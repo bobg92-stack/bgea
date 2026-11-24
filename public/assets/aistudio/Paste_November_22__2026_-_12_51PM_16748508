@@ -1,0 +1,1228 @@
+bg9211014🎃kali)-[~]
+└─$ cd ~/nuttxspace/nuttx && {
+cmdand cursh>   echo "=== ADC/DAC ARCH FILES ==="
+cmdand cursh>   cat arch/arm/src/lpc17xx_40xx/lpc17_40_adc.h
+cmdand cursh>   cat arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c
+cmdand cursh>   cat arch/arm/src/lpc17xx_40xx/lpc17_40_dac.h
+cmdand cursh>   cat arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c
+cmdand cursh>
+cmdand cursh>   echo "=== ADC/DAC PIN DEFINITIONS ==="
+cmdand cursh>   grep -nE "GPIO_AD0|GPIO_DAC" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h
+cmdand cursh>
+cmdand cursh>   echo "=== ANALOG DRIVERS & APPS ==="
+cmdand cursh>   grep -rnE "config (EXAMPLES_ADC|EXAMPLES_DAC|ADC|DAC)" drivers/analog/Kconfig ../apps/examples/ --include="Kconfig"
+cmdand cursh>   grep -n "PCLKSEL" arch/arm/src/lpc17xx_40xx/lpc17_40_*.c
+cmdand cursh> } > /tmp/batch2_inspect.txt && cat /tmp/batch2_inspect.txt
+=== ADC/DAC ARCH FILES ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_adc.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_ADC_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_ADC_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+#include "hardware/lpc17_40_adc.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Configuration ************************************************************/
+
+/* If CONFIG_LPC17_40_ADC_CHANLIST is enabled, then the platform specific
+ * code must do two things:  (1) define CONFIG_LPC17_40_ADC_NCHANNELS in the
+ * configuration file and (2) provide an array g_adc_chanlist[] with the
+ * channel numbers matching the ADC0_MASK within the board-specific library.
+ */
+
+#ifdef CONFIG_LPC17_40_ADC_CHANLIST
+#  if !defined(CONFIG_LPC17_40_ADC_NCHANNELS)
+#    error "CONFIG_LPC17_40_ADC_CHANLIST must defined in this configuration"
+#  elif CONFIG_LPC17_40_ADC_NCHANNELS < 1
+#    error "The value of CONFIG_LPC17_40_ADC_NCHANNELS is invalid"
+#  endif
+#endif
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
+/* The errata that states: "A/D Global Data register should not be used with
+ * burst mode or hardware triggering".  The configuration option
+ * CONFIG_LPC17_40_ADC_CHANLIST is a workaround for this errata.  If this
+ * option is selected, then the ADC driver will grab from the individual
+ * channel registers rather than from the global data register as this is the
+ * stated workaround in the errata.
+ *
+ * If this option is enabled, then the platform specific code must do two
+ * things:
+ * (1) define CONFIG_LPC17_40_ADC_NCHANNELS in the configuration file
+ * (2) provide an array g_adc_chanlist[] with the channel numbers
+ *     matching the ADC0_MASK within the board-specific library.
+ */
+
+#ifdef CONFIG_LPC17_40_ADC_CHANLIST
+extern uint8_t g_adc_chanlist[CONFIG_LPC17_40_ADC_NCHANNELS];
+#endif
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_adcinitialize
+ *
+ * Description:
+ *   Initialize the ADC
+ *
+ * Returned Value:
+ *   Valid ADC device structure reference on success; a NULL on failure
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_LPC17_40_ADC
+struct adc_dev_s *lpc17_40_adcinitialize(void);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_ADC_H */
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: 2011 Li Zhuoyi. All rights reserved.
+ * SPDX-FileCopyrightText: 2010,2013,2016 Gregory Nutt. All rights reserved.
+ * SPDX-FileContributor: Li Zhuoyi <lzyy.cn@gmail.com>
+ * SPDX-FileContributor: Gregory Nutt <gnutt@nuttx.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. Neither the name NuttX nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <assert.h>
+#include <nuttx/debug.h>
+
+#include <arch/board/board.h>
+#include <nuttx/irq.h>
+#include <nuttx/arch.h>
+#include <nuttx/analog/adc.h>
+
+#include "arm_internal.h"
+#include "chip.h"
+#include "hardware/lpc17_40_syscon.h"
+#include "lpc17_40_gpio.h"
+#include "lpc17_40_adc.h"
+
+#if defined(CONFIG_LPC17_40_ADC)
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#ifndef CONFIG_LPC17_40_ADC0_MASK
+#  define CONFIG_LPC17_40_ADC0_MASK    0x01
+#endif
+
+#ifndef CONFIG_LPC17_40_ADC0_SPS
+#  define CONFIG_LPC17_40_ADC0_SPS     1000
+#endif
+
+#ifndef CONFIG_LPC17_40_ADC0_AVERAGE
+#  define CONFIG_LPC17_40_ADC0_AVERAGE 200
+#endif
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+struct up_dev_s
+{
+  const struct adc_callback_s *cb;
+  uint8_t  mask;
+  uint32_t sps;
+  int      irq;
+  int32_t  buf[8];
+  uint8_t  count[8];
+};
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static void adc_receive(struct up_dev_s *priv, uint8_t ch, int32_t data);
+
+/* ADC methods */
+
+static int  adc_bind(struct adc_dev_s *dev,
+                     const struct adc_callback_s *callback);
+static void adc_reset(struct adc_dev_s *dev);
+static int  adc_setup(struct adc_dev_s *dev);
+static void adc_shutdown(struct adc_dev_s *dev);
+static void adc_rxint(struct adc_dev_s *dev, bool enable);
+static int  adc_ioctl(struct adc_dev_s *dev, int cmd, unsigned long arg);
+static int  adc_interrupt(int irq, void *context, void *arg);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static const struct adc_ops_s g_adcops =
+{
+  .ao_bind     = adc_bind,
+  .ao_reset    = adc_reset,
+  .ao_setup    = adc_setup,
+  .ao_shutdown = adc_shutdown,
+  .ao_rxint    = adc_rxint,
+  .ao_ioctl    = adc_ioctl,
+};
+
+static struct up_dev_s g_adcpriv =
+{
+  .sps         = CONFIG_LPC17_40_ADC0_SPS,
+  .mask        = CONFIG_LPC17_40_ADC0_MASK,
+  .irq         = LPC17_40_IRQ_ADC,
+};
+
+static struct adc_dev_s g_adcdev =
+{
+  .ad_ops      = &g_adcops,
+  .ad_priv     = &g_adcpriv,
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: adc_receive
+ *
+ * Description:
+ *   Provide received ADC dat to the upper-half driver.
+ *
+ ****************************************************************************/
+
+static void adc_receive(struct up_dev_s *priv, uint8_t ch, int32_t data)
+{
+  /* Verify that the upper-half driver has bound its callback functions. */
+
+  if (priv->cb != NULL)
+    {
+      /* Perform the data received callback */
+
+      DEBUGASSERT(priv->cb->au_receive != NULL);
+      priv->cb->au_receive(&g_adcdev, ch, data);
+    }
+}
+
+/****************************************************************************
+ * Name: adc_bind
+ *
+ * Description:
+ *   Bind the upper-half driver callbacks to the lower-half implementation.
+ *   This must be called early in order to receive ADC event notifications.
+ *
+ ****************************************************************************/
+
+static int adc_bind(struct adc_dev_s *dev,
+                    const struct adc_callback_s *callback)
+{
+  struct up_dev_s *priv = (struct up_dev_s *)dev->ad_priv;
+
+  DEBUGASSERT(priv != NULL);
+  priv->cb = callback;
+  return OK;
+}
+
+/****************************************************************************
+ * Name: adc_reset
+ *
+ * Description:
+ *   Reset the ADC device.  Called early to initialize the hardware. This
+ *   is called, before adc_setup() and on error conditions.
+ *
+ ****************************************************************************/
+
+static void adc_reset(struct adc_dev_s *dev)
+{
+  struct up_dev_s *priv = (struct up_dev_s *)dev->ad_priv;
+  irqstate_t flags;
+  uint32_t clkdiv;
+  uint32_t regval;
+
+  flags = enter_critical_section();
+
+  regval  = getreg32(LPC17_40_SYSCON_PCONP);
+  regval |= SYSCON_PCONP_PCADC;
+  putreg32(regval, LPC17_40_SYSCON_PCONP);
+
+  /* Power up before we access hardware */
+
+  putreg32(ADC_CR_PDN, LPC17_40_ADC_CR);
+
+#ifdef LPC176x
+  /* PCLKSEL0 only exists in LPC176x family parts */
+
+  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+  regval &= ~SYSCON_PCLKSEL0_ADC_MASK;
+  regval |= (SYSCON_PCLKSEL_CCLK8 << SYSCON_PCLKSEL0_ADC_SHIFT);
+  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+#endif
+
+#ifdef CONFIG_LPC17_40_ADC_BURSTMODE
+  clkdiv   = LPC17_40_CCLK / 3 / 65 / priv->sps;
+
+  /* putreg32(0x04, LPC17_40_ADC_INTEN);
+   *                                   Enable only last channel interrupt
+   */
+
+  putreg32(0x100, LPC17_40_ADC_INTEN);     /* Enable only global interrupt */
+
+  putreg32((priv->mask) |                  /* Select channels 0 to 7 on ADC0 */
+
+  /*       (clkdiv) << 8) |           CLKDIV = divisor to make the samples
+   *                                  per second conversion rate
+   */
+
+           ((32) << 8) |                        /* CLKDIV = divisor to make the faster
+                                                 * conversion rate */
+           (0 << 16) |                          /* BURST = 0, BURST capture all selected
+                                                 * channels */
+           (1 << 17) |                          /* Reserved bit = 0 */
+           (1 << 21) |                          /* PDN = 1, normal operation */
+           (1 << 26) | (0 << 25) | (0 << 24) |  /* START = at MAT0 signal */
+           (1 << 27),                           /* EDGE = 1 (CAP/MAT signal rising
+                                                 * trigger A/D conversion) */
+           LPC17_40_ADC_CR);
+
+#else /* CONFIG_LPC17_40_ADC_BURSTMODE */
+
+  clkdiv   = LPC17_40_CCLK / 8 / 65 / priv->sps;
+  clkdiv <<= 8;
+  clkdiv  &= 0xff00;
+  putreg32(ADC_CR_PDN | ADC_CR_BURST | clkdiv | priv->mask, LPC17_40_ADC_CR);
+
+#endif /* CONFIG_LPC17_40_ADC_BURSTMODE */
+
+  if ((priv->mask & 0x01) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p0);
+    }
+
+  if ((priv->mask & 0x02) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p1);
+    }
+
+  if ((priv->mask & 0x04) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p2);
+    }
+
+  if ((priv->mask & 0x08) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p3);
+    }
+
+  if ((priv->mask & 0x10) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p4);
+    }
+
+  if ((priv->mask & 0x20) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p5);
+    }
+
+  if ((priv->mask & 0x40) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p6);
+    }
+
+  if ((priv->mask & 0x80) != 0)
+    {
+      lpc17_40_configgpio(GPIO_AD0p7);
+    }
+
+  leave_critical_section(flags);
+}
+
+/****************************************************************************
+ * Name: adc_setup
+ *
+ * Description:
+ *   Configure the ADC. This method is called the first time that the ADC
+ *   device is opened.  This will occur when the port is first opened.
+ *   This setup includes configuring and attaching ADC interrupts.
+ *   Interrupts are all disabled upon return.
+ *
+ ****************************************************************************/
+
+static int adc_setup(struct adc_dev_s *dev)
+{
+  struct up_dev_s *priv = (struct up_dev_s *)dev->ad_priv;
+  int i;
+
+  int ret = irq_attach(priv->irq, adc_interrupt, NULL);
+  if (ret == OK)
+    {
+      for (i = 0; i < 8; i++)
+        {
+          priv->buf[i]   = 0;
+          priv->count[i] = 0;
+        }
+
+      up_enable_irq(priv->irq);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: adc_shutdown
+ *
+ * Description:
+ *   Disable the ADC.  This method is called when the ADC device is closed.
+ *   This method reverses the operation the setup method.
+ *
+ ****************************************************************************/
+
+static void adc_shutdown(struct adc_dev_s *dev)
+{
+  struct up_dev_s *priv = (struct up_dev_s *)dev->ad_priv;
+
+  /* Disable ADC interrupts, both at the level of the ADC device and at the
+   * level of the NVIC.
+   */
+
+  putreg32(0, LPC17_40_ADC_INTEN);
+  up_disable_irq(priv->irq);
+
+  /* Then detach the ADC interrupt handler. */
+
+  irq_detach(priv->irq);
+}
+
+/****************************************************************************
+ * Name: adc_rxint
+ *
+ * Description:
+ *   Call to enable or disable RX interrupts
+ *
+ ****************************************************************************/
+
+static void adc_rxint(struct adc_dev_s *dev, bool enable)
+{
+  struct up_dev_s *priv = (struct up_dev_s *)dev->ad_priv;
+
+  if (enable)
+    {
+#ifndef CONFIG_LPC17_40_ADC_BURSTMODE
+#ifdef CONFIG_LPC17_40_ADC_CHANLIST
+      /* Trigger interrupt at the end of conversion on the last A/D channel
+       * in the channel list.
+       */
+
+      putreg32(ADC_INTEN_CHAN(
+               g_adc_chanlist[CONFIG_LPC17_40_ADC_NCHANNELS - 1]),
+               LPC17_40_ADC_INTEN);
+#else
+      /* Trigger interrupt using the global DONE flag. */
+
+      putreg32(ADC_INTEN_GLOBAL, LPC17_40_ADC_INTEN);
+#endif
+#else /* CONFIG_LPC17_40_ADC_BURSTMODE */
+      /* Enable only global interrupt */
+
+      putreg32(0x100, LPC17_40_ADC_INTEN);
+#endif /* CONFIG_LPC17_40_ADC_BURSTMODE */
+    }
+  else
+    {
+      putreg32(0, LPC17_40_ADC_INTEN);
+    }
+}
+
+/****************************************************************************
+ * Name: adc_ioctl
+ *
+ * Description:
+ *  All ioctl calls will be routed through this method
+ *
+ ****************************************************************************/
+
+static int adc_ioctl(struct adc_dev_s *dev, int cmd, unsigned long arg)
+{
+  /* No ioctl commands supported */
+
+  return -ENOTTY;
+}
+
+/****************************************************************************
+ * Name: adc_interrupt
+ *
+ * Description:
+ *   ADC interrupt handler
+ *
+ ****************************************************************************/
+
+static int adc_interrupt(int irq, void *context, void *arg)
+{
+#ifndef CONFIG_LPC17_40_ADC_BURSTMODE
+#ifdef CONFIG_LPC17_40_ADC_CHANLIST
+
+  struct up_dev_s *priv = (struct up_dev_s *)g_adcdev.ad_priv;
+  uint32_t regval;
+  unsigned char ch;
+  int32_t value;
+  int i;
+
+  regval = getreg32(LPC17_40_ADC_GDR);
+  for (i = 0; i < CONFIG_LPC17_40_ADC_NCHANNELS; i++)
+    {
+      ch     = g_adc_chanlist[i];
+      regval = getreg32(LPC17_40_ADC_DR(ch));
+
+      if (regval&ADC_DR_DONE)
+        {
+          priv->count[ch]++;
+          priv->buf[ch] += regval & 0xfff0;
+
+          if (priv->count[ch] >= CONFIG_LPC17_40_ADC0_AVERAGE)
+            {
+              value           = priv->buf[ch] / priv->count[ch];
+              value         <<= 15;
+              adc_receive(priv, ch, value);
+              priv->buf[ch]   = 0;
+              priv->count[ch] = 0;
+            }
+        }
+    }
+
+  return OK;
+
+#else
+
+  struct up_dev_s *priv = (struct up_dev_s *)g_adcdev.ad_priv;
+  uint32_t regval;
+  unsigned char ch;
+  int32_t value;
+
+  regval               = getreg32(LPC17_40_ADC_GDR);
+  ch                   = (regval >> 24) & 0x07;
+  priv->buf[ch]       += regval & 0xfff0;
+
+  priv->count[ch]++;
+  if (priv->count[ch] >= CONFIG_LPC17_40_ADC0_AVERAGE)
+    {
+      value            = priv->buf[ch] / priv->count[ch];
+      value          <<= 15;
+      adc_receive(priv, ch, value);
+      priv->buf[ch]    = 0;
+      priv->count[ch]  = 0;
+    }
+
+  return OK;
+
+#endif
+#else /* CONFIG_LPC17_40_ADC_BURSTMODE */
+
+  struct up_dev_s *priv = (struct up_dev_s *)g_adcdev.ad_priv;
+  volatile uint32_t reg_val;
+  volatile uint32_t reg_val2;
+  volatile uint32_t reg_val3;
+
+  /* Verify that an interrupt has actually occurred */
+
+  reg_val2 = getreg32(LPC17_40_ADC_STAT);  /* Read ADSTAT will clear the interrupt flag */
+  if ((reg_val2) & (1 << 16))
+    {
+      if ((priv->mask & 0x01) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR0);
+
+#ifdef CONFIG_ADC_DIRECT_ACCESS
+          /* Store the data value plus the status bits */
+
+          adc0_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+#else /* CONFIG_ADC_DIRECT_ACCESS */
+#ifdef CONFIG_ADC_WORKER_THREAD
+          /* Store the data value plus the status bits */
+
+          adc0_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+
+#else /* CONFIG_ADC_WORKER_THREAD */
+      if ((reg_val) & (1 << 31))
+        {
+          adc_receive(priv, 0, (reg_val >> 4) & 0xfff);
+        }
+
+#endif /* CONFIG_ADC_WORKER_THREAD */
+#endif /* CONFIG_ADC_DIRECT_ACCESS */
+        }
+
+      if ((priv->mask & 0x02) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR1);
+
+#ifdef CONFIG_ADC_DIRECT_ACCESS
+          /* Store the data value plus the status bits */
+
+          adc1_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+
+#else /* CONFIG_ADC_DIRECT_ACCESS */
+#ifdef CONFIG_ADC_WORKER_THREAD
+          /* Store the data value plus the status bits */
+
+          adc1_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+
+#else /* CONFIG_ADC_WORKER_THREAD */
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 1, (reg_val >> 4) & 0xfff);
+            }
+
+#endif /* CONFIG_ADC_WORKER_THREAD */
+#endif /* CONFIG_ADC_DIRECT_ACCESS */
+        }
+
+      if ((priv->mask & 0x04) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR2);
+
+#ifdef CONFIG_ADC_DIRECT_ACCESS
+          /* Store the data value plus the status bits */
+
+          adc2_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+
+#else /* CONFIG_ADC_DIRECT_ACCESS */
+#ifdef CONFIG_ADC_WORKER_THREAD
+          /* Store the data value plus the status bits */
+
+          adc2_buffer0[0] = reg_val;
+          adc0_int_done = 1;
+
+#else /* CONFIG_ADC_WORKER_THREAD */
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 2, (reg_val >> 4) & 0xfff);
+            }
+
+#endif /* CONFIG_ADC_WORKER_THREAD */
+#endif /* CONFIG_ADC_DIRECT_ACCESS */
+        }
+
+      if ((priv->mask & 0x08) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR3);
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 3, (reg_val >> 4) & 0xfff);
+            }
+        }
+
+      if ((priv->mask & 0x10) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR4);
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 4, (reg_val >> 4) & 0xfff);
+            }
+        }
+
+      if ((priv->mask & 0x20) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR5);
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 5, (reg_val >> 4) & 0xfff);
+            }
+        }
+
+      if ((priv->mask & 0x40) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR6);
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 6, (reg_val >> 4) & 0xfff);
+            }
+        }
+
+      if ((priv->mask & 0x80) != 0)
+        {
+          reg_val = getreg32(LPC17_40_ADC_DR7);
+          if ((reg_val) & (1 << 31))
+            {
+              adc_receive(priv, 7, (reg_val >> 4) & 0xfff);
+            }
+        }
+
+#ifdef CONFIG_ADC_WORKER_THREAD
+      if (adc0_int_done == 1)
+        {
+          work_queue(HPWORK, &priv->irqwork, adc_irqworker,
+                     (void *)priv, 0);
+        }
+
+#endif /* CONFIG_ADC_WORKER_THREAD */
+    }
+
+  reg_val3 = getreg32(LPC17_40_ADC_GDR);        /* Read ADGDR clear the DONE and OVERRUN bits */
+  putreg32((priv->mask) |                       /* Select channels 0 to 7 on ADC0 */
+           (32 << 8) |                          /* CLKDIV = 16 */
+           (0 << 16) |                          /* BURST = 1, BURST capture all selected channels */
+           (1 << 17) |                          /* Reserved bit = 0 */
+           (1 << 21) |                          /* PDN = 1, normal operation */
+           (1 << 26) | (0 << 25) | (0 << 24) |  /* START = at MAT0 signal */
+           (1 << 27),                           /* EDGE = 1 (CAP/MAT signal rising trigger A/D
+                                                 * conversion) */
+           LPC17_40_ADC_CR);
+
+  /* lpc17_40_gpiowrite(LPCXPRESSO_GPIO0_21, 0);  Reset pin P0.21 */
+
+  /* leave_critical_section(saved_state); */
+
+  return OK;
+#endif /* CONFIG_LPC17_40_ADC_BURSTMODE */
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_adcinitialize
+ *
+ * Description:
+ *   Initialize the adc
+ *
+ * Returned Value:
+ *   Valid can device structure reference on success; a NULL on failure
+ *
+ ****************************************************************************/
+
+struct adc_dev_s *lpc17_40_adcinitialize(void)
+{
+  return &g_adcdev;
+}
+
+#endif /* CONFIG_LPC17_40_ADC */
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_dac.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_DAC_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_DAC_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+#include "hardware/lpc17_40_dac.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+#ifndef __ASSEMBLY__
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_dacinitialize
+ *
+ * Description:
+ *   Initialize the DAC
+ *
+ * Returned Value:
+ *   Valid DAC device structure reference on success; a NULL on failure
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_LPC17_40_DAC
+struct dac_dev_s *lpc17_40_dacinitialize(void);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* __ASSEMBLY__ */
+
+#endif /* __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_DAC_H */
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: 2010,2014,2016 Gregory Nutt. All rights reserved.
+ * SPDX-FileCopyrightText: 2011 Li Zhuoyi. All rights reserved.
+ * SPDX-FileContributor: Li Zhuoyi <lzyy.cn@gmail.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. Neither the name NuttX nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <nuttx/debug.h>
+
+#include <arch/board/board.h>
+#include <nuttx/irq.h>
+#include <nuttx/arch.h>
+#include <nuttx/analog/dac.h>
+
+#include "arm_internal.h"
+#include "chip.h"
+
+#include "hardware/lpc17_40_syscon.h"
+#include "hardware/lpc17_40_pinconfig.h"
+#include "lpc17_40_gpio.h"
+#include "lpc17_40_dac.h"
+
+#ifdef CONFIG_LPC17_40_DAC
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+/* DAC methods */
+
+static void dac_reset(struct dac_dev_s *dev);
+static int  dac_setup(struct dac_dev_s *dev);
+static void dac_shutdown(struct dac_dev_s *dev);
+static void dac_txint(struct dac_dev_s *dev, bool enable);
+static int  dac_send(struct dac_dev_s *dev, struct dac_msg_s *msg);
+static int  dac_ioctl(struct dac_dev_s *dev, int cmd, unsigned long arg);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static const struct dac_ops_s g_dacops =
+{
+  .ao_reset    = dac_reset,
+  .ao_setup    = dac_setup,
+  .ao_shutdown = dac_shutdown,
+  .ao_txint    = dac_txint,
+  .ao_send     = dac_send,
+  .ao_ioctl    = dac_ioctl,
+};
+
+static struct dac_dev_s g_dacdev =
+{
+  .ad_ops = &g_dacops,
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/* Reset the DAC device.  Called early to initialize the hardware. This
+ * is called, before ao_setup() and on error conditions.
+ */
+
+static void dac_reset(struct dac_dev_s *dev)
+{
+  irqstate_t flags;
+  uint32_t regval;
+
+  flags = enter_critical_section();
+
+  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+  regval &= ~SYSCON_PCLKSEL0_DAC_MASK;
+  regval |= (SYSCON_PCLKSEL_CCLK8 << SYSCON_PCLKSEL0_DAC_SHIFT);
+  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+
+  /* putreg32(DAC_CTRL_DBLBUFEN, LPC17_40_DAC_CTRL); ? */
+
+  lpc17_40_configgpio(GPIO_AOUT);
+
+  leave_critical_section(flags);
+}
+
+/* Configure the DAC. This method is called the first time that the DAC
+ * device is opened.  This will occur when the port is first opened.
+ * This setup includes configuring and attaching DAC interrupts.  Interrupts
+ * are all disabled upon return.
+ */
+
+static int  dac_setup(struct dac_dev_s *dev)
+{
+  return OK;
+}
+
+/* Disable the DAC.  This method is called when the DAC device is closed.
+ * This method reverses the operation the setup method.
+ */
+
+static void dac_shutdown(struct dac_dev_s *dev)
+{
+}
+
+/* Call to enable or disable TX interrupts */
+
+static void dac_txint(struct dac_dev_s *dev, bool enable)
+{
+}
+
+static int  dac_send(struct dac_dev_s *dev, struct dac_msg_s *msg)
+{
+  /* adjust the binary value to the lpc1768's register format (plus high
+   * speed profile in bit 16)
+   */
+
+  putreg32(((((msg->am_data) << 6) | 0x10000) & 0xffff), LPC17_40_DAC_CR);
+  dac_txdone(&g_dacdev);
+  return 0;
+}
+
+/* All ioctl calls will be routed through this method */
+
+static int dac_ioctl(struct dac_dev_s *dev, int cmd, unsigned long arg)
+{
+  aerr("ERROR: Fix me -- Not Implemented\n");
+  return 0;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_dacinitialize
+ *
+ * Description:
+ *   Initialize the DAC
+ *
+ * Returned Value:
+ *   Valid DAC device structure reference on success; a NULL on failure
+ *
+ ****************************************************************************/
+
+struct dac_dev_s *lpc17_40_dacinitialize(void)
+{
+  return &g_dacdev;
+}
+
+#endif /* CONFIG_LPC17_40_DAC */
+=== ADC/DAC PIN DEFINITIONS ===
+117:#define GPIO_AD0p6         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN12)
+121:#define GPIO_AD0p7         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN13)
+165:#define GPIO_AD0p0         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN23)
+169:#define GPIO_AD0p1         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN24)
+173:#define GPIO_AD0p2         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN25)
+177:#define GPIO_AD0p3         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN26)
+359:#define GPIO_AD0p4         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT1 | GPIO_PIN30)
+365:#define GPIO_AD0p5         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT1 | GPIO_PIN31)
+=== ANALOG DRIVERS & APPS ===
+drivers/analog/Kconfig:38:config ADC
+drivers/analog/Kconfig:58:config ADC_FIFOSIZE
+drivers/analog/Kconfig:68:config ADC_NPOLLWAITERS
+drivers/analog/Kconfig:74:config ADC_ADS1242
+drivers/analog/Kconfig:86:config ADC_ADS125X
+drivers/analog/Kconfig:101:config ADC_LTC1867L
+drivers/analog/Kconfig:120:config ADC_PGA11X
+drivers/analog/Kconfig:162:config ADC_ADS7828
+drivers/analog/Kconfig:182:config ADC_MAX1161X
+drivers/analog/Kconfig:216:config ADC_HX711
+drivers/analog/Kconfig:232:config ADC_HA711_ADD_DELAY
+drivers/analog/Kconfig:253:config ADC_MCP3008
+drivers/analog/Kconfig:262:config ADC_MCP3008_SPI_FREQUENCY
+drivers/analog/Kconfig:271:config ADC_MCP3008_DIFFERENTIAL
+drivers/analog/Kconfig:281:config ADC_ADS7046
+drivers/analog/Kconfig:298:config ADC_ADS1115
+drivers/analog/Kconfig:309:config ADC_ADS1115_I2C_FREQUENCY
+drivers/analog/Kconfig:315:config ADC_ADS1115_ADDR
+drivers/analog/Kconfig:321:config ADC_ADS1115_CHANNEL
+drivers/analog/Kconfig:331:config ADC_ADS1115_PGA
+drivers/analog/Kconfig:340:config ADC_ADS1115_CONTINOUS
+drivers/analog/Kconfig:348:config ADC_ADS1115_DR
+drivers/analog/Kconfig:357:config ADC_ADS1115_COMP_MODE
+drivers/analog/Kconfig:363:config ADC_ADS1115_COMP_POL
+drivers/analog/Kconfig:369:config ADC_ADS1115_COMP_LAT
+drivers/analog/Kconfig:376:config ADC_ADS1115_COMP_QUE
+drivers/analog/Kconfig:385:config ADC_ADS1115_HI_THRESH
+drivers/analog/Kconfig:392:config ADC_ADS1115_LO_THRESH
+drivers/analog/Kconfig:409:config DAC
+drivers/analog/Kconfig:417:config DAC_FIFOSIZE
+drivers/analog/Kconfig:427:config DAC_AD5410
+drivers/analog/Kconfig:433:config DAC7571
+drivers/analog/Kconfig:440:config DAC7571_I2C_FREQUENCY
+drivers/analog/Kconfig:445:config DAC7554
+../apps/examples/adc/Kconfig:6:config EXAMPLES_ADC
+../apps/examples/adc/Kconfig:15:config EXAMPLES_ADC_DEVPATH
+../apps/examples/adc/Kconfig:21:config EXAMPLES_ADC_NSAMPLES
+../apps/examples/adc/Kconfig:28:config EXAMPLES_ADC_GROUPSIZE
+../apps/examples/adc/Kconfig:34:config EXAMPLES_ADC_SWTRIG
+../apps/examples/dac/Kconfig:1:config EXAMPLES_DAC
+../apps/examples/dac/Kconfig:10:config EXAMPLES_DAC_DEVPATH
+arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c:211:  /* PCLKSEL0 only exists in LPC176x family parts */
+arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c:213:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c:214:  regval &= ~SYSCON_PCLKSEL0_ADC_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c:215:  regval |= (SYSCON_PCLKSEL_CCLK8 << SYSCON_PCLKSEL0_ADC_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_adc.c:216:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:117:/* Get the SYSCON_PCLKSEL value for CAN1 the implements this divisor */
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:120:#    define CAN1_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:122:#    define CAN1_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK2
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:124:#    define CAN1_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK4
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:126:#    define CAN1_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK6
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:146:/* Get the SYSCON_PCLKSEL value for CAN2 the implements this divisor */
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:149:#    define CAN2_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:151:#    define CAN2_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK2
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:153:#    define CAN2_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK4
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:155:#    define CAN2_CCLK_DIVISOR SYSCON_PCLKSEL_CCLK6
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1893:      regval  = can_getcommon(LPC17_40_SYSCON_PCLKSEL);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1894:      regval &= SYSCON_PCLKSEL_PCLKDIV_MASK
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1895:      regval >>= SYSCON_PCLKSEL_PCLKDIV_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1898:      regval  = can_getcommon(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1899:      regval &= ~SYSCON_PCLKSEL0_CAN1_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1900:      regval |= (CAN1_CCLK_DIVISOR << SYSCON_PCLKSEL0_CAN1_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1901:      can_putcommon(LPC17_40_SYSCON_PCLKSEL0, regval);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1926:      regval  = can_getcommon(LPC17_40_SYSCON_PCLKSEL);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1927:      regval &= SYSCON_PCLKSEL_PCLKDIV_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1928:      regval >>= SYSCON_PCLKSEL_PCLKDIV_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1931:      regval  = can_getcommon(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1932:      regval &= ~SYSCON_PCLKSEL0_CAN2_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1933:      regval |= (CAN2_CCLK_DIVISOR << SYSCON_PCLKSEL0_CAN2_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_can.c:1934:      can_putcommon(LPC17_40_SYSCON_PCLKSEL0, regval);
+arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c:117:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c:118:  regval &= ~SYSCON_PCLKSEL0_DAC_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c:119:  regval |= (SYSCON_PCLKSEL_CCLK8 << SYSCON_PCLKSEL0_DAC_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_dac.c:120:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:545:#if defined(LPC17_40_SYSCON_PCLKSEL0)
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:546:      regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:547:      regval &= ~SYSCON_PCLKSEL0_I2C0_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:548:      regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL0_I2C0_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:549:      putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:576:      regval  = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:577:      regval &= ~SYSCON_PCLKSEL1_I2C1_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:578:      regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL1_I2C1_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:579:      putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:605:      regval  = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:606:      regval &= ~SYSCON_PCLKSEL1_I2C2_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:607:      regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL1_I2C2_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_i2c.c:608:      putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:135: * divisor in PCLKSEL0 or PCLKSEL1:
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:151:#    define CONSOLE_CCLKDIV  SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:154:  /* Calculate and optimal PCLKSEL0/1 divisor.
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:171:#      define CONSOLE_CCLKDIV  SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:186:#      define CONSOLE_CCLKDIV SYSCON_PCLKSEL_CCLK2
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:201:#     define CONSOLE_CCLKDIV SYSCON_PCLKSEL_CCLK4
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:216:#      define CONSOLE_CCLKDIV   SYSCON_PCLKSEL_CCLK8
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:285: *   2. Peripheral clock: In the PCLKSEL0 register, select PCLK_UART0 and
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:286: *      PCLK_UART1; in the PCLKSEL1 register,
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:332:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:333:  regval &= ~(SYSCON_PCLKSEL0_UART0_MASK | SYSCON_PCLKSEL0_UART1_MASK);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:335:  regval |= (CONSOLE_CCLKDIV << SYSCON_PCLKSEL0_UART0_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:337:  regval |= (CONSOLE_CCLKDIV << SYSCON_PCLKSEL0_UART1_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:339:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:341:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:342:  regval &= ~(SYSCON_PCLKSEL1_UART2_MASK | SYSCON_PCLKSEL1_UART3_MASK);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:344:  regval |= (CONSOLE_CCLKDIV << SYSCON_PCLKSEL1_UART2_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:346:  regval |= (CONSOLE_CCLKDIV << SYSCON_PCLKSEL1_UART3_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_lowputc.c:348:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_mcpwm.c:418:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_mcpwm.c:421:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_pwm.c:572:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_pwm.c:573:  regval &= ~SYSCON_PCLKSEL0_PWM1_MASK;                          /* PCLK_MC peripheral clk = CCLK = LPC17_40_CCLK */
+arch/arm/src/lpc17xx_40xx/lpc17_40_pwm.c:574:  regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL0_PWM1_SHIFT); /* PCLK_MC peripheral clk = CCLK = LPC17_40_CCLK */
+arch/arm/src/lpc17xx_40xx/lpc17_40_pwm.c:575:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:676:  return SYSCON_PCLKSEL_CCLK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:694: *   PCLKSEL0 or PCLKSEL1:
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:717:   * divisor in PCLKSEL0 or PCLKSEL1:
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:726:  /* Calculate and optimal PCLKSEL0/1 divisor.
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:744:      return SYSCON_PCLKSEL_CCLK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:760:      return SYSCON_PCLKSEL_CCLK2;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:776:      return SYSCON_PCLKSEL_CCLK4;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:792:      return SYSCON_PCLKSEL_CCLK8;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:808: *   2. Peripheral clock: In the PCLKSEL0 register, select PCLK_UART0 and
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:809: *      PCLK_UART1; in the PCLKSEL1 register, select PCLK_UART2 and
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:833:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:834:  regval &= ~SYSCON_PCLKSEL0_UART0_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:835:  regval |= ((uint32_t)g_uart0priv.cclkdiv << SYSCON_PCLKSEL0_UART0_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:836:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:863:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:864:  regval &= ~SYSCON_PCLKSEL0_UART1_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:865:  regval |= ((uint32_t)g_uart1priv.cclkdiv << SYSCON_PCLKSEL0_UART1_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:866:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:922:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:923:  regval &= ~SYSCON_PCLKSEL1_UART2_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:924:  regval |= ((uint32_t)g_uart2priv.cclkdiv << SYSCON_PCLKSEL1_UART2_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:925:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:952:  regval = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:953:  regval &= ~SYSCON_PCLKSEL1_UART3_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:954:  regval |= ((uint32_t)g_uart3priv.cclkdiv << SYSCON_PCLKSEL1_UART3_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:955:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:985:    case SYSCON_PCLKSEL_CCLK4:   /* PCLK_peripheral = CCLK/4 */
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:989:    case SYSCON_PCLKSEL_CCLK:    /* PCLK_peripheral = CCLK */
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:993:    case SYSCON_PCLKSEL_CCLK2:   /* PCLK_peripheral = CCLK/2 */
+arch/arm/src/lpc17xx_40xx/lpc17_40_serial.c:997:    case SYSCON_PCLKSEL_CCLK8:   /* PCLK_peripheral = CCLK/8 (except CAN1, CAN2, and CAN) */
+arch/arm/src/lpc17xx_40xx/lpc17_40_spi.c:77:#define SPI_PCLKSET_DIV    SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_spi.c:543:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_spi.c:544:  regval &= ~SYSCON_PCLKSEL0_SPI_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_spi.c:545:  regval |= (SPI_PCLKSET_DIV << SYSCON_PCLKSEL0_SPI_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_spi.c:546:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:82:#  define SSP_PCLKSET_DIV    SYSCON_PCLKSEL_CCLK
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:810:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:811:  regval &= ~SYSCON_PCLKSEL1_SSP0_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:812:  regval |= (SSP_PCLKSET_DIV << SYSCON_PCLKSEL1_SSP0_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:813:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:864:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:865:  regval &= ~SYSCON_PCLKSEL0_SSP1_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:866:  regval |= (SSP_PCLKSET_DIV << SYSCON_PCLKSEL0_SSP1_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:867:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:917:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:918:  regval &= ~SYSCON_PCLKSEL0_SSP2_MASK;
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:919:  regval |= (SSP_PCLKSET_DIV << SYSCON_PCLKSEL0_SSP2_SHIFT);
+arch/arm/src/lpc17xx_40xx/lpc17_40_ssp.c:920:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_timer.c:377:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_timer.c:382:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL0);
+arch/arm/src/lpc17xx_40xx/lpc17_40_timer.c:383:  regval  = getreg32(LPC17_40_SYSCON_PCLKSEL1);
+arch/arm/src/lpc17xx_40xx/lpc17_40_timer.c:388:  putreg32(regval, LPC17_40_SYSCON_PCLKSEL1);
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]

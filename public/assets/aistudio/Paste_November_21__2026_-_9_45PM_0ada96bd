@@ -1,0 +1,1171 @@
+──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ >....
+118:CONFIG_DEBUG_MEMCARD_WARN=y
+119:CONFIG_DEBUG_MEMCARD_INFO=y
+374:CONFIG_LPC17_40_ETHERNET=y
+1082:# CONFIG_ETH0_PHY_NONE is not set
+1083:# CONFIG_ETH0_PHY_MULTI is not set
+1084:# CONFIG_ETH0_PHY_AM79C874 is not set
+1085:# CONFIG_ETH0_PHY_AR8031 is not set
+1086:# CONFIG_ETH0_PHY_KS8721 is not set
+1087:# CONFIG_ETH0_PHY_KSZ8041 is not set
+1088:# CONFIG_ETH0_PHY_KSZ8051 is not set
+1089:# CONFIG_ETH0_PHY_KSZ8061 is not set
+1090:# CONFIG_ETH0_PHY_KSZ8081 is not set
+1091:# CONFIG_ETH0_PHY_KSZ90x1 is not set
+1092:# CONFIG_ETH0_PHY_DP83848C is not set
+1093:# CONFIG_ETH0_PHY_DP83825I is not set
+1094:# CONFIG_ETH0_PHY_DP83630 is not set
+1095:# CONFIG_ETH0_PHY_TJA1100 is not set
+1096:# CONFIG_ETH0_PHY_TJA1101 is not set
+1097:# CONFIG_ETH0_PHY_TJA1103 is not set
+1098:CONFIG_ETH0_PHY_LAN8720=y
+1099:# CONFIG_ETH0_PHY_LAN8740 is not set
+1100:# CONFIG_ETH0_PHY_LAN8740A is not set
+1101:# CONFIG_ETH0_PHY_LAN8742A is not set
+1102:# CONFIG_ETH0_PHY_RTL8211F is not set
+1103:# CONFIG_ETH0_PHY_DM9161 is not set
+1104:# CONFIG_ETH0_PHY_YT8512 is not set
+1821:CONFIG_MM_REGIONS=1
+172:static int     mmcsd_get_scr(FAR struct mmcsd_state_s *priv,
+253:static int     mmcsd_sdinitialize(FAR struct mmcsd_state_s *priv);
+515: * Name: mmcsd_get_scr
+525:static int mmcsd_get_scr(FAR struct mmcsd_state_s *priv, uint32_t scr[2])
+4019: * Name: mmcsd_sdinitialize
+4027:static int mmcsd_sdinitialize(FAR struct mmcsd_state_s *priv)
+4156:  ret = mmcsd_get_scr(priv, scr);
+4612:                ret = mmcsd_sdinitialize(priv);
+4619:                ret = mmcsd_sdinitialize(priv);
+4626:                ret = mmcsd_sdinitialize(priv);
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && \
+sed -n '515,615p;4025,4185p' drivers/mmcsd/mmcsd_sdio.c && \
+grep -n -A 70 "lpc17_40_configgpio(" arch/arm/src/lpc17xx_40xx/*gpio*.c && \
+grep -nC 15 "SDCARD" boards/arm/lpc17xx_40xx/lpc4088-devkit/include/board.h && \
+grep -rnE "LPC_MCI|P1_6|MCIDAT0" ~/ss4/eanatty/lpc1788_samples/ | head -n 30
+ * Name: mmcsd_get_scr
+ *
+ * Description:
+ *   Obtain the SD card's Configuration Register (SCR)
+ *
+ * Returned Value:
+ *   OK on success; a negated errno on failure.
+ *
+ ****************************************************************************/
+
+static int mmcsd_get_scr(FAR struct mmcsd_state_s *priv, uint32_t scr[2])
+{
+  int ret;
+#ifdef CONFIG_SDIO_DMA
+  bool drop = false;
+#endif
+
+#if defined(CONFIG_SDIO_DMA) && defined(CONFIG_ARCH_HAVE_SDIO_PREFLIGHT)
+  /* If we think we are going to perform a DMA transfer, make sure that we
+   * will be able to before we commit the card to the operation.
+   */
+
+  if ((priv->caps & SDIO_CAPS_DMASUPPORTED) != 0)
+    {
+      ret = SDIO_DMAPREFLIGHT(priv->dev, (FAR uint8_t *)scr, 8);
+      if (ret != OK)
+        {
+          finfo("SDIO_DMAPREFLIGHT: error %d, drop to RECVSETUP\n", ret);
+          drop = true;
+        }
+    }
+#endif
+
+  /* Set Block Size To 8 Bytes */
+
+  ret = mmcsd_setblocklen(priv, 8);
+  if (ret != OK)
+    {
+      ferr("ERROR: mmcsd_setblocklen failed: %d\n", ret);
+      return ret;
+    }
+
+  /* Setup up to receive data with interrupt mode */
+
+  SDIO_BLOCKSETUP(priv->dev, 8, 1);
+#ifdef CONFIG_SDIO_DMA
+  if (!drop && (priv->caps & SDIO_CAPS_DMASUPPORTED) != 0)
+    {
+      ret = SDIO_DMARECVSETUP(priv->dev, (FAR uint8_t *)scr, 8);
+      if (ret != OK)
+        {
+          finfo("SDIO_DMARECVSETUP: error %d, drop to RECVSETUP\n", ret);
+          drop = true;
+        }
+    }
+
+  if (drop)
+#endif
+    {
+      SDIO_RECVSETUP(priv->dev, (FAR uint8_t *)scr, 8);
+    }
+
+  SDIO_WAITENABLE(priv->dev,
+                  SDIOWAIT_TRANSFERDONE | SDIOWAIT_TIMEOUT | SDIOWAIT_ERROR,
+                  MMCSD_SCR_DATADELAY);
+
+  /* Send CMD55 APP_CMD with argument as card's RCA */
+
+  mmcsd_sendcmdpoll(priv, SD_CMD55, (uint32_t)priv->rca << 16);
+  ret = mmcsd_recv_r1(priv, SD_CMD55);
+  if (ret != OK)
+    {
+      ferr("ERROR: RECVR1 for CMD55 failed: %d\n", ret);
+      SDIO_CANCEL(priv->dev);
+      return ret;
+    }
+
+  /* Send ACMD51 SD_APP_SEND_SCR with argument as 0 to start data receipt */
+
+  mmcsd_sendcmdpoll(priv, SD_ACMD51, 0);
+  ret = mmcsd_recv_r1(priv, SD_ACMD51);
+  if (ret != OK)
+    {
+      ferr("ERROR: RECVR1 for ACMD51 failed: %d\n", ret);
+      SDIO_CANCEL(priv->dev);
+      return ret;
+    }
+
+  /* Wait for data to be transferred */
+
+  ret = mmcsd_eventwait(priv, SDIOWAIT_TIMEOUT | SDIOWAIT_ERROR);
+  if (ret != OK)
+    {
+      ferr("ERROR: mmcsd_eventwait for READ DATA failed: %d\n", ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: mmcsd_decode_csd
+ ****************************************************************************/
+
+static int mmcsd_sdinitialize(FAR struct mmcsd_state_s *priv)
+{
+  uint32_t cid[4];
+  uint32_t scr[2];
+  int ret;
+
+  /* At this point, clocking has been supplied to the card, both CMD0 and
+   * ACMD41 (with OCR=0) have been sent successfully, the card is no longer
+   * busy and (presumably) in the IDLE state so there is good evidence
+   * that we have an SD card inserted into the slot.
+   *
+   * Send CMD2, ALL_SEND_CID.  The SD CMD2 is similar to the MMC CMD2 except
+   * that the buffer type used to transmit to response of the card (SD Memory
+   * Card: Push-Pull, MMC: Open-Drain). This implementation supports only a
+   * single SD card.  If multiple cards were installed in the slot, each card
+   * would respond to CMD2 by sending its CID (only one card completes the
+   * response at a time).  The driver should send CMD2 and obtain RCAs until
+   * no response to ALL_SEND_CID is received.
+   *
+   * When an SD card receives the CMD2 command it should transition to the
+   * identification state/card-identification mode
+   */
+
+  mmcsd_sendcmdpoll(priv, MMCSD_CMD2, 0);
+  ret = SDIO_RECVR2(priv->dev, MMCSD_CMD2, cid);
+  if (ret != OK)
+    {
+      ferr("ERROR: SDIO_RECVR2 for SD CID failed: %d\n", ret);
+      return ret;
+    }
+
+  mmcsd_decode_cid(priv, cid);
+
+  /* Send CMD3, SEND_RELATIVE_ADDR.  In both protocols, this command is used
+   * to assign a logical address to the card.  For MMC, the host assigns the
+   * address; for SD, the memory card has this responsibility. CMD3 causes
+   * transition to standby state/data-transfer mode
+   *
+   * Send CMD3 with argument 0, SD card publishes its RCA in the response.
+   */
+
+  mmcsd_sendcmdpoll(priv, SD_CMD3, 0);
+  ret = mmcsd_recv_r6(priv, SD_CMD3);
+  if (ret != OK)
+    {
+      ferr("ERROR: mmcsd_recv_r6 for SD RCA failed: %d\n", ret);
+      return ret;
+    }
+
+  finfo("RCA: %04x\n", priv->rca);
+
+  /* This should have caused a transition to standby state. However, this
+   * will not be reflected in the present R1/6 status.  R1/6 contains the
+   * state of the card when the command was received, not when it
+   * completed execution.
+   *
+   * Verify that we are in standby state/data-transfer mode
+   */
+
+  ret = mmcsd_verifystate(priv, MMCSD_R1_STATE_STBY);
+  if (ret != OK)
+    {
+      ferr("ERROR: Failed to enter standby state\n");
+      return ret;
+    }
+
+  /* Send CMD9, SEND_CSD, in standby state/data-transfer mode to obtain the
+   * Card Specific Data (CSD) register.  The argument is the RCA that we
+   * just obtained from CMD3.  The card stays in standby state/data-transfer
+   * mode.
+   */
+
+  mmcsd_sendcmdpoll(priv, MMCSD_CMD9, (uint32_t)priv->rca << 16);
+  ret = SDIO_RECVR2(priv->dev, MMCSD_CMD9, priv->csd);
+  if (ret != OK)
+    {
+      ferr("ERROR: Could not get SD CSD register(%d)\n", ret);
+      return ret;
+    }
+
+  mmcsd_decode_csd(priv, priv->csd);
+
+  /* Send CMD7 with the argument == RCA in order to select the card.
+   * Since we are supporting only a single card, we just leave the
+   * card selected all of the time.
+   */
+
+  mmcsd_sendcmdpoll(priv, MMCSD_CMD7S, (uint32_t)priv->rca << 16);
+  ret = mmcsd_recv_r1(priv, MMCSD_CMD7S);
+  if (ret != OK)
+    {
+      ferr("ERROR: mmcsd_recv_r1 for CMD7 failed: %d\n", ret);
+      return ret;
+    }
+
+  /* Set the Driver Stage Register (DSR) if (1) a CONFIG_MMCSD_DSR has been
+   * provided and (2) the card supports a DSR register.  If no DSR value
+   * the card default value (0x0404) will be used.
+   */
+
+  mmcsd_sendcmd4(priv);
+
+  /* Select high speed SD clocking (which may depend on the DSR setting) */
+
+  SDIO_CLOCK(priv->dev, CLOCK_SD_TRANSFER_1BIT);
+  MMCSD_USLEEP(MMCSD_CLK_DELAY);
+
+  /* If the hardware only supports 4-bit transfer mode then we forced to
+   * attempt to setup the card in this mode before checking the SCR register.
+   */
+
+  if ((priv->caps & SDIO_CAPS_4BIT_ONLY) != 0)
+    {
+      /* Select width (4-bit) bus operation */
+
+      priv->buswidth = MMCSD_SCR_BUSWIDTH_4BIT;
+      ret = mmcsd_widebus(priv);
+
+      if (ret != OK)
+        {
+          ferr("ERROR: Failed to set wide bus operation: %d\n", ret);
+        }
+    }
+
+  /* Get the SD card Configuration Register (SCR).  We need this now because
+   * that configuration register contains the indication whether or not
+   * this card supports wide bus operation.
+   */
+
+  ret = mmcsd_get_scr(priv, scr);
+  if (ret != OK)
+    {
+      ferr("ERROR: Could not get SD SCR register(%d)\n", ret);
+      return ret;
+    }
+
+  mmcsd_decode_scr(priv, scr);
+
+  if ((priv->caps & SDIO_CAPS_4BIT) != 0)
+    {
+      /* Select width (4-bit) bus operation (if the card supports it) */
+
+      ret = mmcsd_widebus(priv);
+      if (ret != OK)
+        {
+          ferr("ERROR: Failed to set wide bus operation: %d\n", ret);
+        }
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: mmcsd_cardidentify
+ *
+ * Description:
+ *   We believe that there is media in the slot.  Attempt to initialize and
+ *   configure the card.  This is called only from mmcsd_probe().
+ *
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c:561:int lpc17_40_configgpio(lpc17_40_pinset_t cfgset)
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-562-{
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-563-  unsigned int port;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-564-  unsigned int pin;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-565-  int ret = -EINVAL;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-566-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-567-  /* Verify that this hardware supports the select GPIO port */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-568-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-569-  port = (cfgset & GPIO_PORT_MASK) >> GPIO_PORT_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-570-  if (port < GPIO_NPORTS)
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-571-    {
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-572-      /* Get the pin number and select the port configuration register for
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-573-       * that pin
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-574-       */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-575-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-576-      pin = (cfgset & GPIO_PIN_MASK) >> GPIO_PIN_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-577-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-578-      /* Handle according to pin function */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-579-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-580-      switch (cfgset & GPIO_FUNC_MASK)
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-581-        {
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-582-        case GPIO_INPUT:   /* GPIO input pin */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-583-          ret = lpc17_40_configinput(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-584-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-585-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-586-        case GPIO_INTFE:   /* GPIO interrupt falling edge */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-587-        case GPIO_INTRE:   /* GPIO interrupt rising edge */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-588-        case GPIO_INTBOTH: /* GPIO interrupt both edges */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-589-          ret = lpc17_40_configinterrupt(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-590-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-591-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-592-        case GPIO_OUTPUT:  /* GPIO output pin */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-593-          ret = lpc17_40_configoutput(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-594-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-595-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-596-        case GPIO_ALT1:    /* Alternate function 1 */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-597-          ret = lpc17_40_configalternate(cfgset, port, pin,
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-598-                                         PINCONN_PINSEL_ALT1);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-599-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-600-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-601-        case GPIO_ALT2:    /* Alternate function 2 */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-602-          ret = lpc17_40_configalternate(cfgset, port, pin,
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-603-                                         PINCONN_PINSEL_ALT2);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-604-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-605-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-606-        case GPIO_ALT3:    /* Alternate function 3 */
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-607-          ret = lpc17_40_configalternate(cfgset, port, pin,
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-608-                                         PINCONN_PINSEL_ALT3);
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-609-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-610-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-611-        default:
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-612-          break;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-613-        }
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-614-    }
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-615-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-616-  return ret;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-617-}
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-618-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-619-/****************************************************************************
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-620- * Name: lpc17_40_gpiowrite
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-621- *
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-622- * Description:
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-623- *   Write one or zero to the selected GPIO pin
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-624- *
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-625- ****************************************************************************/
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-626-
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-627-void lpc17_40_gpiowrite(lpc17_40_pinset_t pinset, bool value)
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-628-{
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-629-  uint32_t fiobase;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-630-  uint32_t offset;
+arch/arm/src/lpc17xx_40xx/lpc176x_gpio.c-631-  unsigned int port;
+--
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c:798:int lpc17_40_configgpio(lpc17_40_pinset_t cfgset)
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-799-{
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-800-  unsigned int port;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-801-  unsigned int pin;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-802-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-803-  int ret = -EINVAL;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-804-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-805-  /* Verify that this hardware supports the select GPIO port */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-806-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-807-  port = (cfgset & GPIO_PORT_MASK) >> GPIO_PORT_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-808-  if (port < GPIO_NPORTS)
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-809-    {
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-810-      /* Get the pin number and select the port configuration register for
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-811-       * that pin.
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-812-       */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-813-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-814-      pin = (cfgset & GPIO_PIN_MASK) >> GPIO_PIN_SHIFT;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-815-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-816-      /* Handle according to pin function */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-817-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-818-      switch (cfgset & GPIO_FUNC_MASK)
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-819-        {
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-820-        case GPIO_INPUT:   /* GPIO input pin */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-821-          ret = lpc17_40_configinput(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-822-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-823-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-824-        case GPIO_INTFE:   /* GPIO interrupt falling edge */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-825-        case GPIO_INTRE:   /* GPIO interrupt rising edge */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-826-        case GPIO_INTBOTH: /* GPIO interrupt both edges */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-827-          ret = lpc17_40_configinterrupt(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-828-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-829-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-830-        case GPIO_OUTPUT:  /* GPIO output pin */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-831-          ret = lpc17_40_configoutput(cfgset, port, pin);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-832-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-833-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-834-        case GPIO_ALT1:    /* Alternate function 1 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-835-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT1);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-836-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-837-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-838-        case GPIO_ALT2:    /* Alternate function 2 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-839-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT2);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-840-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-841-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-842-        case GPIO_ALT3:    /* Alternate function 3 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-843-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT3);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-844-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-845-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-846-        case GPIO_ALT4:    /* Alternate function 4 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-847-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT4);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-848-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-849-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-850-        case GPIO_ALT5:    /* Alternate function 5 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-851-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT5);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-852-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-853-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-854-        case GPIO_ALT6:    /* Alternate function 6 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-855-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT6);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-856-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-857-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-858-        case GPIO_ALT7:    /* Alternate function 7 */
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-859-          ret = lpc17_40_configalternate(cfgset, port, pin, IOCON_FUNC_ALT7);
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-860-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-861-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-862-        default:
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-863-          break;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-864-        }
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-865-    }
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-866-
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-867-  return ret;
+arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c-868-}
+139-#endif
+140-
+141-/* FLASH Configuration */
+142-
+143-#undef  CONFIG_LPC17_40_FLASH
+144-#define CONFIG_LPC17_40_FLASH         1
+145-
+146-/* Flash access use 6 CPU clocks - Safe for any allowed conditions */
+147-
+148-#define BOARD_FLASHCFG_VALUE       (SYSCON_FLASHCFG_TIM_5 | 0x03a)
+149-
+150-/* Ethernet configuration */
+151-
+152-#define ETH_MCFG_CLKSEL_DIV        ETH_MCFG_CLKSEL_DIV48
+153-
+154:#ifdef CONFIG_LPC17_40_SDCARD
+155-
+156-/* SDIO dividers.
+157- * Note that slower clocking is required when DMA is disabled in order to
+158- * avoid RX overrun/TX underrun errors due to delayed responses to
+159- * service FIFOs in interrupt driven mode.
+160: * SDCARD_CLOCK=PCLK/(2*(SDCARD_CLKDIV+1))
+161- */
+162-
+163:#  define SDCARD_CLKDIV_INIT       74   /* 400Khz  */
+164:#  define SDCARD_INIT_CLKDIV       (SDCARD_CLKDIV_INIT)
+165-
+166:#  define SDCARD_NORMAL_CLKDIV     1    /* DMA ON:  SDCARD_CLOCK=15MHz */
+167:#define SDCARD_SLOW_CLKDIV         14   /* DMA OFF: SDCARD_CLOCK=2MHz */
+168-
+169-#  ifdef CONFIG_SDIO_DMA
+170:#    define SDCARD_MMCXFR_CLKDIV   (SDCARD_NORMAL_CLKDIV)
+171-#  else
+172:#    define SDCARD_MMCXFR_CLKDIV   (SDCARD_SLOW_CLKDIV)
+173-#  endif
+174-
+175-#  ifdef CONFIG_SDIO_DMA
+176:#    define SDCARD_SDXFR_CLKDIV    (SDCARD_NORMAL_CLKDIV)
+177-#  else
+178:#    define SDCARD_SDXFR_CLKDIV    (SDCARD_SLOW_CLKDIV)
+179-#  endif
+180-#endif
+181-
+182-/* Set EMC delay values:
+183- *
+184- * CMDDLY: Programmable delay value for EMC outputs in command delayed
+185- *   mode.  The delay amount is roughly CMDDLY * 250 picoseconds.
+186- * FBCLKDLY: Programmable delay value for the feedback clock that controls
+187- *   input data sampling.  The delay amount is roughly (FBCLKDLY+1) * 250
+188- *   picoseconds.
+189- * CLKOUT0DLY: Programmable delay value for the CLKOUT0 output. This would
+190- *   typically be used in clock delayed mode.  The delay amount is roughly
+191- *  (CLKOUT0DLY+1) * 250 picoseconds.
+192- * CLKOUT1DLY: Programmable delay value for the CLKOUT1 output. This would
+193- *  typically be used in clock delayed mode.  The delay amount is roughly
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:102:  LPC_IOCON->P1_6  &= ~0x07;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:103:  LPC_IOCON->P1_6  |= 0x01;           /* ENET_TX_CLK */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:212:  __IO uint32_t P1_6;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:854:} LPC_MCI_TypeDef;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:1367:#define LPC_MCI_BASE          (LPC_APB1_BASE + 0x40000)
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:1430:#define LPC_MCI               ((LPC_MCI_TypeDef       *) LPC_MCI_BASE      )
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_gpdma.c:48:          (&LPC_MCI->FIFO),                               // SD Card
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_gpdma.c:83:          ((uint32_t)&LPC_MCI->FIFO),                                     // SD Card
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:188:           GPDMACfg.DstMemAddr = (uint32_t)&LPC_MCI->FIFO;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:200:           GPDMACfg.SrcMemAddr = (uint32_t)&LPC_MCI->FIFO;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:295:           *dest = LPC_MCI->FIFO;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:317:           LPC_MCI->FIFO = *src;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:336:   LPC_MCI->MASK0 |= ((DATA_END_INT_MASK)|(ERR_TX_INT_MASK));      /* Enable TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:338:   LPC_MCI->MASK0 |= ((FIFO_TX_INT_MASK)|(DATA_END_INT_MASK)|(ERR_TX_INT_MASK));   /* FIFO TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:355:   LPC_MCI->MASK0 &= ~((DATA_END_INT_MASK)|(ERR_TX_INT_MASK));     /* Enable TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:357:   LPC_MCI->MASK0 &= ~((FIFO_TX_INT_MASK)|(DATA_END_INT_MASK)|(ERR_TX_INT_MASK));  /* FIFO TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:374:   LPC_MCI->MASK0 |= ((DATA_END_INT_MASK)|(ERR_RX_INT_MASK));      /* Enable RX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:376:   LPC_MCI->MASK0 |= ((FIFO_RX_INT_MASK)|(DATA_END_INT_MASK)|(ERR_RX_INT_MASK));   /* FIFO RX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:393:   LPC_MCI->MASK0 &= ~((DATA_END_INT_MASK)|(ERR_RX_INT_MASK));     /* Enable TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:395:   LPC_MCI->MASK0 &= ~((FIFO_RX_INT_MASK)|(DATA_END_INT_MASK)|(ERR_RX_INT_MASK));  /* FIFO TX interrupts only */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:465:   MCIStatus = LPC_MCI->STATUS;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:469:           LPC_MCI->CLEAR =  MCI_CMD_CRC_FAIL;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:474:           LPC_MCI->CLEAR =  MCI_CMD_TIMEOUT;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:480:           LPC_MCI->CLEAR =  MCI_CMD_RESP_END;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:485:           LPC_MCI->CLEAR =  MCI_CMD_SENT;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:490:           LPC_MCI->CLEAR =  MCI_CMD_ACTIVE;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:508:   MCIStatus = LPC_MCI->STATUS;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:512:           LPC_MCI->CLEAR = MCI_DATA_CRC_FAIL;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:517:           LPC_MCI->CLEAR =  MCI_DATA_TIMEOUT;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:523:           LPC_MCI->CLEAR = MCI_TX_UNDERRUN;
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && \
+sed -n '580,797p' arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c && \
+grep -nE "GPIO_SD_|BOARD_SCS" boards/arm/lpc17xx_40xx/lpc4088-devkit/include/board.h && \
+grep -rnE "MCI_Init|SD_CLK|SD_DAT0|P1_5|P1_6|mci" ~/ss4/eanatty/lpc1788_samples/ | head -n 40 && \
+sed -n '540,900p' ~/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c
+    {
+      /* Disable any rising edge interrupts */
+
+      regval = getreg32(intbase + LPC17_40_GPIOINT_INTENR_OFFSET);
+      regval &= ~pinmask;
+      putreg32(regval, intbase + LPC17_40_GPIOINT_INTENR_OFFSET);
+
+      /* Disable any falling edge interrupts */
+
+      regval  = getreg32(intbase + LPC17_40_GPIOINT_INTENF_OFFSET);
+      regval &= ~pinmask;
+      putreg32(regval, intbase + LPC17_40_GPIOINT_INTENF_OFFSET);
+
+      /* Forget about any falling/rising edge interrupt enabled */
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+      lpc17_40_setintedge(port, pin, 0);
+#endif
+    }
+
+  /* Set pull-up mode */
+
+  lpc17_40_setpullup(cfgset, port, pin);
+
+  /* Clear opendrain */
+
+  lpc17_40_clropendrain(port, pin);
+
+  /* Set input polarity */
+
+  if ((cfgset & GPIO_INVERT) != 0)
+    {
+      lpc17_40_setinvertinput(port, pin);
+    }
+
+  /* Set input hysteresis */
+
+  lpc17_40_sethysteresis(cfgset, port, pin);
+
+  /* Set input filtering */
+
+  lpc17_40_setfilter(cfgset, port, pin);
+
+  /* Configure as GPIO */
+
+  lpc17_40_setpinfunction(port, pin, IOCON_FUNC_GPIO);
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: lpc17_40_configinterrupt
+ *
+ * Description:
+ *   Configure a GPIO interrupt pin based on bit-encoded description of the
+ *   pin.
+ *
+ ****************************************************************************/
+
+static inline int lpc17_40_configinterrupt(lpc17_40_pinset_t cfgset,
+                                           unsigned int port,
+                                           unsigned int pin)
+{
+  /* First, configure the port as a generic input so that we have a known
+   * starting point and consistent behavior during the re-configuration.
+   */
+
+  lpc17_40_configinput(cfgset, port, pin);
+
+  /* Then just remember the rising/falling edge interrupt enabled */
+
+  DEBUGASSERT(port == 0 || port == 2);
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+  lpc17_40_setintedge(port, pin,
+                     (cfgset & GPIO_EDGE_MASK) >> GPIO_EDGE_SHIFT);
+#endif
+  return OK;
+}
+
+/****************************************************************************
+ * Name: lpc17_40_configoutput
+ *
+ * Description:
+ *   Configure a GPIO output pin based on bit-encoded description of the pin.
+ *
+ ****************************************************************************/
+
+static inline int lpc17_40_configoutput(lpc17_40_pinset_t cfgset,
+                                        unsigned int port,
+                                        unsigned int pin)
+{
+  uint32_t fiobase;
+  uint32_t regval;
+
+  /* First, configure the port as a generic input so that we have a known
+   * starting point and consistent behavior during the re-configuration.
+   */
+
+  lpc17_40_configinput(DEFAULT_INPUT, port, pin);
+
+  /* Now, reconfigure the pin as an output */
+
+  fiobase = g_fiobase[port];
+  regval  = getreg32(fiobase + LPC17_40_FIO_DIR_OFFSET);
+  regval |= (1 << pin);
+  putreg32(regval, fiobase + LPC17_40_FIO_DIR_OFFSET);
+
+  /* Check for open drain output */
+
+  if ((cfgset & GPIO_OPEN_DRAIN) != 0)
+    {
+      /* Set pull-up mode.
+       * This normally only applies to input pins, but does have
+       * meaning if the port is an open drain output.
+       */
+
+      lpc17_40_setpullup(cfgset, port, pin);
+
+      /* Select open drain output */
+
+      lpc17_40_setopendrain(port, pin);
+    }
+
+  /* Set output slew rate */
+
+  lpc17_40_setslewmode(cfgset, port, pin);
+
+  /* Set the initial value of the output */
+
+  lpc17_40_gpiowrite(cfgset, ((cfgset & GPIO_VALUE) != GPIO_VALUE_ZERO));
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: lpc17_40_configalternate
+ *
+ * Description:
+ *   Configure a GPIO alternate function pin based on bit-encoded description
+ *   of the pin.
+ *
+ ****************************************************************************/
+
+static int lpc17_40_configalternate(lpc17_40_pinset_t cfgset,
+                                    unsigned int port,
+                                    unsigned int pin, uint32_t alt)
+{
+  uint32_t i2cmode;
+
+  /* First, configure the port as an input so that we have a known
+   * starting point and consistent behavior during the re-configuration.
+   */
+
+  lpc17_40_configinput(DEFAULT_INPUT, port, pin);
+
+  /* Set pull-up mode */
+
+  lpc17_40_setpullup(cfgset, port, pin);
+
+  /* Check for analog mode */
+
+  if ((cfgset & GPIO_MODE_ANALOG) != 0)
+    {
+      lpc17_40_setmodeanalog(port, pin);
+
+      /* Check for DAC output enable */
+
+      if ((cfgset & GPIO_DACEN) != 0)
+        {
+          lpc17_40_setdacenable(port, pin);
+        }
+    }
+
+  /* Check for I2C modes */
+
+  if ((cfgset & (GPIO_I2CHS | GPIO_HIDRIVE)) != 0)
+    {
+      /* Isolate the I2C mode bits */
+
+      i2cmode = ((cfgset & GPIO_I2CMODE_MASK) >> GPIO_I2CMODE_SHIFT);
+
+      /* Set I2C Modes */
+
+      lpc17_40_seti2cmode(port, pin, i2cmode);
+    }
+
+  /* Check for open drain output */
+
+  if ((cfgset & GPIO_OPEN_DRAIN) != 0)
+    {
+      /* Select open drain output */
+
+      lpc17_40_setopendrain(port, pin);
+    }
+
+  /* Set output slew rate */
+
+  lpc17_40_setslewmode(cfgset, port, pin);
+
+  /* Select the alternate pin */
+
+  lpc17_40_setpinfunction(port, pin, alt);
+
+  return OK;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_configgpio
+ *
+ * Description:
+ *   Configure a GPIO pin based on bit-encoded description of the pin.
+ *
+ ****************************************************************************/
+
+72: * should also be set in the BOARD_SCS_VALUE.
+77:#define BOARD_SCS_VALUE            SYSCON_SCS_OSCEN
+341:#define GPIO_SD_DAT0               GPIO_SD_DAT0_2
+342:#define GPIO_SD_DAT1               GPIO_SD_DAT1_1
+343:#define GPIO_SD_DAT2               GPIO_SD_DAT2_1
+344:#define GPIO_SD_DAT3               GPIO_SD_DAT3_1
+345:#define GPIO_SD_CLK                GPIO_SD_CLK_2
+346:#define GPIO_SD_CMD                GPIO_SD_CMD_2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:50:                randomcirclesapp.c          Random Circls App
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBaseBoard/src/fs_diskio.c:22:#include "lpc177x_8x_mci.h"
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBaseBoard/src/fs_diskio.c:299:       if ( MCI_Init(0) != MCI_FUNC_OK )
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBaseBoard/src/fs_diskio.c:301:               diskio_printf("MCI_Init failed\n");
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBaseBoard/src/fs_diskio.c:382:               // cardtype mci.h to chan cardtype - (maybe redundant)
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBaseBoard/src/fs_diskio.c:492:       // done in mci-driver: if (!(CardType & 4)) sector *= 512;      /* Convert to uint8_t address if needed */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:100:  LPC_IOCON->P1_5  &= ~0x07;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:101:  LPC_IOCON->P1_5  |= 0x01;           /* ENET_TXER */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:102:  LPC_IOCON->P1_6  &= ~0x07;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_OemBoard/src/ethmac.c:103:  LPC_IOCON->P1_6  |= 0x01;           /* ENET_TX_CLK */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:211:  __IO uint32_t P1_5;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_CMSIS/inc/LPC177x_8x.h:212:  __IO uint32_t P1_6;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:2:* $Id$               lpc177x_8x_mci.c                        2011-06-02
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:4:* @file              lpc177x_8x_mci.c
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:29:#include "lpc177x_8x_mci.h"
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:800:uint32_t MCI_Init(uint8_t powerActiveLevel )
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:810:   LPC_IOCON->P1_2  &= ~0x1F; /* SD_CLK @ P1.2 */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:812:   LPC_IOCON->P1_5  &= ~0x1F; /* SD_PWR @ P1.5 */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:813:   LPC_IOCON->P1_6  &= ~0x1F; /* SD_DAT_0 @ P1.6 */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c:852:   //SD_CLK
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_pinsel.h:110:#define LOC_SD_DAT_0_P1_6                       ((1))   /**< Input for SD_DAT_0 comes from P1.6 */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:2:* $Id$               lpc177x_8x_mci.h                        2011-06-02
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:4:* @file              lpc177x_8x_mci.h
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:261:typedef enum mci_card_state
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:275:typedef enum mci_func_error
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:286:typedef enum mci_card_type
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:293:typedef struct mci_cid
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mci.h:326:uint32_t MCI_Init(uint8_t powerActiveLevel );
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:141:/** Enables/Disable channel (cap) capture event on a rising edge on MCI(mci) */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:142:#define MCPWM_CAPCON_CAPMCI_RE(cap,mci)  (((cap>=0)&&(cap<=2)&&(mci>=0)&&(mci<=2)) ? ((uint32_t)(1<<((cap*6)+(mci*2)+0))) : (0))
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:143:/** Enables/Disable channel (cap) capture event on a falling edge on MCI(mci) */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:144:#define MCPWM_CAPCON_CAPMCI_FE(cap,mci)  (((cap>=0)&&(cap<=2)&&(mci>=0)&&(mci<=2)) ? ((uint32_t)(1<<((cap*6)+(mci*2)+1))) : (0))
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:181:/** Counter(tc) advances on a rising edge on MCI(mci) pin */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:182:#define MCPWM_CNTCON_TCMCI_RE(tc,mci)    (((tc>=0)&&(tc<=2)&&(mci>=0)&&(mci<=2)) ? ((uint32_t)(1<<((6*tc)+(2*mci)+0))) : (0))
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:183:/** Counter(cnt) advances on a falling edge on MCI(mci) pin */
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_MCU/inc/lpc177x_8x_mcpwm.h:184:#define MCPWM_CNTCON_TCMCI_FE(tc,mci)    (((tc>=0)&&(tc<=2)&&(mci>=0)&&(mci<=2)) ? ((uint32_t)(1<<((6*tc)+(2*mci)+1))) : (0))
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_FreeRTOS_Demo/main.c:103: LPC_IOCON->P1_5 &= (~7);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_fatfs/uVision/fatfs.uvopt:301:      <PathWithFileName>..\..\Lib_MCU\src\lpc177x_8x_mci.c</PathWithFileName>
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_fatfs/uVision/fatfs.uvopt:302:      <FilenameWithoutPath>lpc177x_8x_mci.c</FilenameWithoutPath>
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_fatfs/uVision/fatfs.uvproj:415:              <FileName>lpc177x_8x_mci.c</FileName>
+
+/*********************************************************************//**
+ * @brief               Called by MCI interrupt handler. This is the last interrupt
+ *                              manipulates the process of the data-block write and read
+ *                              to/with card
+ *
+ * @details             This service is also used with/without DMA support. It simply
+ *                              clears the flag messages the in-process data-block transfer
+ *                              has been done/ended
+ *
+ * @param               None
+ *
+ * @return              None
+ *************************************************************************/
+void MCI_DATA_END_InterruptService( void )
+{
+        uint32_t MCIStatus;
+
+        MCIStatus = LPC_MCI->STATUS;
+        if ( MCIStatus &  MCI_DATA_END )                /* Data end, and Data block end  */
+        {
+                LPC_MCI->CLEAR = MCI_DATA_END;
+
+                Mci_Data_Xfer_End = 0;
+
+                MCI_TXDisable();
+
+                MCI_RXDisable();
+
+                return;
+        }
+
+        if ( MCIStatus &  MCI_DATA_BLK_END )
+        {
+                LPC_MCI->CLEAR =  MCI_DATA_BLK_END;
+
+                //MCI_TXDisable();
+
+                return;
+        }
+
+        /* Tx active  */
+        if ( MCIStatus & MCI_TX_ACTIVE )
+        {
+
+        }
+
+        /* Rx active  */
+        if ( MCIStatus & MCI_RX_ACTIVE )
+        {
+
+        }
+
+        return;
+}
+
+
+/*********************************************************************//**
+ * @brief               Called by MCI interrupt handler if requiring to using FIFO
+ *                              for data transferring. It copy data to/from FIFO register
+ *                              from/to a data buffer.
+ *
+ * @param               None
+ *
+ * @return              None
+ *
+ * @note                This function is done without DMA transfer support
+ **********************************************************************/
+void MCI_FIFOInterruptService( void )
+{
+#if !MCI_DMA_ENABLED
+        uint32_t MCIStatus;
+
+        MCIStatus = LPC_MCI->STATUS;
+
+        if ( MCIStatus & (FIFO_TX_INT_MASK ) )
+        {
+                /* empty is multiple of 512 block size */
+                if ( MCIStatus & MCI_TX_HALF_EMPTY )
+                {
+                        //There's no data, return
+                        if(dataSrcBlock == NULL)
+                                return;
+
+                        /* write 8 words to fifo */
+                        MCI_WriteFifo((uint32_t *)&dataSrcBlock[txBlockCnt]);
+
+                        txBlockCnt += 32;
+                }
+
+                if (txBlockCnt == BLOCK_LENGTH) /* block complete */
+                {
+                        dataSrcBlock += BLOCK_LENGTH;
+
+                        txBlockCnt = 0;
+
+                        /* disable FIFO int until next block write */
+                        //LPC_MCI->MASK0 &= ~(FIFO_TX_INT_MASK);
+
+                        /* wait for SD card to complete sending data i.e MCI_DATA_BLK_END interrupt */
+                }
+        }
+        else if ( MCIStatus & (FIFO_RX_INT_MASK) )
+        {
+                /* if using RX_HALF_FULL remove one ReadFIFO below */
+                if ( MCIStatus & MCI_RX_HALF_FULL )
+                {
+                        //There's no store data, return
+                        if(dataDestBlock == NULL)
+                                return;
+
+                        /* read 8 words from fifo */
+                        MCI_ReadFifo((uint32_t *)&dataDestBlock[rxBlockCnt]);
+
+                        rxBlockCnt += 32;
+                }
+
+                /* block complete */
+                if (rxBlockCnt == BLOCK_LENGTH)
+                {
+                        dataDestBlock += BLOCK_LENGTH;
+
+                        rxBlockCnt = 0;
+                }
+        }
+#endif
+
+        return;
+}
+
+/*********************************************************************//**
+ * @brief               MCI_IRQHandler is to manage the reasons that cause the
+ *                              interrupt.
+ *
+ * @details             It controls the data-block writing and reading by access
+ *                              the FIFO register.
+ *                              It handle the state changes on the MCI bus...
+ *
+ * @param               None
+ *
+ * @return              None
+ **********************************************************************/
+void MCI_IRQHandler (void)
+{
+        uint32_t MCI_Status;
+
+        MCI_Status = LPC_MCI->STATUS;
+
+        /* handle MCI_STATUS interrupt */
+        if ( MCI_Status & DATA_ERR_INT_MASK )
+        {
+                MCI_DataErrorProcess();
+
+                return;
+        }
+
+        if ( MCI_Status & DATA_END_INT_MASK )
+        {
+                MCI_DATA_END_InterruptService();
+
+                return;
+        }
+        else if ( MCI_Status & FIFO_INT_MASK )
+        {
+                MCI_FIFOInterruptService();
+
+                return;
+        }
+        else if ( MCI_Status & CMD_INT_MASK )
+        {
+                MCI_CmdProcess();
+
+                return;
+        }
+}
+
+
+/**
+ * @}
+ */
+
+
+
+/** @addtogroup MCI_Public_Functions
+ * @{
+ */
+
+/*********************************************************************//**
+ * @brief               Set MCI clock rate, during initialization phase < 400K
+ *                              during data phase < 20Mhz
+ *
+ * @param[in]   ClockRate Clock rate to be set
+ *
+ * @return              None
+ **********************************************************************/
+void MCI_Set_MCIClock( uint32_t ClockRate )
+{
+        uint32_t i, ClkValue = 0;
+
+        if ( ClockRate == MCI_SLOW_RATE )
+        {
+                /* slow clock */
+                ClkValue |= MCLKDIV_SLOW;
+        }
+        else if (ClockRate == MCI_NORMAL_RATE)
+        {
+                /* normal clock */
+                ClkValue |= MCLKDIV_NORMAL;
+        }
+
+        LPC_MCI->CLOCK &= ~(0xFF); /* clear clock divider */
+
+        LPC_MCI->CLOCK |= (1 << 8)  | ClkValue;
+
+        for ( i = 0; i < 0x10; i++ );   /* delay 3MCLK + 2PCLK before next write */
+
+        return;
+}
+
+
+/**********************************************************************//**
+ * @brief               Set the Width to 1-bit Bus or 4-bit Bus
+ *
+ * @param[in]   width buswidth expected to set
+ *
+ * @return              MCI_FUNC_OK in case of success
+ *************************************************************************/
+uint32_t MCI_SetBusWidth( uint32_t width )
+{
+        uint32_t i;
+
+        for ( i = 0; i < 0x10; i++ );   /* delay 3MCLK + 2PCLK  */
+
+        if ( width == SD_1_BIT )
+        {
+                LPC_MCI->CLOCK &=  ~(1 << 11);  /* 1 bit bus */
+        }
+        else if ( width == SD_4_BIT )
+        {
+                LPC_MCI->CLOCK |=  (1 << 11);/* 4 bit bus */
+        }
+
+        if ( MCI_Acmd_SendBusWidth( BUS_WIDTH_4BITS ) != MCI_FUNC_OK )
+        {
+                return(MCI_FUNC_FAILED);
+        }
+
+        return MCI_FUNC_OK;
+}
+
+
+/************************************************************************//**
+ * @brief               Do initialization the MCI block as set its clock, registers,
+ *                              setup NVIC for interrupts, configure the pins used for MCI
+ *                              function, do initialize the card in slot...
+ *
+ * @param[in]   powerActiveLevel the power level to activate the card in slot
+ *
+ * @return              MCI_FUNC_OK in case of success
+ ***************************************************************************/
+uint32_t MCI_Init(uint8_t powerActiveLevel )
+{
+        uint32_t i, retval;
+
+        MCI_CardType = MCI_CARD_UNKNOWN;
+
+        // Following block of code added to ensure card VCC drops to zero
+    // before card is initialized
+
+   // Force all MCI control pins to basic I/O mode
+   LPC_IOCON->P1_2  &= ~0x1F; /* SD_CLK @ P1.2 */
+   LPC_IOCON->P1_3  &= ~0x1F; /* SD_CMD @ P1.3 */
+   LPC_IOCON->P1_5  &= ~0x1F; /* SD_PWR @ P1.5 */
+   LPC_IOCON->P1_6  &= ~0x1F; /* SD_DAT_0 @ P1.6 */
+   LPC_IOCON->P1_7  &= ~0x1F; /* SD_DAT_1 @ P1.7 */
+   LPC_IOCON->P1_11 &= ~0x1F; /* SD_DAT_2 @ P1.11 */
+   LPC_IOCON->P1_12 &= 0x1F; /* SD_DAT_3 @ P1.12 */
+
+   // Set all MCI pins to outputs
+   LPC_GPIO1->DIR |= 0x18EC;
+
+   // Force all pins low (except power control pin)
+   LPC_GPIO1->CLR = 0x1000;
+   LPC_GPIO1->CLR = 0x0800;
+   LPC_GPIO1->CLR = 0x0080;
+   LPC_GPIO1->CLR = 0x0040;
+
+   LPC_GPIO1->SET = 0x0020;
+
+   LPC_GPIO1->CLR = 0x0008;
+   LPC_GPIO1->CLR = 0x0004;
+
+   // Crude delay of 50ms at 120MHz
+   for ( i = 0; i < 0x100000; i++ );
+
+        LPC_SC->PCONP |= ( 1 << 28 );                   /* Enable clock to the MCI block */
+
+        if ( LPC_MCI->CLOCK & (1 << 8) )
+        {
+                LPC_MCI->CLOCK &= ~(1 << 8);
+        }
+
+        if ( LPC_MCI->POWER & 0x02 )
+        {
+                LPC_MCI->POWER = 0x00;
+        }
+
+        for ( i = 0; i < 0x1000; i++ );
+
+        /* Disable all interrupts for now */
+        LPC_MCI->MASK0 = 0;
+
+        //SD_CLK
+        PINSEL_ConfigPin(1, 2, 2);
+
+        //SD_CMD
+        PINSEL_ConfigPin(1, 3, 2);
+
+        //SD_PWR
+        PINSEL_ConfigPin(1, 5, 2);
+
+        //SD_DAT_0
+        PINSEL_ConfigPin(1, 6, 2);
+
+        //SD_DAT_1
+        PINSEL_ConfigPin(1, 7, 2);
+
+        //SD_DAT_2
+        PINSEL_ConfigPin(1, 11, 2);
+
+        //SD_DAT_3
+        PINSEL_ConfigPin(1, 12, 2);
+
+        // SD_PWR is active high (follows the output of the SD Card interface block).
+        if(powerActiveLevel == LOW_LVL)
+        {
+                LPC_SC->SCS &= ~ 0x08;//Becase on EA board SD_PWR is active low
+        }
+        else
+        {
+                LPC_SC->SCS |= 0x08;
+        }
+
+        //Setting for timeout problem
+        LPC_MCI->DATATMR = 0x1FFFFFFF;
+
+        /*set up clocking default mode, clear any registers as needed */
+        LPC_MCI->COMMAND = 0;
+        LPC_MCI->DATACTRL = 0;
+        LPC_MCI->CLEAR = 0x7FF;         /* clear all pending interrupts */
+
+        LPC_MCI->POWER = 0x02;          /* power up */
+        while ( !(LPC_MCI->POWER & 0x02) );
+
+        for ( i = 0; i < 0x100; i++ );
+
+        /* During identification phase, the clock should be less than
+        400Khz. Once we pass this phase, the normal clock can be set up
+        to 25Mhz on SD card and 20Mhz on MMC card. */
+        MCI_Set_MCIClock(MCI_SLOW_RATE );

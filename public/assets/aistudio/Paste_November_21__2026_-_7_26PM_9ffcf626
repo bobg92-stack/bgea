@@ -1,0 +1,1689 @@
+
+         █████████████
+      ███████████████████
+    ███████████████████████
+    ████    ███████    ████
+    ███      █████      ███
+    ███      █████      ███
+    ████    ███ ███    ████
+     █████████ █ █████████
+      ███████████████████
+       ███  ██  ██  ██ █
+         █   █  █   █
+             █
+
+┌──(bg9211014🎃kali)-[~]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && \
+grep -n "GPIO_SSP0" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h && \
+grep -n "ADS7843" .config boards/arm/lpc17xx_40xx/open1788/include/board.h && \
+grep -rnE "PIN(15|16|17|18|20|14)\b" boards/arm/lpc17xx_40xx/open1788/ && \ 
+cat boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+128:#define GPIO_SSP0_SCK_1    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN15)
+132:#define GPIO_SSP0_SSEL_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN16)
+136:#define GPIO_SSP0_MISO_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN17)
+140:#define GPIO_SSP0_MOSI_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN18)
+283:#define GPIO_SSP0_SCK_2    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN20)
+289:#define GPIO_SSP0_SSEL_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN21)
+306:#define GPIO_SSP0_MOSI_2   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN23)
+314:#define GPIO_SSP0_MOSI_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN24)
+345:#define GPIO_SSP0_SSEL_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN28)
+468:#define GPIO_SSP0_SCK_3    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN22)
+472:#define GPIO_SSP0_SSEL_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN23)
+479:#define GPIO_SSP0_MISO_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN26)
+483:#define GPIO_SSP0_MOSI_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN27)
+.config:932:CONFIG_INPUT_ADS7843E=y
+.config:933:# CONFIG_ADS7843E_MULTIPLE is not set
+.config:934:CONFIG_ADS7843E_NPOLLWAITERS=4
+.config:935:CONFIG_ADS7843E_SPIDEV=0
+.config:936:CONFIG_ADS7843E_DEVMINOR=0
+.config:937:CONFIG_ADS7843E_SPIMODE=0
+.config:938:CONFIG_ADS7843E_FREQUENCY=500000
+.config:939:# CONFIG_ADS7843E_SWAPXY is not set
+.config:940:CONFIG_ADS7843E_THRESHX=12
+.config:941:CONFIG_ADS7843E_THRESHY=12
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:58:#define GPIO_LED1        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT1 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:59:#define GPIO_LED2        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN16)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:95:#define GPIO_JOY_CTR     (GPIO_INTBOTH | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:146:#define GPIO_TC_PENIRQ   (GPIO_INTFE | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN15)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:147:#define GPIO_TC_BUSY     (GPIO_INPUT | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:148:#define GPIO_TC_CS       (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN20)
+/****************************************************************************
+ * boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <nuttx/debug.h>
+#include <assert.h>
+#include <errno.h>
+
+#include <nuttx/arch.h>
+#include <nuttx/irq.h>
+#include <nuttx/spi/spi.h>
+#include <nuttx/input/touchscreen.h>
+#include <nuttx/input/ads7843e.h>
+
+#include "lpc17_40_gpio.h"
+#include "lpc17_40_ssp.h"
+#include "open1788.h"
+
+#ifdef CONFIG_INPUT_ADS7843E
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Configuration ************************************************************/
+
+#ifndef CONFIG_INPUT
+#  error "Touchscreen support requires CONFIG_INPUT"
+#endif
+
+#ifndef CONFIG_LPC17_40_SSP1
+#  error "Touchscreen support requires CONFIG_LPC17_40_SSP1"
+#endif
+
+#ifndef CONFIG_LPC17_40_GPIOIRQ
+#  error "Touchscreen support requires CONFIG_LPC17_40_GPIOIRQ"
+#endif
+
+#ifndef CONFIG_ADS7843E_FREQUENCY
+#  define CONFIG_ADS7843E_FREQUENCY 500000
+#endif
+
+#ifndef CONFIG_ADS7843E_SPIDEV
+#  define CONFIG_ADS7843E_SPIDEV 1
+#endif
+
+#if CONFIG_ADS7843E_SPIDEV != 1
+#  error "CONFIG_ADS7843E_SPIDEV must be one"
+#endif
+
+#ifndef CONFIG_ADS7843E_DEVMINOR
+#  define CONFIG_ADS7843E_DEVMINOR 0
+#endif
+
+/* REVISIT:  Currently, XPT2046 reports BUSY all of the time.  This is
+ * probably GPIO setting issues.  But there is this cryptic statement in
+ * the XPT2046 spec:  "No DCLK delay required with dedicated serial port."
+ *
+ * The busy state is used by the XPT2046 driver to control the delay
+ * between sending the command, then reading the returned data.
+ */
+
+#define XPT2046_NO_BUSY 1
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+/* IRQ/GPIO access callbacks.  These operations all hidden behind
+ * callbacks to isolate the XPT2046 driver from differences in GPIO
+ * interrupt handling by varying boards and MCUs.  If possible,
+ * interrupts should be configured on both rising and falling edges
+ * so that contact and loss-of-contact events can be detected.
+ *
+ * attach  - Attach the XPT2046 interrupt handler to the GPIO interrupt
+ * enable  - Enable or disable the GPIO interrupt
+ * clear   - Acknowledge/clear any pending GPIO interrupt
+ * pendown - Return the state of the pen down GPIO input
+ */
+
+static int  tsc_attach(struct ads7843e_config_s *state, xcpt_t isr);
+static void tsc_enable(struct ads7843e_config_s *state, bool enable);
+static void tsc_clear(struct ads7843e_config_s *state);
+static bool tsc_busy(struct ads7843e_config_s *state);
+static bool tsc_pendown(struct ads7843e_config_s *state);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+/* A reference to a structure of this type must be passed to the XPT2046
+ * driver.  This structure provides information about the configuration
+ * of the XPT2046 and provides some board-specific hooks.
+ *
+ * Memory for this structure is provided by the caller.  It is not copied
+ * by the driver and is presumed to persist while the driver is active.
+ */
+
+static struct ads7843e_config_s g_tscinfo =
+{
+  .frequency = CONFIG_ADS7843E_FREQUENCY,
+  .attach    = tsc_attach,
+  .enable    = tsc_enable,
+  .clear     = tsc_clear,
+  .busy      = tsc_busy,
+  .pendown   = tsc_pendown,
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/* IRQ/GPIO access callbacks.  These operations all hidden behind
+ * callbacks to isolate the XPT2046 driver from differences in GPIO
+ * interrupt handling by varying boards and MCUs.  If possible,
+ * interrupts should be configured on both rising and falling edges
+ * so that contact and loss-of-contact events can be detected.
+ *
+ * attach  - Attach the XPT2046 interrupt handler to the GPIO interrupt
+ * enable  - Enable or disable the GPIO interrupt
+ * clear   - Acknowledge/clear any pending GPIO interrupt
+ * pendown - Return the state of the pen down GPIO input
+ */
+
+static int tsc_attach(struct ads7843e_config_s *state, xcpt_t handler)
+{
+  /* Attach then enable the touchscreen interrupt handler */
+
+  irq_attach(LPC17_40_IRQ_PENIRQ, handler, NULL);
+  return OK;
+}
+
+static void tsc_enable(struct ads7843e_config_s *state, bool enable)
+{
+  iinfo("enable:%d\n", enable);
+  if (enable)
+    {
+      /* Enable PENIRQ interrupts.
+       * NOTE: The pin interrupt is enabled from worker thread
+       * logic after completion of processing of the touchscreen interrupt.
+       */
+
+      putreg32((1 << 15), LPC17_40_GPIOINT2_INTCLR);
+      up_enable_irq(LPC17_40_IRQ_PENIRQ);
+    }
+  else
+    {
+      /* Disable PENIRQ interrupts.
+       * NOTE: The PENIRQ interrupt will be disabled from
+       * interrupt handling logic.
+       */
+
+      up_disable_irq(LPC17_40_IRQ_PENIRQ);
+    }
+}
+
+static void tsc_clear(struct ads7843e_config_s *state)
+{
+  /* Does nothing.
+   * The interrupt is cleared automatically in the GPIO
+   * logic for the LPC17xx/LPC40xx family.
+   */
+}
+
+static bool tsc_busy(struct ads7843e_config_s *state)
+{
+/* The busy state is used by the XPT2046 driver to control the delay
+ * between sending the command, then reading the returned data.
+ */
+
+#ifdef XPT2046_NO_BUSY
+/* REVISIT:  Currently, XPT2046 reports BUSY all of the time.  This is
+ * probably GPIO setting issues.  But there is this cryptic statement in
+ * the XPT2046 spec:  "No DCLK delay required with dedicated serial port."
+ */
+
+  return false;
+
+#else /* XPT2046_NO_BUSY */
+
+#if defined(CONFIG_DEBUG_INPUT) && defined(CONFIG_DEBUG_INFO)
+  static bool last = (bool)-1;
+#endif
+
+  /* REVISIT:  This might need to be inverted */
+
+  bool busy = lpc17_40_gpioread(GPIO_TC_BUSY);
+#if defined(CONFIG_DEBUG_INPUT) && defined(CONFIG_DEBUG_INFO)
+  if (busy != last)
+    {
+      iinfo("busy:%d\n", busy);
+      last = busy;
+    }
+#endif
+
+  return busy;
+
+#endif /* XPT2046_NO_BUSY */
+}
+
+static bool tsc_pendown(struct ads7843e_config_s *state)
+{
+  /* XPT2046 uses an an internal pullup resistor.  The PENIRQ output goes low
+   * due to the current path through the touch screen to ground, which
+   * initiates an interrupt to the processor via TP_INT.
+   */
+
+  bool pendown = !lpc17_40_gpioread(GPIO_TC_PENIRQ);
+  iinfo("pendown:%d\n", pendown);
+  return pendown;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: open1788_tsc_setup
+ *
+ * Description:
+ *   This function is called by board-bringup logic to configure the
+ *   touchscreen device.  This function will register the driver as
+ *   /dev/inputN where N is the minor device number.
+ *
+ * Input Parameters:
+ *   minor - The input device minor number
+ *
+ * Returned Value:
+ *   Zero is returned on success.  Otherwise, a negated errno value is
+ *   returned to indicate the nature of the failure.
+ *
+ ****************************************************************************/
+
+int open1788_tsc_setup(int minor)
+{
+  struct spi_dev_s *dev;
+  int ret;
+
+  iinfo("minor:%d\n", minor);
+  DEBUGASSERT(minor == 0);
+
+  /* Configure and enable the XPT2046 PENIRQ pin as an interrupting input. */
+
+  lpc17_40_configgpio(GPIO_TC_PENIRQ);
+
+  /* Configure the XPT2046 BUSY pin as a normal input. */
+
+#ifndef XPT2046_NO_BUSY
+  lpc17_40_configgpio(GPIO_TC_BUSY);
+#endif
+
+  /* Get an instance of the SPI interface */
+
+  dev = lpc17_40_sspbus_initialize(CONFIG_ADS7843E_SPIDEV);
+  if (!dev)
+    {
+      ierr("ERROR: Failed to initialize SPI bus %d\n",
+           CONFIG_ADS7843E_SPIDEV);
+      return -ENODEV;
+    }
+
+  /* Initialize and register the SPI touchscreen device */
+
+  ret = ads7843e_register(dev, &g_tscinfo, CONFIG_ADS7843E_DEVMINOR);
+  if (ret < 0)
+    {
+      ierr("ERROR: Failed to register touchscreen device minor=%d\n",
+           CONFIG_ADS7843E_DEVMINOR);
+
+      /* up_spiuninitialize(dev); */
+
+      return -ENODEV;
+    }
+
+  return OK;
+}
+
+#endif /* CONFIG_INPUT_ADS7843E */
+                                                                           
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                           
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ >....                                                                  
+  g_tsc_spi = dev;
+
+  ret = ads7843e_register(dev, &g_tscinfo, CONFIG_ADS7843E_DEVMINOR);
+  if (ret < 0)
+    {
+      ierr("ERROR: Failed to register touchscreen device minor=%d\n",
+           CONFIG_ADS7843E_DEVMINOR);
+      return -ENODEV;
+    }
+
+  return OK;
+}
+
+#endif /* CONFIG_INPUT_ADS7843E */
+EOF
+LN: platform/board to /home/bg9211014/nuttxspace/apps/platform/dummy
+Register: tc
+Register: bas
+Register: fb
+Register: nxwm
+Register: i2c
+Register: dd
+Register: nsh
+Register: sh
+─(bg9211014🎃kali)-[~]                     
+└─$ cd /home/bg9211014/nuttxspace/nuttx && \                                                                                                                
+grep -n "GPIO_SSP0" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h && \                                                                        
+grep -n "ADS7843" .config boards/arm/lpc17xx_40xx/open1788/include/board.h && \                                                                             
+grep -rnE "PIN(15|16|17|18|20|14)\b" boards/arm/lpc17xx_40xx/open1788/ && \                                                                                 
+cat boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c                                                                                             
+128:#define GPIO_SSP0_SCK_1    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN15)                                                                          
+132:#define GPIO_SSP0_SSEL_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN16)                                                                          
+136:#define GPIO_SSP0_MISO_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN17)                                                                          
+140:#define GPIO_SSP0_MOSI_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN18)                                                                          
+283:#define GPIO_SSP0_SCK_2    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN20)                                                                          
+289:#define GPIO_SSP0_SSEL_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN21)                                                                          
+306:#define GPIO_SSP0_MOSI_2   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN23)                                                                          
+314:#define GPIO_SSP0_MOSI_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN24)                                                                          
+345:#define GPIO_SSP0_SSEL_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN28)                                                                          
+468:#define GPIO_SSP0_SCK_3    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN22)                                                                          
+472:#define GPIO_SSP0_SSEL_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN23)                                                                          
+479:#define GPIO_SSP0_MISO_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN26)                                                                          
+483:#define GPIO_SSP0_MOSI_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN27)                                                                          
+.config:932:CONFIG_INPUT_ADS7843E=y                                                                                                                         
+.config:933:# CONFIG_ADS7843E_MULTIPLE is not set                                                                                                           
+.config:934:CONFIG_ADS7843E_NPOLLWAITERS=4                                                                                                                  
+.config:935:CONFIG_ADS7843E_SPIDEV=0                                                                                                                        
+.config:936:CONFIG_ADS7843E_DEVMINOR=0
+.config:937:CONFIG_ADS7843E_SPIMODE=0
+.config:938:CONFIG_ADS7843E_FREQUENCY=500000
+.config:939:# CONFIG_ADS7843E_SWAPXY is not set
+.config:940:CONFIG_ADS7843E_THRESHX=12
+.config:941:CONFIG_ADS7843E_THRESHY=12
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:58:#define GPIO_LED1        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT1 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:59:#define GPIO_LED2        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN16)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:95:#define GPIO_JOY_CTR     (GPIO_INTBOTH | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:146:#define GPIO_TC_PENIRQ   (GPIO_INTFE | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN15)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:147:#define GPIO_TC_BUSY     (GPIO_INPUT | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN14)
+boards/arm/lpc17xx_40xx/open1788/src/open1788.h:148:#define GPIO_TC_CS       (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN20)
+/****************************************************************************
+ * boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <nuttx/debug.h>
+#include <assert.h>
+#include <errno.h>
+
+#include <nuttx/arch.h>
+#include <nuttx/irq.h>
+CC:  exec_builtin.c chip/lpc17_40_allocateheap.c:156:6: warning: #warning "CONFIG_MM_REGIONS < 2: Available AHB SRAM Bank(s) not included in HEAP" [-Wcpp]
+  156 | #    warning "CONFIG_MM_REGIONS < 2: Available AHB SRAM Bank(s) not included in HEAP"
+      |      ^~~~~~~
+CXX:  src/cnumericedit.cxx In file included from bas.c:2255:
+bas_statement.c: In function 'stmt_DEFINT_DEFDBL_DEFSTR':
+bas_statement.c:748:22: warning: array subscript 0 is outside array bounds of 'char[0]' [-Warray-bounds=]
+  748 |           for (i.name[0] = tolower(ident->name[0]), i.name[1] = '\0';
+      |                ~~~~~~^~~
+In file included from bas_auto.h:78,
+                 from bas.c:50:
+bas_token.h:104:8: note: while referencing 'name'
+  104 |   char name[0];
+      |        ^~~~
+bas_statement.c:730:29: note: defined here 'i'
+  730 |           struct Identifier i;
+      |                             ^
+bas_statement.c:748:59: warning: array subscript 1 is outside array bounds of 'char[0]' [-Warray-bounds=]
+  748 |           for (i.name[0] = tolower(ident->name[0]), i.name[1] = '\0';
+      |                                                     ~~~~~~^~~
+bas_token.h:104:8: note: while referencing 'name'
+  104 |   char name[0];
+      |        ^~~~
+bas_statement.c:730:29: note: defined here 'i'
+  730 |           struct Identifier i;
+      |                             ^
+bas_statement.c:749:22: warning: array subscript 0 is outside array bounds of 'char[0]' [-Warray-bounds=]
+  749 |                i.name[0] <= tolower(g_pc.token->u.identifier->name[0]);
+      |                ~~~~~~^~~
+bas_token.h:104:8: note: while referencing 'name'
+  104 |   char name[0];
+      |        ^~~~
+bas_statement.c:730:29: note: defined here 'i'
+  730 |           struct Identifier i;
+      |                             ^
+bas_statement.c:750:24: warning: array subscript 0 is outside array bounds of 'char[0]' [-Warray-bounds=]
+  750 |                ++i.name[0])
+      |                  ~~~~~~^~~
+bas_token.h:104:8: note: while referencing 'name'
+  104 |   char name[0];
+      |        ^~~~
+bas_statement.c:730:29: note: defined here 'i'
+  730 |           struct Identifier i;
+      |                             ^
+bas_statement.c:750:24: warning: array subscript 0 is outside array bounds of 'char[0]' [-Warray-bounds=]
+  750 |                ++i.name[0])
+      |                  ~~~~~~^~~
+bas_token.h:104:8: note: while referencing 'name'
+  104 |   char name[0];
+      |        ^~~~
+bas_statement.c:730:29: note: defined here 'i'
+  730 |           struct Identifier i;
+      |                             ^
+CPP:  /home/bg9211014/nuttxspace/nuttx/boards/arm/lpc17xx_40xx/open1788/scripts/ld.script-> /home/bg9211014/nuttxspace/nuttx/boards/arm/lpc17xx_40xx/open178LD: nuttx                        
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      319864 B       512 KB     61.01%
+            SRAM:        9472 B        64 KB     14.45%
+     AHBRAM8_B0A:           0 B         8 KB      0.00%
+     AHBRAM8_B0B:           0 B         8 KB      0.00%
+        AHBRAM16:           0 B        16 KB      0.00%
+CP: nuttx.hex
+CP: nuttx.bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ ─(bg9211014🎃kali)-[~]
+─(bg9211014🎃kali)-[~]: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ └─$ cd /home/bg9211014/nuttxspace/nuttx && \
+cmdand> grep -n "GPIO_SSP0" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h && \
+cmdand cmdand> grep -n "ADS7843" .config boards/arm/lpc17xx_40xx/open1788/include/board.h && \
+cmdand cmdand cmdand> grep -rnE "PIN(15|16|17|18|20|14)\b" boards/arm/lpc17xx_40xx/open1788/ && \ 
+└─$: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ cat boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+/****************************************************************************
+ * boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <nuttx/debug.h>
+#include <assert.h>
+#include <errno.h>
+
+#include <nuttx/arch.h>
+#include <nuttx/irq.h>
+#include <nuttx/spi/spi.h>
+#include <nuttx/input/touchscreen.h>
+#include <nuttx/input/ads7843e.h>
+
+#include "arm_internal.h"
+#include "lpc17_40_gpio.h"
+#include "hardware/lpc17_40_gpio.h"
+#include "lpc17_40_ssp.h"
+#include "open1788.h"
+
+#ifdef CONFIG_INPUT_ADS7843E
+
+#ifndef CONFIG_INPUT
+#  error "Touchscreen support requires CONFIG_INPUT"
+#endif
+
+#ifndef CONFIG_LPC17_40_SSP0
+#  error "Touchscreen support requires CONFIG_LPC17_40_SSP0"
+#endif
+
+#ifndef CONFIG_LPC17_40_GPIOIRQ
+#  error "Touchscreen support requires CONFIG_LPC17_40_GPIOIRQ"
+#endif
+
+#ifndef CONFIG_ADS7843E_FREQUENCY
+#  define CONFIG_ADS7843E_FREQUENCY 500000
+#endif
+
+#ifndef CONFIG_ADS7843E_SPIDEV
+#  define CONFIG_ADS7843E_SPIDEV 0
+#endif
+
+#if CONFIG_ADS7843E_SPIDEV != 0
+#  error "CONFIG_ADS7843E_SPIDEV must be zero"
+#endif
+
+#ifndef CONFIG_ADS7843E_DEVMINOR
+#  define CONFIG_ADS7843E_DEVMINOR 0
+#endif
+
+#define XPT2046_NO_BUSY 1
+#define TSC_Z1_THRESHOLD 200
+
+static int  tsc_attach(struct ads7843e_config_s *state, xcpt_t isr);
+static void tsc_enable(struct ads7843e_config_s *state, bool enable);
+static void tsc_clear(struct ads7843e_config_s *state);
+static bool tsc_busy(struct ads7843e_config_s *state);
+static bool tsc_pendown(struct ads7843e_config_s *state);
+
+static struct spi_dev_s *g_tsc_spi = NULL;
+static xcpt_t g_tsc_upper_isr = NULL;
+static volatile bool g_tsc_irq_fired = false;
+
+static struct ads7843e_config_s g_tscinfo =
+{
+  .frequency = CONFIG_ADS7843E_FREQUENCY,
+  .attach    = tsc_attach,
+  .enable    = tsc_enable,
+  .clear     = tsc_clear,
+  .busy      = tsc_busy,
+  .pendown   = tsc_pendown,
+};
+
+static int tsc_isr_wrapper(int irq, void *context, void *arg)
+{
+  g_tsc_irq_fired = true;
+  if (g_tsc_upper_isr != NULL)
+    {
+      return g_tsc_upper_isr(irq, context, arg);
+    }
+
+  return OK;
+}
+
+static int tsc_attach(struct ads7843e_config_s *state, xcpt_t handler)
+{
+  g_tsc_upper_isr = handler;
+  irq_attach(LPC17_40_IRQ_PENIRQ, tsc_isr_wrapper, NULL);
+  return OK;
+}
+
+static void tsc_enable(struct ads7843e_config_s *state, bool enable)
+{
+  iinfo("enable:%d\n", enable);
+  if (enable)
+    {
+      g_tsc_irq_fired = false;
+      putreg32((1 << 15), LPC17_40_GPIOINT2_INTCLR);
+      up_enable_irq(LPC17_40_IRQ_PENIRQ);
+    }
+  else
+    {
+      up_disable_irq(LPC17_40_IRQ_PENIRQ);
+    }
+}
+
+static void tsc_clear(struct ads7843e_config_s *state)
+{
+  putreg32((1 << 15), LPC17_40_GPIOINT2_INTCLR);
+}
+
+static bool tsc_busy(struct ads7843e_config_s *state)
+{
+  return false;
+}
+
+static bool tsc_pendown(struct ads7843e_config_s *state)
+{
+  bool penirq = !lpc17_40_gpioread(GPIO_TC_PENIRQ);
+  bool irq = g_tsc_irq_fired;
+  uint8_t b0 = 0;
+  uint8_t b1 = 0;
+  uint16_t z1 = 0;
+  bool pendown;
+
+  g_tsc_irq_fired = false;
+
+  if (g_tsc_spi != NULL)
+    {
+      SPI_SELECT(g_tsc_spi, SPIDEV_TOUCHSCREEN(0), true);
+      SPI_SEND(g_tsc_spi, 0xb1);
+      up_udelay(3);
+      b0 = (uint8_t)SPI_SEND(g_tsc_spi, 0x00);
+      b1 = (uint8_t)SPI_SEND(g_tsc_spi, 0x00);
+      SPI_SELECT(g_tsc_spi, SPIDEV_TOUCHSCREEN(0), false);
+      z1 = ((((uint16_t)b0 << 8) | b1) >> 3) & 0x0fff;
+    }
+
+  pendown = penirq || irq || (z1 > TSC_Z1_THRESHOLD && z1 < 3950);
+  iinfo("penirq:%d irq:%d z1:%u (raw:%02x%02x) pendown:%d\n",
+        (int)penirq, (int)irq, (unsigned int)z1, b0, b1, (int)pendown);
+  return pendown;
+}
+
+int open1788_tsc_setup(int minor)
+{
+  struct spi_dev_s *dev;
+  int ret;
+
+  iinfo("minor:%d\n", minor);
+  DEBUGASSERT(minor == 0);
+
+  lpc17_40_configgpio(GPIO_TC_PENIRQ);
+  lpc17_40_configgpio(GPIO_TC_CS);
+
+#ifndef XPT2046_NO_BUSY
+  lpc17_40_configgpio(GPIO_TC_BUSY);
+#endif
+
+  dev = lpc17_40_sspbus_initialize(CONFIG_ADS7843E_SPIDEV);
+  if (!dev)
+    {
+      ierr("ERROR: Failed to initialize SPI bus %d\n",
+           CONFIG_ADS7843E_SPIDEV);
+      return -ENODEV;
+    }
+
+  g_tsc_spi = dev;
+
+  ret = ads7843e_register(dev, &g_tscinfo, CONFIG_ADS7843E_DEVMINOR);
+  if (ret < 0)
+    {
+      ierr("ERROR: Failed to register touchscreen device minor=%d\n",
+           CONFIG_ADS7843E_DEVMINOR);
+      return -ENODEV;
+    }
+
+  return OK;
+}
+
+#endif /* CONFIG_INPUT_ADS7843E */
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 128:#define GPIO_SSP0_SCK_1    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN15)
+128:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 132:#define GPIO_SSP0_SSEL_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN16)
+132:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 136:#define GPIO_SSP0_MISO_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN17)
+136:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 140:#define GPIO_SSP0_MOSI_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN18)
+140:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 283:#define GPIO_SSP0_SCK_2    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN20)
+283:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 289:#define GPIO_SSP0_SSEL_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN21)
+289:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 306:#define GPIO_SSP0_MOSI_2   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN23)
+306:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 314:#define GPIO_SSP0_MOSI_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN24)
+314:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 345:#define GPIO_SSP0_SSEL_3   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN28)
+345:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 468:#define GPIO_SSP0_SCK_3    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN22)
+468:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 472:#define GPIO_SSP0_SSEL_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN23)
+472:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 479:#define GPIO_SSP0_MISO_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN26)
+479:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 483:#define GPIO_SSP0_MOSI_4   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN27)
+483:#define: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:932:CONFIG_INPUT_ADS7843E=y
+.config:932:CONFIG_INPUT_ADS7843E=y: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:933:# CONFIG_ADS7843E_MULTIPLE is not set
+.config:933:#: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:934:CONFIG_ADS7843E_NPOLLWAITERS=4
+.config:934:CONFIG_ADS7843E_NPOLLWAITERS=4: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:935:CONFIG_ADS7843E_SPIDEV=0
+.config:935:CONFIG_ADS7843E_SPIDEV=0: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:936:CONFIG_ADS7843E_DEVMINOR=0
+.config:936:CONFIG_ADS7843E_DEVMINOR=0: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:937:CONFIG_ADS7843E_SPIMODE=0
+.config:937:CONFIG_ADS7843E_SPIMODE=0: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:938:CONFIG_ADS7843E_FREQUENCY=500000
+.config:938:CONFIG_ADS7843E_FREQUENCY=500000: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:939:# CONFIG_ADS7843E_SWAPXY is not set
+.config:939:#: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:940:CONFIG_ADS7843E_THRESHX=12
+.config:940:CONFIG_ADS7843E_THRESHX=12: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ .config:941:CONFIG_ADS7843E_THRESHY=12
+.config:941:CONFIG_ADS7843E_THRESHY=12: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:58:#define GPIO_LED1        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT1 | GPIO_PIN14)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:58:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:59:#define GPIO_LED2        (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN16)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:59:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:95:#define GPIO_JOY_CTR     (GPIO_INTBOTH | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN14)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:95:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:146:#define GPIO_TC_PENIRQ   (GPIO_INTFE | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN15)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:146:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:147:#define GPIO_TC_BUSY     (GPIO_INPUT | GPIO_FLOAT | GPIO_PORT2 | GPIO_PIN14)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:147:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ boards/arm/lpc17xx_40xx/open1788/src/open1788.h:148:#define GPIO_TC_CS       (GPIO_OUTPUT | GPIO_VALUE_ONE | GPIO_PORT0 | GPIO_PIN20)
+zsh: no such file or directory: boards/arm/lpc17xx_40xx/open1788/src/open1788.h:148:#define
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_touchscreen.c
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * SPDX-License-Identifier: Apache-2.0
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Licensed to the Apache Software Foundation (ASF) under one or more
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * contributor license agreements.  See the NOTICE file distributed with
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * this work for additional information regarding copyright ownership.  The
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * ASF licenses this file to you under the Apache License, Version 2.0 (the
+>  * "License"); you may not use this file except in compliance with the
+zsh: unknown file attribute: h
+you: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * License.  You may obtain a copy of the License at
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   http://www.apache.org/licenses/LICENSE-2.0
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Unless required by applicable law or agreed to in writing, software
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * License for the specific language governing permissions and limitations
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * under the License.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Included Files
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/config.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <stdbool.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <stdio.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/debug.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <assert.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <errno.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/arch.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/irq.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/spi/spi.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/input/touchscreen.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include <nuttx/input/ads7843e.h>
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include "lpc17_40_gpio.h"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include "lpc17_40_ssp.h"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #include "open1788.h"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifdef CONFIG_INPUT_ADS7843E
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Pre-processor Definitions
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /* Configuration ************************************************************/
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_INPUT
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  error "Touchscreen support requires CONFIG_INPUT"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_LPC17_40_SSP1
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  error "Touchscreen support requires CONFIG_LPC17_40_SSP1"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_LPC17_40_GPIOIRQ
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  error "Touchscreen support requires CONFIG_LPC17_40_GPIOIRQ"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_ADS7843E_FREQUENCY
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  define CONFIG_ADS7843E_FREQUENCY 500000
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_ADS7843E_SPIDEV
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  define CONFIG_ADS7843E_SPIDEV 1
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #if CONFIG_ADS7843E_SPIDEV != 1
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  error "CONFIG_ADS7843E_SPIDEV must be one"
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #ifndef CONFIG_ADS7843E_DEVMINOR
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #  define CONFIG_ADS7843E_DEVMINOR 0
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /* REVISIT:  Currently, XPT2046 reports BUSY all of the time.  This is
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * probably GPIO setting issues.  But there is this cryptic statement in
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * the XPT2046 spec:  "No DCLK delay required with dedicated serial port."
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * The busy state is used by the XPT2046 driver to control the delay
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * between sending the command, then reading the returned data.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  */
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #define XPT2046_NO_BUSY 1
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Private Types
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Private Function Prototypes
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /* IRQ/GPIO access callbacks.  These operations all hidden behind
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * callbacks to isolate the XPT2046 driver from differences in GPIO
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * interrupt handling by varying boards and MCUs.  If possible,
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * interrupts should be configured on both rising and falling edges
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * so that contact and loss-of-contact events can be detected.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * attach  - Attach the XPT2046 interrupt handler to the GPIO interrupt
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * enable  - Enable or disable the GPIO interrupt
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * clear   - Acknowledge/clear any pending GPIO interrupt
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * pendown - Return the state of the pen down GPIO input
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  */
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static int  tsc_attach(struct ads7843e_config_s *state, xcpt_t isr);
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static void tsc_enable(struct ads7843e_config_s *state, bool enable);
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static void tsc_clear(struct ads7843e_config_s *state);
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static bool tsc_busy(struct ads7843e_config_s *state);
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static bool tsc_pendown(struct ads7843e_config_s *state);
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Private Data
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /* A reference to a structure of this type must be passed to the XPT2046
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * driver.  This structure provides information about the configuration
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * of the XPT2046 and provides some board-specific hooks.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Memory for this structure is provided by the caller.  It is not copied
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * by the driver and is presumed to persist while the driver is active.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  */
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static struct ads7843e_config_s g_tscinfo =
+Command 'static' not found, but can be installed with:
+sudo apt install python3-static3
+Do you want to install it? (N/y)BUGASSERT(minor == 0);
+
+  /* Configure and enable the XPT2046 PENIRQ pin as an interrupting input. */
+
+  lpc17_40_configgpio(GPIO_TC_PENIRQ);
+
+  /* Configure the XPT2046 BUSY pin as a normal input. */
+
+#ifndef XPT2046_NO_BUSY
+  lpc17_40_configgpio(GPIO_TC_BUSY);
+#endif
+
+  /* Get an instance of the SPI interface */
+
+  dev = lpc17_40_sspbus_initialize(CONFIG_ADS7843E_SPIDEV);
+  if (!dev)
+    {
+      ierr("ERROR: Failed to initialize SPI bus %d\n",
+           CONFIG_ADS7843E_SPIDEV);
+      return -ENODEV;
+    }
+
+  /* Initialize and register the SPI touchscreen device */
+
+  ret = ads7843e_register(dev, &g_tscinfo, CONFIG_ADS7843E_DEVMINOR);
+  if (ret < 0)
+    {
+      ierr("ERROR: Failed to register touchscreen device minor=%d\n",
+           CONFIG_ADS7843E_DEVMINOR);
+
+      /* up_spiuninitialize(dev); */
+
+      return -ENODEV;
+    }
+
+  return OK;
+}
+
+#endif /* CONFIG_INPUT_ADS7843E */
+                                                                           
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ enable the touchscreen interrupt handler */
+enable: no such hash table element: the
+enable: no such hash table element: touchscreen
+enable: no such hash table element: interrupt
+enable: no such hash table element: handler
+enable: no such hash table element: arch/
+enable: no such hash table element: audio/
+enable: no such hash table element: binfmt/
+enable: no such hash table element: boards/
+enable: no such hash table element: cmake/
+enable: no such hash table element: crypto/
+enable: no such hash table element: Documentation/
+enable: no such hash table element: drivers/
+enable: no such hash table element: dummy/
+enable: no such hash table element: fs/
+enable: no such hash table element: graphics/
+enable: no such hash table element: include/
+enable: no such hash table element: libs/
+enable: no such hash table element: mm/
+enable: no such hash table element: net/
+enable: no such hash table element: nxtmpdir/
+enable: no such hash table element: openamp/
+enable: no such hash table element: pass1/
+enable: no such hash table element: sched/
+enable: no such hash table element: staging/
+enable: no such hash table element: syscall/
+enable: no such hash table element: tools/
+enable: no such hash table element: video/
+enable: no such hash table element: wireless/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   irq_attach(LPC17_40_IRQ_PENIRQ, handler, NULL);
+zsh: number expected
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   return OK;
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ }
+zsh: parse error near `}'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static void tsc_enable(struct ads7843e_config_s *state, bool enable)
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ {
+cursh>   iinfo("enable:%d\n", enable);
+cursh>   if (enable)
+cursh if>     {
+cursh if cursh>       /* Enable PENIRQ interrupts.
+cursh if cursh>        * NOTE: The pin interrupt is enabled from worker thread
+cursh if cursh>        * logic after completion of processing of the touchscreen interrupt.
+cursh if cursh>        */
+cursh if cursh> 
+cursh if cursh>       putreg32((1 << 15), LPC17_40_GPIOINT2_INTCLR);
+zsh: parse error near `)'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$       up_enable_irq(LPC17_40_IRQ_PENIRQ);
+zsh: number expected
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$     }
+zsh: parse error near `}'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   else
+zsh: parse error near `else'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$     {
+cursh>       /* Disable PENIRQ interrupts.
+cursh>        * NOTE: The PENIRQ interrupt will be disabled from
+cursh>        * interrupt handling logic.
+cursh>        */
+cursh> 
+cursh>       up_disable_irq(LPC17_40_IRQ_PENIRQ);
+cursh>     }
+zsh: permission denied: /bin
+AGENTS.md: command not found
+AGENTS.md: command not found
+zsh: permission denied: arch/
+zsh: number expected
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ }
+zsh: parse error near `}'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static void tsc_clear(struct ads7843e_config_s *state)
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ {
+cursh>   /* Does nothing.
+cursh>    * The interrupt is cleared automatically in the GPIO
+cursh>    * logic for the LPC17xx/LPC40xx family.
+cursh>    */
+cursh> }
+zsh: permission denied: /bin
+AGENTS.md: command not found
+AGENTS.md: command not found
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static bool tsc_busy(struct ads7843e_config_s *state)
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ {
+cursh> /* The busy state is used by the XPT2046 driver to control the delay
+cursh>  * between sending the command, then reading the returned data.
+cursh>  */
+cursh> 
+cursh> #ifdef XPT2046_NO_BUSY
+cursh> /* REVISIT:  Currently, XPT2046 reports BUSY all of the time.  This is
+cursh>  * probably GPIO setting issues.  But there is this cryptic statement in
+cursh>  * the XPT2046 spec:  "No DCLK delay required with dedicated serial port."
+cursh>  */
+cursh> 
+cursh>   return false;
+cursh> 
+cursh> #else /* XPT2046_NO_BUSY */
+cursh> 
+cursh> #if defined(CONFIG_DEBUG_INPUT) && defined(CONFIG_DEBUG_INFO)
+cursh>   static bool last = (bool)-1;
+cursh> #endif
+cursh> 
+cursh>   /* REVISIT:  This might need to be inverted */
+cursh> 
+cursh>   bool busy = lpc17_40_gpioread(GPIO_TC_BUSY);
+cursh> #if defined(CONFIG_DEBUG_INPUT) && defined(CONFIG_DEBUG_INFO)
+cursh>   if (busy != last)
+cursh if>     {
+cursh if cursh>       iinfo("busy:%d\n", busy);
+cursh if cursh>       last = busy;
+cursh if cursh>     }
+cursh if> #endif
+cursh if> 
+cursh if>   return busy;
+cursh if> 
+cursh if> #endif /* XPT2046_NO_BUSY */
+cursh if> }
+zsh: permission denied: /bin
+AGENTS.md: command not found
+zsh: permission denied: arch/
+zsh: permission denied: /bin
+AGENTS.md: command not found
+AGENTS.md: command not found
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ static bool tsc_pendown(struct ads7843e_config_s *state)
+zsh: unknown username 't ads7843e_'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ {
+cursh>   /* XPT2046 uses an an internal pullup resistor.  The PENIRQ output goes low
+cursh>    * due to the current path through the touch screen to ground, which
+cursh>    * initiates an interrupt to the processor via TP_INT.
+cursh>    */
+cursh> 
+cursh>   bool pendown = !lpc17_40_gpioread(GPIO_TC_PENIRQ);
+zsh: event not found: lpc17_40_gpioread(GPIO_TC_PENIRQ)
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   iinfo("pendown:%d\n", pendown);
+iinfo(pendown:%d\n, pendown): command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   return pendown;
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ }
+zsh: parse error near `}'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Public Functions
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ /****************************************************************************
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Name: open1788_tsc_setup
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Description:
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   This function is called by board-bringup logic to configure the
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   touchscreen device.  This function will register the driver as
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   /dev/inputN where N is the minor device number.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Input Parameters:
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   minor - The input device minor number
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  * Returned Value:
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   Zero is returned on success.  Otherwise, a negated errno value is
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *   returned to indicate the nature of the failure.
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  *
+AGENTS.md: command not found
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$  ****************************************************************************/
+zsh: permission denied: arch/
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ int open1788_tsc_setup(int minor)
+zsh: unknown file attribute: i
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ {
+cursh>   struct spi_dev_s *dev;
+cursh>   int ret;
+cursh> 
+cursh>   iinfo("minor:%d\n", minor);
+cursh>   DEBUGASSERT(minor == 0);
+cursh> 
+cursh>   /* Configure and enable the XPT2046 PENIRQ pin as an interrupting input. */
+cursh> 
+cursh>   lpc17_40_configgpio(GPIO_TC_PENIRQ);
+cursh> 
+cursh>   /* Configure the XPT2046 BUSY pin as a normal input. */
+cursh> 
+cursh> #ifndef XPT2046_NO_BUSY
+cursh>   lpc17_40_configgpio(GPIO_TC_BUSY);
+cursh> #endif
+cursh> 
+cursh>   /* Get an instance of the SPI interface */
+cursh> 
+cursh>   dev = lpc17_40_sspbus_initialize(CONFIG_ADS7843E_SPIDEV);
+cursh>   if (!dev)
+zsh: event not found: dev)
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$     {
+cursh>       ierr("ERROR: Failed to initialize SPI bus %d\n",
+cursh>            CONFIG_ADS7843E_SPIDEV);
+cursh>       return -ENODEV;
+cursh>     }
+zsh: unknown sort specifier
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   /* Initialize and register the SPI touchscreen device */
+zsh: permission denied: /bin
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   ret = ads7843e_register(dev, &g_tscinfo, CONFIG_ADS7843E_DEVMINOR);
+zsh: parse error near `)'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$   if (ret < 0)
+if>     {
+if cursh>       ierr("ERROR: Failed to register touchscreen device minor=%d\n",
+if cursh>            CONFIG_ADS7843E_DEVMINOR);
+if cursh> 
+if cursh>       /* up_spiuninitialize(dev); */
+if cursh> 
+if cursh>       return -ENODEV;
+if cursh>     }
+if> 
+if>   return OK;
+if> }
+zsh: parse error near `}'
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ #endif /* CONFIG_INPUT_ADS7843E */
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$                                                                            
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ ┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+zsh: no such file or directory: ┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+                                                                                                                                                            
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ 

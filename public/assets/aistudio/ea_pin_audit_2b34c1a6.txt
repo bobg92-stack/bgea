@@ -1,0 +1,165 @@
+=== EA SAMPLES LCD & TOUCH DEFINITIONS ===
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:95:void PWM1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:100:void SSP0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:101:void SSP1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:116:void MCPWM_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:123:void SSP2_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:124:void LCD_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:126:void PWM0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:188:	PWM1_IRQHandler,						// 25, 0x64 - PWM1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:193:	SSP0_IRQHandler,						// 30, 0x78 - SSP0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:194:	SSP1_IRQHandler,						// 31, 0x7c - SSP1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:209:	MCPWM_IRQHandler,						// 46, 0xb8 - Motor Control PWM
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:216:	SSP2_IRQHandler, 						// 52, 0xd0 - SSP2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:217:	LCD_IRQHandler, 						// 53, 0xd4 - LCD
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/src/cr_startup_lpc178x.c:219:	PWM0_IRQHandler, 						// 55, 0xdc - PWM0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:78:							<tool id="com.crt.advproject.link.cpp.exe.debug.1795643272" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug"/>
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:511:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP0&amp;amp;0x1" id="SSP0" location="0x40088000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:512:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP1&amp;amp;0x1" id="SSP1" location="0x40030000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:513:&lt;peripheralInstance derived_from="LPC17_SSP" id="SSP2" location="0x400AC000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:515:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM0&amp;amp;0x1" id="PWM0" location="0x40014000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:516:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM1&amp;amp;0x1" id="PWM1" location="0x40018000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:534:&lt;peripheralInstance derived_from="LPC17_CANCON" enable="SYSCTL.PCONP.PCCAN2&amp;amp;0x1" id="CANCON2" location="0x40048000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_memreg/.cproject:542:&lt;peripheralInstance derived_from="LPC17_MCPWM" enable="SYSCTL.PCONP.PCMCPWM&amp;amp;0x1" id="MCPWM" location="0x400B8000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/short.txt:3:load /slides/800x480/colors/blue.png 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/short.txt:5:load /slides/800x480/colors/red.png 1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/short.txt:6:load /slides/800x480/colors/green.png 2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/mixed.txt:3:load /slides/800x480/colors/blue.png 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/mixed.txt:5:load /slides/800x480/colors/red.png 1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/800x480/mixed.txt:6:load /slides/800x480/colors/green.png 2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/short.txt:3:load /slides/480x272/short/05.jpg 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/short.txt:5:load /slides/480x272/short/29.jpg 1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/short.txt:6:load /slides/480x272/short/30.jpg 2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/mixed.txt:3:load /slides/480x272/short/05.jpg 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/mixed.txt:5:load /slides/480x272/short/29.jpg 1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/romfs/slides/480x272/mixed.txt:6:load /slides/480x272/short/30.jpg 2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/sdcard/ea_demo/slides/800x480/about.txt:2:load /slides/800x480/about/about.png 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/media/sdcard/ea_demo/slides/480x272/about.txt:2:load /slides/480x272/about/about.png 0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/apps/jawbreaker/jaw_graphics.c:364:    // The 4.3" display has a 480x272 resolution and the board will take
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/apps/jawbreaker/jaw_graphics.c:459:      result = E_LCD_CREATE_FAILED;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/apps/jawbreaker/jaw_types.h:78:	E_LCD_CREATE_FAILED,
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/apps/calibapp.c:78:  swim_put_box(win, 0, 0, 480, 40);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/apps/menuapp.c:339:    // The 4.3" display has a 480x272 resolution on which the four
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/any_display.c:82:  LCD_PARAM_T lp;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/any_display.c:385:  lcd_ioctl(GlobalParameters.display.dev_lcd, LCD_SET_BUFFER, buff);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:95:void PWM1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:100:void SSP0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:101:void SSP1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:116:void MCPWM_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:123:void SSP2_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:124:void LCD_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:126:void PWM0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:188:	PWM1_IRQHandler,						// 25, 0x64 - PWM1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:193:	SSP0_IRQHandler,						// 30, 0x78 - SSP0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:194:	SSP1_IRQHandler,						// 31, 0x7c - SSP1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:209:	MCPWM_IRQHandler,						// 46, 0xb8 - Motor Control PWM
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:216:	SSP2_IRQHandler, 						// 52, 0xd0 - SSP2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:217:	LCD_IRQHandler, 						// 53, 0xd4 - LCD
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/src/cr_startup_lpc178x.c:219:	PWM0_IRQHandler, 						// 55, 0xdc - PWM0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:81:							<tool id="com.crt.advproject.link.cpp.exe.debug.1795643272" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug"/>
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:518:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP0&amp;amp;0x1" id="SSP0" location="0x40088000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:519:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP1&amp;amp;0x1" id="SSP1" location="0x40030000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:520:&lt;peripheralInstance derived_from="LPC17_SSP" id="SSP2" location="0x400AC000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:522:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM0&amp;amp;0x1" id="PWM0" location="0x40014000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:523:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM1&amp;amp;0x1" id="PWM1" location="0x40018000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:541:&lt;peripheralInstance derived_from="LPC17_CANCON" enable="SYSCTL.PCONP.PCCAN2&amp;amp;0x1" id="CANCON2" location="0x40048000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/.cproject:549:&lt;peripheralInstance derived_from="LPC17_MCPWM" enable="SYSCTL.PCONP.PCMCPWM&amp;amp;0x1" id="MCPWM" location="0x400B8000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:83:                    480x272\                Container for slide shows for 4.3" display. /slides/480x272
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:84:                    800x480\                Container for slide shows for 7" display. /slides/800x480
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:89:                        480x272\            Container for slide shows for 4.3" display. /ea_demo/slides/480x272
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:90:                        800x480\            Container for slide shows for 7" display. /ea_demo/slides/800x480
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:332:        /slides/480x272/                Slideshows for 4.3" display in ROM file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:333:        /slides/800x480/                Slideshows for 7"   display in ROM file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:335:        /ea_demo/slides/480x272/        Slideshows for 4.3" display on the SD Card file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:336:        /ea_demo/slides/800x480/        Slideshows for 7"   display on the SD Card file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:357:            /slides/480x272/                Slideshows for 4.3" display in ROM file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:358:            /slides/800x480/                Slideshows for 7"   display in ROM file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:360:            /ea_demo/slides/480x272/        Slideshows for 4.3" display on the SD Card file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:361:            /ea_demo/slides/800x480/        Slideshows for 7"   display on the SD Card file system
+/home/bg9211014/ss4/eanatty/lpc1788_samples/ea_demo_ext/readme.txt:403:            480x272x2 or 800x480x2 bytes of RAM depending on
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:444:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP0&amp;amp;0x1" id="SSP0" location="0x40088000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:445:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP1&amp;amp;0x1" id="SSP1" location="0x40030000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:446:&lt;peripheralInstance derived_from="LPC17_SSP" id="SSP2" location="0x400AC000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:448:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM0&amp;amp;0x1" id="PWM0" location="0x40014000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:449:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM1&amp;amp;0x1" id="PWM1" location="0x40018000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:467:&lt;peripheralInstance derived_from="LPC17_CANCON" enable="SYSCTL.PCONP.PCCAN2&amp;amp;0x1" id="CANCON2" location="0x40048000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/Lib_FreeRTOS/.cproject:475:&lt;peripheralInstance derived_from="LPC17_MCPWM" enable="SYSCTL.PCONP.PCMCPWM&amp;amp;0x1" id="MCPWM" location="0x400B8000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/calibapp.c:77:  swim_put_box(win, 0, 0, 480, 40);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/main.c:228:  LCD_PARAM_T lp;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:95:void PWM1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:100:void SSP0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:101:void SSP1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:116:void MCPWM_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:123:void SSP2_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:124:void LCD_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:126:void PWM0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:188:	PWM1_IRQHandler,						// 25, 0x64 - PWM1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:193:	SSP0_IRQHandler,						// 30, 0x78 - SSP0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:194:	SSP1_IRQHandler,						// 31, 0x7c - SSP1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:209:	MCPWM_IRQHandler,						// 46, 0xb8 - Motor Control PWM
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:216:	SSP2_IRQHandler, 						// 52, 0xd0 - SSP2
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:217:	LCD_IRQHandler, 						// 53, 0xd4 - LCD
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/src/cr_startup_lpc178x.c:219:	PWM0_IRQHandler, 						// 55, 0xdc - PWM0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:80:							<tool id="com.crt.advproject.link.cpp.exe.debug.1795643272" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug"/>
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:517:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP0&amp;amp;0x1" id="SSP0" location="0x40088000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:518:&lt;peripheralInstance derived_from="LPC17_SSP" enable="SYSCTL.PCONP.PCSSP1&amp;amp;0x1" id="SSP1" location="0x40030000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:519:&lt;peripheralInstance derived_from="LPC17_SSP" id="SSP2" location="0x400AC000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:521:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM0&amp;amp;0x1" id="PWM0" location="0x40014000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:522:&lt;peripheralInstance derived_from="LPC17_PWM" enable="SYSCTL.PCONP.PWM1&amp;amp;0x1" id="PWM1" location="0x40018000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:540:&lt;peripheralInstance derived_from="LPC17_CANCON" enable="SYSCTL.PCONP.PCCAN2&amp;amp;0x1" id="CANCON2" location="0x40048000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_display_board/.cproject:548:&lt;peripheralInstance derived_from="LPC17_MCPWM" enable="SYSCTL.PCONP.PCMCPWM&amp;amp;0x1" id="MCPWM" location="0x400B8000"/&gt;&#13;
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:95:void PWM1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:100:void SSP0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:101:void SSP1_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:116:void MCPWM_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:123:void SSP2_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:124:void LCD_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:126:void PWM0_IRQHandler(void) ALIAS(IntDefaultHandler);
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:188:	PWM1_IRQHandler,						// 25, 0x64 - PWM1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:193:	SSP0_IRQHandler,						// 30, 0x78 - SSP0
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:194:	SSP1_IRQHandler,						// 31, 0x7c - SSP1
+/home/bg9211014/ss4/eanatty/lpc1788_samples/s_ob_joystick/src/cr_startup_lpc178x.c:209:	MCPWM_IRQHandler,						// 46, 0xb8 - Motor Control PWM
+
+=== NUTTX EA-LPC4088 DEVKIT BOARD.H (IDENTICAL BASEBOARD) ===
+197: * Needed for NAND and SDRAM: {17,1,2,1}
+373:#define GPIO_LCD_VD0                GPIO_LCD_VD0_1
+374:#define GPIO_LCD_VD1                GPIO_LCD_VD1_1
+375:#define GPIO_LCD_VD2                GPIO_LCD_VD2_2
+376:#define GPIO_LCD_VD3                GPIO_LCD_VD3_3
+377:#define GPIO_LCD_VD4                GPIO_LCD_VD4_1
+378:#define GPIO_LCD_VD5                GPIO_LCD_VD5_1
+379:#define GPIO_LCD_VD6                GPIO_LCD_VD6_2
+380:#define GPIO_LCD_VD7                GPIO_LCD_VD7_2
+394:#define GPIO_LCD_VD8                GPIO_LCD_VD8_1
+395:#define GPIO_LCD_VD9                GPIO_LCD_VD9_1
+396:#define GPIO_LCD_VD10               GPIO_LCD_VD10_1
+397:#define GPIO_LCD_VD11               GPIO_LCD_VD11_1
+398:#define GPIO_LCD_VD12               GPIO_LCD_VD12_1
+399:#define GPIO_LCD_VD13               GPIO_LCD_VD13_1
+400:#define GPIO_LCD_VD14               GPIO_LCD_VD14_1
+401:#define GPIO_LCD_VD15               GPIO_LCD_VD15_1
+440:#define GPIO_SSP1_MISO   GPIO_SSP1_MISO_3
+441:#define GPIO_SSP1_MOSI   GPIO_SSP1_MOSI_2
+442:#define GPIO_SSP1_SCK    GPIO_SSP1_SCK_2
+
+=== ACTIVE OPEN1788 BOARD.H ===
+193: * Needed for NAND and SDRAM: {17,1,2,1}
+368:#define GPIO_LCD_VD0                GPIO_LCD_VD0_1
+369:#define GPIO_LCD_VD1                GPIO_LCD_VD1_1
+370:#define GPIO_LCD_VD2                GPIO_LCD_VD2_2
+371:#define GPIO_LCD_VD3                GPIO_LCD_VD3_3
+372:#define GPIO_LCD_VD4                GPIO_LCD_VD4_1
+373:#define GPIO_LCD_VD5                GPIO_LCD_VD5_1
+374:#define GPIO_LCD_VD6                GPIO_LCD_VD6_2
+375:#define GPIO_LCD_VD7                GPIO_LCD_VD7_2
+389:#define GPIO_LCD_VD8                GPIO_LCD_VD8_1
+390:#define GPIO_LCD_VD9                GPIO_LCD_VD9_1
+391:#define GPIO_LCD_VD10               GPIO_LCD_VD10_1
+392:#define GPIO_LCD_VD11               GPIO_LCD_VD11_1
+393:#define GPIO_LCD_VD12               GPIO_LCD_VD12_1
+394:#define GPIO_LCD_VD13               GPIO_LCD_VD13_1
+395:#define GPIO_LCD_VD14               GPIO_LCD_VD14_1
+396:#define GPIO_LCD_VD15               GPIO_LCD_VD15_1
+435:#define GPIO_SSP1_MISO   GPIO_SSP1_MISO_3
+436:#define GPIO_SSP1_MOSI   GPIO_SSP1_MOSI_2
+437:#define GPIO_SSP1_SCK    GPIO_SSP1_SCK_2

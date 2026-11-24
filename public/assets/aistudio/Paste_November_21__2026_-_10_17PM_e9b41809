@@ -1,0 +1,1349 @@
+bg9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && {
+  echo "=== memorymap & eth defs ==="
+  sed -n '1,65p' arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_memorymap.h
+  grep -nE "ETH_MCFG_CLKSEL|LPC17_40_IRQ_ETH" arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_irq.h 2>/dev/null || true
+
+  echo "=== lpc17_40_ethernet.c (phyinit tail + tx/rx/work) ==="
+  sed -n '2440,2560p' arch/arm/src/lpc17xx_40xx/lpc17_40_ethernet.c
+  python3 -c '
+lines = open("arch/arm/src/lpc17xx_40xx/lpc17_40_ethernet.c").read().splitlines()
+targets = ("lpc17_40_phyreset(", "lpc17_40_macmode(", "lpc17_40_txdescinit(",
+           "lpc17_40_rxdescinit(", "lpc17_40_ifdown(", "lpc17_40_rxdone_work(",
+           "lpc17_40_rxdone_process(", "lpc17_40_txdone_work(",
+           "lpc17_40_txavail(", "lpc17_40_transmit(")
+for idx, l in enumerate(lines):
+    if l == "{":
+        hdr = "\n".join(lines[max(0, idx-6):idx])
+        if any(t in hdr for t in targets):
+            end = idx
+            while end < len(lines) and lines[end] != "}":
+                end += 1
+            print(f"--- lines {max(1, idx-3)}-{end+1} ---")
+            print("\n".join(lines[max(0, idx-4):end+1]))
+'
+
+  echo "=== gpio / iocon ==="
+  ls arch/arm/src/lpc17xx_40xx/*gpio*.h arch/arm/src/lpc17xx_40xx/hardware/*gpio*.h 2>/dev/null || true
+  sed -n '1,150p' arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c
+  sed -n '1,110p' arch/arm/src/lpc17xx_40xx/lpc17_40_gpio.h
+  sed -n '1,80p' arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h
+
+  echo "=== netinit.c ==="
+  sed -n '1,180p' ../apps/netutils/netinit/netinit.c 2>/dev/null || \
+    grep -rn "netinit_thread\|netinit_net_bringup" ../apps/netutils/netinit/ || true
+}
+=== memorymap & eth defs ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_memorymap.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_MEMORYMAP_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_MEMORYMAP_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include "chip.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Memory Map ***************************************************************/
+
+#define LPC17_40_FLASH_BASE     0x00000000 /* -0x1fffffff: On-chip non-volatile memory */
+#define LPC17_40_SRAM_BASE      0x10000000 /* -0x10007fff: On-chip SRAM (devices <=32Kb) */
+#define LPC17_40_ROM_BASE       0x1fff0000 /* -0x1fffffff: 8Kb Boot ROM with flash services */
+#define LPC17_40_AHBSRAM_BASE   0x20000000 /* -0x3fffffff: On-chip Peripheral SRAM (devices >32Kb) */
+#  define LPC17_40_SRAM_BANK0   0x20000000 /* -0x20003fff: On-chip Peripheral SRAM Bank0 (devices >=32Kb) */
+#  define LPC17_40_SRAM_BANK1   0x20004000 /* -0x20007fff: On-chip Peripheral SRAM Bank1 (devices 64Kb) */
+#define LPC17_40_AHB_BASE       0x20080000 /* -0x2008ffff: DMA Controller, Ethernet, and USB */
+#define LPC17_40_SPIFI_BASE     0x28000000 /* -0x28ffffff: SPIFI memory mapped region */
+#define LPC17_40_APB_BASE       0x40000000 /* -0x5fffffff: APB Peripherals */
+#  define LPC17_40_APB0_BASE    0x40000000 /* -0x4007ffff: APB0 Peripherals */
+#  define LPC17_40_APB1_BASE    0x40080000 /* -0x400fffff: APB1 Peripherals */
+
+/* Off chip Memory via External Memory Interface */
+
+#define LPC17_40_EXTRAM_BASE    0x80000000 /*  */
+#  define LPC17_40_EXTSRAM_CS0  0x80000000 /* Chip select 0 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS1  0x90000000 /* Chip select 1 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS2  0x98000000 /* Chip select 2 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS3  0x9c000000 /* Chip select 3 /up to 64MB/  */
+
+#  define LPC17_40_EXTDRAM_CS0  0xa0000000 /* Chip select 0 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS1  0xb0000000 /* Chip select 1 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS2  0xc0000000 /* Chip select 2 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS3  0xd0000000 /* Chip select 3 /up to 256MB/  */
+
+#define LPC17_40_CORTEXM3_BASE  0xe0000000 /* -0xe00fffff: (see armv7-m/nvic.h) */
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:241:#define ETH_MCFG_CLKSEL_SHIFT           (2)       /* Bits 2-5: Clock select */
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:242:#define ETH_MCFG_CLKSEL_MASK            (15 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:243:#  define ETH_MCFG_CLKSEL_DIV4          (0 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:244:#  define ETH_MCFG_CLKSEL_DIV6          (2 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:245:#  define ETH_MCFG_CLKSEL_DIV8          (3 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:246:#  define ETH_MCFG_CLKSEL_DIV10         (4 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:247:#  define ETH_MCFG_CLKSEL_DIV14         (5 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:248:#  define ETH_MCFG_CLKSEL_DIV20         (6 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:249:#  define ETH_MCFG_CLKSEL_DIV28         (7 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:250:#  define ETH_MCFG_CLKSEL_DIV36         (8 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:251:#  define ETH_MCFG_CLKSEL_DIV40         (9 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:252:#  define ETH_MCFG_CLKSEL_DIV44         (10 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:253:#  define ETH_MCFG_CLKSEL_DIV48         (11 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:254:#  define ETH_MCFG_CLKSEL_DIV52         (12 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:255:#  define ETH_MCFG_CLKSEL_DIV56         (13 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:256:#  define ETH_MCFG_CLKSEL_DIV60         (14 << ETH_MCFG_CLKSEL_SHIFT)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_ethernet.h:257:#  define ETH_MCFG_CLKSEL_DIV64         (15 << ETH_MCFG_CLKSEL_SHIFT)
+=== lpc17_40_ethernet.c (phyinit tail + tx/rx/work) ===
+
+  /* Check for preamble suppression support */
+
+  phyreg = lpc17_40_phyread(phyaddr, MII_MSR);
+  if ((phyreg & MII_MSR_MFRAMESUPPRESS) != 0)
+    {
+      /* The PHY supports preamble suppression */
+
+      regval  = lpc17_40_getreg(LPC17_40_ETH_MCFG);
+      regval |= ETH_MCFG_SUPPRE;
+      lpc17_40_putreg(regval, LPC17_40_ETH_MCFG);
+    }
+
+#if defined(CONFIG_ETH0_PHY_DP83848C)
+  /* Enable the RMII interface for DP83848x PHYs */
+
+  lpc17_40_phywrite(phyaddr, MII_DP83848C_RBR,
+                    MII_RBR_ELAST_2 | MII_RBR_RMIIMODE);
+#endif
+
+  /* Are we configured to do auto-negotiation? */
+
+#ifdef CONFIG_LPC17_40_PHY_AUTONEG
+  /* Enable FD mode, Auto-negotiation and 100Mbps speed */
+
+  lpc17_40_phywrite(phyaddr, MII_MCR,
+                    MII_MCR_FULLDPLX | MII_MCR_ANENABLE | MII_MCR_SPEED100);
+
+  /* Setup the Auto-negotiation advertisement: 100 or 10, and HD or FD */
+
+  lpc17_40_phywrite(phyaddr, MII_ADVERTISE,
+                 (MII_ADVERTISE_100BASETXFULL | MII_ADVERTISE_100BASETXHALF |
+                  MII_ADVERTISE_10BASETXFULL  | MII_ADVERTISE_10BASETXHALF  |
+                  MII_ADVERTISE_CSMA));
+
+  /* Then perform the auto-negotiation */
+
+  ret = lpc17_40_phyautoneg(phyaddr);
+  if (ret < 0)
+    {
+      return ret;
+    }
+#else
+  /* Set up the fixed PHY configuration */
+
+  ret = lpc17_40_phymode(phyaddr, LPC17_40_MODE_DEFLT);
+  if (ret < 0)
+    {
+      return ret;
+    }
+#endif
+
+#if defined(CONFIG_ETH0_PHY_DP83848C)
+  /* Wait until the link is established */
+
+  while ((lpc17_40_phyread(phyaddr, MII_DP83848C_STS) & 0x0001) == 0)
+    {
+      nxsched_usleep(40000);
+    }
+#endif
+
+  /* The link is established */
+
+  lpc17_40_showmii(phyaddr, "After link established");
+
+  /* Check configuration */
+
+#if defined(CONFIG_ETH0_PHY_KS8721)
+  phyreg = lpc17_40_phyread(phyaddr, MII_KS8721_10BTCR);
+
+  switch (phyreg & KS8721_10BTCR_MODE_MASK)
+    {
+      case KS8721_10BTCR_MODE_10BTHD:  /* 10BASE-T half duplex */
+        priv->lp_mode = LPC17_40_10BASET_HD;
+        lpc17_40_putreg(0, LPC17_40_ETH_SUPP);
+        break;
+
+      case KS8721_10BTCR_MODE_100BTHD: /* 100BASE-T half duplex */
+        priv->lp_mode = LPC17_40_100BASET_HD;
+        break;
+
+      case KS8721_10BTCR_MODE_10BTFD: /* 10BASE-T full duplex */
+        priv->lp_mode = LPC17_40_10BASET_FD;
+        lpc17_40_putreg(0, LPC17_40_ETH_SUPP);
+        break;
+
+      case KS8721_10BTCR_MODE_100BTFD: /* 100BASE-T full duplex */
+        priv->lp_mode = LPC17_40_100BASET_FD;
+        break;
+
+      default:
+        nerr("ERROR: Unrecognized mode: %04x\n", phyreg);
+        return -ENODEV;
+    }
+
+#elif defined(CONFIG_ETH0_PHY_KSZ8041)
+  phyreg = lpc17_40_phyread(phyaddr, MII_KSZ8041_PHYCTRL2);
+
+  switch (phyreg & MII_PHYCTRL2_MODE_MASK)
+    {
+      case MII_PHYCTRL2_MODE_10HDX:  /* 10BASE-T half duplex */
+        priv->lp_mode = LPC17_40_10BASET_HD;
+        lpc17_40_putreg(0, LPC17_40_ETH_SUPP);
+        break;
+
+      case MII_PHYCTRL2_MODE_100HDX: /* 100BASE-T half duplex */
+        priv->lp_mode = LPC17_40_100BASET_HD;
+        break;
+
+      case MII_PHYCTRL2_MODE_10FDX: /* 10BASE-T full duplex */
+        priv->lp_mode = LPC17_40_10BASET_FD;
+        lpc17_40_putreg(0, LPC17_40_ETH_SUPP);
+        break;
+
+      case MII_PHYCTRL2_MODE_100FDX: /* 100BASE-T full duplex */
+        priv->lp_mode = LPC17_40_100BASET_FD;
+        break;
+
+      default:
+        nerr("ERROR: Unrecognized mode: %04x\n", phyreg);
+        return -ENODEV;
+--- lines 613-683 ---
+ *
+ ****************************************************************************/
+
+static int lpc17_40_transmit(struct lpc17_40_driver_s *priv)
+{
+  uint32_t *txdesc;
+  void     *txbuffer;
+  unsigned int prodidx;
+
+  /* Verify that the hardware is ready to send another packet.  If we get
+   * here, then we are committed to sending a packet; Higher level logic
+   * must have assured that there is no transmission in progress.
+   */
+
+  DEBUGASSERT(lpc17_40_txdesc(priv) == OK);
+
+  /* Increment statistics and dump the packet *if so configured) */
+
+  NETDEV_TXPACKETS(&priv->lp_dev);
+  lpc17_40_dumppacket("Transmit packet",
+                   priv->lp_dev.d_buf, priv->lp_dev.d_len);
+
+  /* Get the current producer index */
+
+  prodidx = lpc17_40_getreg(LPC17_40_ETH_TXPRODIDX) & ETH_TXPRODIDX_MASK;
+
+  /* Get the packet address from the descriptor and set the descriptor
+   * control fields.
+   */
+
+  txdesc   = (uint32_t *)(LPC17_40_TXDESC_BASE + (prodidx << 3));
+  txbuffer = (void *)*txdesc++;
+  *txdesc  = TXDESC_CONTROL_INT | TXDESC_CONTROL_LAST | TXDESC_CONTROL_CRC |
+             (priv->lp_dev.d_len - 1);
+
+  /* Copy the packet data into the Tx buffer assigned to this descriptor.  It
+   * should fit because each packet buffer is the MTU size and breaking up
+   * larger TCP message is handled by higher level logic.  The hardware
+   * does, however, support breaking up larger messages into many fragments,
+   * however, that capability is not exploited here.
+   *
+   * This would be a great performance improvement:  Remove the buffer from
+   * the lp_dev structure and replace it a pointer directly into the EMAC
+   * DMA memory.  This could eliminate the following, costly memcpy.
+   */
+
+  DEBUGASSERT(priv->lp_dev.d_len <= LPC17_40_MAXPACKET_SIZE);
+  memcpy(txbuffer, priv->lp_dev.d_buf, priv->lp_dev.d_len);
+
+  /* Bump the producer index, making the packet available for transmission. */
+
+  if (++prodidx >= CONFIG_LPC17_40_ETH_NTXDESC)
+    {
+      /* Wrap back to index zero */
+
+      prodidx = 0;
+    }
+
+  lpc17_40_putreg(prodidx, LPC17_40_ETH_TXPRODIDX);
+
+  /* Enable Tx interrupts */
+
+  priv->lp_inten |= ETH_TXINTS;
+  lpc17_40_putreg(priv->lp_inten, LPC17_40_ETH_INTEN);
+
+  /* Setup the TX timeout watchdog (perhaps restarting the timer) */
+
+  wd_start(&priv->lp_txtimeout, LPC17_40_TXTIMEOUT,
+           lpc17_40_txtimeout_expiry, (wdparm_t)priv);
+  return OK;
+}
+--- lines 793-1014 ---
+ *
+ ****************************************************************************/
+
+static void lpc17_40_rxdone_work(void *arg)
+{
+  struct lpc17_40_driver_s *priv = (struct lpc17_40_driver_s *)arg;
+  irqstate_t flags;
+  uint32_t *rxstat;
+  bool fragment;
+  unsigned int prodidx;
+  unsigned int considx;
+  unsigned int pktlen;
+
+  DEBUGASSERT(priv);
+
+  /* Perform pending RX work.  RX interrupts were disabled prior to
+   * scheduling this work to prevent work queue overruns.
+   */
+
+  net_lock();
+
+  /* Get the current producer and consumer indices */
+
+  considx = lpc17_40_getreg(LPC17_40_ETH_RXCONSIDX) & ETH_RXCONSIDX_MASK;
+  prodidx = lpc17_40_getreg(LPC17_40_ETH_RXPRODIDX) & ETH_RXPRODIDX_MASK;
+
+  /* Loop while there are incoming packets to be processed, that is, while
+   * the producer index is not equal to the consumer index.
+   */
+
+  fragment = false;
+  while (considx != prodidx)
+    {
+      /* Get the Rx status and packet length (-4+1) */
+
+      rxstat   = (uint32_t *)(LPC17_40_RXSTAT_BASE + (considx << 3));
+      pktlen   = (*rxstat & RXSTAT_INFO_RXSIZE_MASK) - 3;
+
+      /* Check for errors.  NOTE:  The DMA engine reports bogus length
+       * errors, making this a pretty useless (as well as annoying) check.
+       */
+
+      if ((*rxstat & RXSTAT_INFO_ERROR) != 0)
+        {
+          nerr("ERROR: considx: %08x prodidx: %08x rxstat: %08" PRIx32 "\n",
+               considx, prodidx, *rxstat);
+          NETDEV_RXERRORS(&priv->lp_dev);
+        }
+
+      /* If the pktlen is greater then the buffer, then we cannot accept
+       * the packet.  Also, since the DMA packet buffers are set up to
+       * be the same size as our max packet size, any fragments also
+       * imply that the packet is too big.
+       */
+
+      if (pktlen > CONFIG_NET_ETH_PKTSIZE + CONFIG_NET_GUARDSIZE)
+        {
+          nwarn("WARNING: Too big. considx: %08x prodidx: %08x pktlen: %d "
+                "rxstat: %08" PRIx32 "\n",
+                considx, prodidx, pktlen, *rxstat);
+          NETDEV_RXERRORS(&priv->lp_dev);
+        }
+      else if ((*rxstat & RXSTAT_INFO_LASTFLAG) == 0)
+        {
+          ninfo("Fragment. considx: %08x prodidx: %08x pktlen: %d "
+                "rxstat: %08" PRIx32 "\n",
+                considx, prodidx, pktlen, *rxstat);
+          NETDEV_RXFRAGMENTS(&priv->lp_dev);
+          fragment = true;
+        }
+      else if (fragment)
+        {
+          ninfo("Last fragment. considx: %08x prodidx: %08x pktlen: %d "
+                "rxstat: %08" PRIx32 "\n",
+                considx, prodidx, pktlen, *rxstat);
+          NETDEV_RXFRAGMENTS(&priv->lp_dev);
+          fragment = false;
+        }
+      else
+        {
+          uint32_t *rxdesc;
+          void     *rxbuffer;
+
+          /* Get the Rx buffer address from the Rx descriptor */
+
+          rxdesc   = (uint32_t *)(LPC17_40_RXDESC_BASE + (considx << 3));
+          rxbuffer = (void *)*rxdesc;
+
+          /* Copy the data data from the EMAC DMA RAM to priv->lp_dev.d_buf.
+           * Set amount of data in priv->lp_dev.d_len
+           *
+           * Here would be a great performance improvement:  Remove the
+           * buffer from the lp_dev structure and replace it with a pointer
+           * directly into the EMAC DMA memory.  This could eliminate the
+           * following, costly memcpy.
+           */
+
+          memcpy(priv->lp_dev.d_buf, rxbuffer, pktlen);
+          priv->lp_dev.d_len = pktlen;
+
+          lpc17_40_dumppacket("Received packet",
+                           priv->lp_dev.d_buf, priv->lp_dev.d_len);
+
+#ifdef CONFIG_NET_PKT
+          /* When packet sockets are enabled, feed the frame into the packet
+           * tap.
+           */
+
+           pkt_input(&priv->lp_dev);
+#endif
+
+          /* We only accept IP packets of the configured type and ARP
+           * packets
+           */
+
+#ifdef CONFIG_NET_IPv4
+          if (BUF->type == HTONS(ETHTYPE_IP))
+            {
+              ninfo("IPv4 frame\n");
+              NETDEV_RXIPV4(&priv->lp_dev);
+
+              /* Receive an IPv4 packet from the network device */
+
+              ipv4_input(&priv->lp_dev);
+
+              /* If the above function invocation resulted in data that
+               * should be sent out on the network, the field  d_len will
+               * set to a value > 0.
+               */
+
+              if (priv->lp_dev.d_len > 0)
+                {
+                  /* And send the packet */
+
+                  lpc17_40_response(priv);
+                }
+            }
+          else
+#endif
+#ifdef CONFIG_NET_IPv6
+          if (BUF->type == HTONS(ETHTYPE_IP6))
+            {
+              ninfo("IPv6 frame\n");
+              NETDEV_RXIPV6(&priv->lp_dev);
+
+              /* Give the IPv6 packet to the network layer */
+
+              ipv6_input(&priv->lp_dev);
+
+              /* If the above function invocation resulted in data that
+               * should be sent out on the network, the field  d_len will
+               * set to a value > 0.
+               */
+
+              if (priv->lp_dev.d_len > 0)
+                {
+                  /* And send the packet */
+
+                  lpc17_40_response(priv);
+                }
+            }
+          else
+#endif
+#ifdef CONFIG_NET_ARP
+          if (BUF->type == HTONS(ETHTYPE_ARP))
+            {
+              NETDEV_RXARP(&priv->lp_dev);
+              arp_input(&priv->lp_dev);
+
+              /* If the above function invocation resulted in data that
+               * should be sent out on the network, the field  d_len will
+               * set to a value > 0.
+               */
+
+              if (priv->lp_dev.d_len > 0)
+                {
+                  lpc17_40_response(priv);
+                }
+            }
+          else
+#endif
+            {
+              /* Unrecognized... drop it. */
+
+              NETDEV_RXDROPPED(&priv->lp_dev);
+            }
+        }
+
+      /* Update statistics */
+
+      NETDEV_RXPACKETS(&priv->lp_dev);
+
+      /* Bump up the consumer index and resample the producer index (which
+       * might also have gotten bumped up by the hardware).
+       */
+
+      if (++considx >= CONFIG_LPC17_40_ETH_NRXDESC)
+        {
+          /* Wrap back to index zero */
+
+          considx = 0;
+        }
+
+      lpc17_40_putreg(considx, LPC17_40_ETH_RXCONSIDX);
+      prodidx = lpc17_40_getreg(LPC17_40_ETH_RXPRODIDX) & ETH_RXPRODIDX_MASK;
+    }
+
+  net_unlock();
+
+  /* Re-enable RX interrupts (this must be atomic).  Skip this step if the
+   * lp-txpending TX underrun state is in effect.
+   */
+
+  flags = enter_critical_section();
+  if (!priv->lp_txpending)
+    {
+      priv->lp_inten |= ETH_RXINTS;
+      lpc17_40_putreg(priv->lp_inten, LPC17_40_ETH_INTEN);
+    }
+
+  leave_critical_section(flags);
+}
+--- lines 1028-1070 ---
+ *
+ ****************************************************************************/
+
+static void lpc17_40_txdone_work(void *arg)
+{
+  struct lpc17_40_driver_s *priv = (struct lpc17_40_driver_s *)arg;
+
+  /* Verify that the hardware is ready to send another packet.  Since a Tx
+   * just completed, this must be the case.
+   */
+
+  DEBUGASSERT(priv);
+  DEBUGASSERT(lpc17_40_txdesc(priv) == OK);
+
+  /* Check if there is a pending Tx transfer that was scheduled by Rx
+   * handling while the Tx logic was busy.  If so, processing that pending
+   * Tx now.
+   */
+
+  net_lock();
+  if (priv->lp_txpending)
+    {
+      /* Clear the pending condition, send the packet,
+       * and restore Rx interrupts
+       */
+
+      priv->lp_txpending = false;
+
+      lpc17_40_transmit(priv);
+
+      priv->lp_inten |= ETH_RXINTS;
+      lpc17_40_putreg(priv->lp_inten, LPC17_40_ETH_INTEN);
+    }
+
+  /* Otherwise poll the network layer for new XMIT data */
+
+  else
+    {
+      devif_poll(&priv->lp_dev, lpc17_40_txpoll);
+    }
+
+  net_unlock();
+}
+--- lines 1529-1556 ---
+ *
+ ****************************************************************************/
+
+static int lpc17_40_ifdown(struct net_driver_s *dev)
+{
+  struct lpc17_40_driver_s *priv =
+    (struct lpc17_40_driver_s *)dev->d_private;
+  irqstate_t flags;
+
+  /* Disable the Ethernet interrupt */
+
+  flags = enter_critical_section();
+  up_disable_irq(LPC17_40_IRQ_ETH);
+
+  /* Cancel the TX timeout timers */
+
+  wd_cancel(&priv->lp_txtimeout);
+
+  /* Reset the device and mark it as down. */
+
+  lpc17_40_ethreset(priv);
+  priv->lp_ifup = false;
+  leave_critical_section(flags);
+
+  netdev_carrier_off(dev);
+
+  return OK;
+}
+--- lines 1613-1636 ---
+ *
+ ****************************************************************************/
+
+static int lpc17_40_txavail(struct net_driver_s *dev)
+{
+  struct lpc17_40_driver_s *priv =
+    (struct lpc17_40_driver_s *)dev->d_private;
+
+  /* Is our single poll work structure available?  It may not be if there
+   * are pending polling actions and we will have to ignore the Tx
+   * availability action (which is okay because all poll actions have,
+   * ultimately, the same effect.
+   */
+
+  if (work_available(&priv->lp_pollwork))
+    {
+      /* Schedule to serialize the poll on the worker thread. */
+
+      work_queue(ETHWORK, &priv->lp_pollwork, lpc17_40_txavail_work,
+                 priv, 0);
+    }
+
+  return OK;
+}
+--- lines 2177-2208 ---
+ ****************************************************************************/
+
+#ifdef LPC17_40_HAVE_PHY
+static inline int lpc17_40_phyreset(uint8_t phyaddr)
+{
+  int32_t timeout;
+  uint16_t phyreg;
+
+  /* Reset the PHY.  Needs a minimal 50uS delay after reset. */
+
+  lpc17_40_phywrite(phyaddr, MII_MCR, MII_MCR_RESET);
+
+  /* Wait for a minimum of 50uS no matter what */
+
+  up_udelay(50);
+
+  /* The MCR reset bit is self-clearing.  Wait for it to be clear indicating
+   * that the reset is complete.
+   */
+
+  for (timeout = MII_BIG_TIMEOUT; timeout > 0; timeout--)
+    {
+      phyreg = lpc17_40_phyread(phyaddr, MII_MCR);
+      if ((phyreg & MII_MCR_RESET) == 0)
+        {
+          return OK;
+        }
+    }
+
+  nerr("ERROR: Reset failed. MCR: %04x\n", phyreg);
+  return -ETIMEDOUT;
+}
+--- lines 2717-2756 ---
+ *
+ ****************************************************************************/
+
+static inline void lpc17_40_txdescinit(struct lpc17_40_driver_s *priv)
+{
+  uint32_t *txdesc;
+  uint32_t *txstat;
+  uint32_t pktaddr;
+  int i;
+
+  /* Configure Tx descriptor and status tables */
+
+  lpc17_40_putreg(LPC17_40_TXDESC_BASE, LPC17_40_ETH_TXDESC);
+  lpc17_40_putreg(LPC17_40_TXSTAT_BASE, LPC17_40_ETH_TXSTAT);
+  lpc17_40_putreg(CONFIG_LPC17_40_ETH_NTXDESC - 1, LPC17_40_ETH_TXDESCRNO);
+
+  /* Initialize Tx descriptors and link to packet buffers */
+
+  txdesc  = (uint32_t *)LPC17_40_TXDESC_BASE;
+  pktaddr = LPC17_40_TXBUFFER_BASE;
+
+  for (i = 0; i < CONFIG_LPC17_40_ETH_NTXDESC; i++)
+    {
+      *txdesc++ = pktaddr;
+      *txdesc++ = (TXDESC_CONTROL_INT | (LPC17_40_MAXPACKET_SIZE - 1));
+      pktaddr  += LPC17_40_MAXPACKET_SIZE;
+    }
+
+  /* Initialize Tx status */
+
+  txstat  = (uint32_t *)LPC17_40_TXSTAT_BASE;
+  for (i = 0; i < CONFIG_LPC17_40_ETH_NTXDESC; i++)
+    {
+      *txstat++ = 0;
+    }
+
+  /* Point to first Tx descriptor */
+
+  lpc17_40_putreg(0, LPC17_40_ETH_TXPRODIDX);
+}
+--- lines 2773-2813 ---
+ *
+ ****************************************************************************/
+
+static inline void lpc17_40_rxdescinit(struct lpc17_40_driver_s *priv)
+{
+  uint32_t *rxdesc;
+  uint32_t *rxstat;
+  uint32_t pktaddr;
+  int i;
+
+  /* Configure Rx descriptor and status tables */
+
+  lpc17_40_putreg(LPC17_40_RXDESC_BASE, LPC17_40_ETH_RXDESC);
+  lpc17_40_putreg(LPC17_40_RXSTAT_BASE, LPC17_40_ETH_RXSTAT);
+  lpc17_40_putreg(CONFIG_LPC17_40_ETH_NRXDESC - 1, LPC17_40_ETH_RXDESCNO);
+
+  /* Initialize Rx descriptors and link to packet buffers */
+
+  rxdesc  = (uint32_t *)LPC17_40_RXDESC_BASE;
+  pktaddr = LPC17_40_RXBUFFER_BASE;
+
+  for (i = 0; i < CONFIG_LPC17_40_ETH_NRXDESC; i++)
+    {
+      *rxdesc++ = pktaddr;
+      *rxdesc++ = (RXDESC_CONTROL_INT | (LPC17_40_MAXPACKET_SIZE - 1));
+      pktaddr  += LPC17_40_MAXPACKET_SIZE;
+    }
+
+  /* Initialize Rx status */
+
+  rxstat  = (uint32_t *)LPC17_40_RXSTAT_BASE;
+  for (i = 0; i < CONFIG_LPC17_40_ETH_NRXDESC; i++)
+    {
+      *rxstat++ = 0;
+      *rxstat++ = 0;
+    }
+
+  /* Point to first Rx descriptor */
+
+  lpc17_40_putreg(0, LPC17_40_ETH_RXCONSIDX);
+}
+--- lines 2829-2894 ---
+ ****************************************************************************/
+
+#ifdef LPC17_40_HAVE_PHY
+static inline void lpc17_40_macmode(uint8_t mode)
+{
+  uint32_t regval;
+
+  /* Set up for full or half duplex operation */
+
+  if ((mode & LPC17_40_DUPLEX_MASK) == LPC17_40_DUPLEX_FULL)
+    {
+      /* Set the back-to-back inter-packet gap */
+
+      lpc17_40_putreg(21, LPC17_40_ETH_IPGT);
+
+      /* Set MAC to operate in full duplex mode with CRC and Pad enabled */
+
+      regval = lpc17_40_getreg(LPC17_40_ETH_MAC2);
+      regval |= (ETH_MAC2_FD | ETH_MAC2_CRCEN | ETH_MAC2_PADCRCEN);
+      lpc17_40_putreg(regval, LPC17_40_ETH_MAC2);
+
+      /* Select full duplex operation for ethernet controller */
+
+      regval = lpc17_40_getreg(LPC17_40_ETH_CMD);
+      regval |= (ETH_CMD_FD | ETH_CMD_RMII | ETH_CMD_PRFRAME);
+      lpc17_40_putreg(regval, LPC17_40_ETH_CMD);
+    }
+  else
+    {
+      /* Set the back-to-back inter-packet gap */
+
+      lpc17_40_putreg(18, LPC17_40_ETH_IPGT);
+
+      /* Set MAC to operate in half duplex mode with CRC and Pad enabled */
+
+      regval = lpc17_40_getreg(LPC17_40_ETH_MAC2);
+      regval &= ~ETH_MAC2_FD;
+      regval |= (ETH_MAC2_CRCEN | ETH_MAC2_PADCRCEN);
+      lpc17_40_putreg(regval, LPC17_40_ETH_MAC2);
+
+      /* Select half duplex operation for ethernet controller */
+
+      regval = lpc17_40_getreg(LPC17_40_ETH_CMD);
+      regval &= ~ETH_CMD_FD;
+      regval |= (ETH_CMD_RMII | ETH_CMD_PRFRAME);
+      lpc17_40_putreg(regval, LPC17_40_ETH_CMD);
+    }
+
+  /* This is currently done in lpc17_40_phyinit().  That doesn't
+   * seem like the right place. It should be done here.
+   */
+
+#if 0
+  regval = lpc17_40_getreg(LPC17_40_ETH_SUPP);
+  if ((mode & LPC17_40_SPEED_MASK) == LPC17_40_SPEED_100)
+    {
+      regval |= ETH_SUPP_SPEED;
+    }
+  else
+    {
+      regval &= ~ETH_SUPP_SPEED;
+    }
+
+  lpc17_40_putreg(regval, LPC17_40_ETH_SUPP);
+#endif
+}
+--- lines 2894-2899 ---
+}
+
+#else
+static inline void lpc17_40_macmode(uint8_t mode)
+{
+}
+=== gpio / iocon ===
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h  arch/arm/src/lpc17xx_40xx/lpc176x_gpio.h
+arch/arm/src/lpc17xx_40xx/lpc17_40_gpio.h           arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.h
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <sys/types.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <errno.h>
+#include <nuttx/debug.h>
+
+#include <arch/irq.h>
+
+#include "arm_internal.h"
+#include "chip.h"
+#include "lpc17_40_gpio.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Default input pin configuration */
+
+#define DEFAULT_INPUT (GPIO_INPUT|GPIO_PULLUP)
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/* These tables have global scope because they are also used in
+ * lpc17_40_gpiodbg.c
+ */
+
+/* We have to remember the configured interrupt setting.. PINs are not
+ * actually set up to interrupt until the interrupt is enabled.
+ */
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+uint64_t g_intedge0;
+uint64_t g_intedge2;
+#endif
+
+/* FIO register base addresses */
+
+const uint32_t g_fiobase[GPIO_NPORTS] =
+{
+  LPC17_40_FIO0_BASE,
+  LPC17_40_FIO1_BASE,
+  LPC17_40_FIO2_BASE,
+  LPC17_40_FIO3_BASE,
+  LPC17_40_FIO4_BASE
+#if GPIO_NPORTS > 5
+  , LPC17_40_FIO5_BASE
+#endif
+};
+
+/* Port 0 and Port 2 can provide a single interrupt for any combination of
+ * port pins
+ */
+
+const uint32_t g_intbase[GPIO_NPORTS] =
+{
+  LPC17_40_GPIOINT0_BASE,
+  0,
+  LPC17_40_GPIOINT2_BASE,
+  0,
+  0
+#if GPIO_NPORTS > 5
+  , 0
+#endif
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_getioconmask
+ *
+ * Description:
+ *   Get the LPC178x/40xx IOCON register mask.
+ *
+ *   Type D: FUNC, MODE, HYS, INV, SLEW, OD             -
+ *   Type A: FUNC, MODE, INV, ADMODE, FILTER, OD, DACEN -P0[12:13,23:26],
+ *                                                       P1[30:31]
+ *   Type U: FUNC                                       -P0[29:31]
+ *   Type I: FUNC, INV, HS, HIDRIVE                     -P0[27:28], P5[2:3]
+ *   Type W: FUNC, MODE, HYS, INV, FILTER, SLEW, OD     -P0[7:9]
+ *
+ ****************************************************************************/
+
+#if 0 /* Not used */
+static uint32_t lpc17_40_getioconmask(unsigned int port, unsigned int pin)
+{
+  uint32_t typemask = IOCON_TYPE_D_MASK;
+
+  /* Select the mask based on pin usage */
+
+  switch (port)
+    {
+      case 0:
+        switch (pin)
+          {
+            case 7:
+            case 8:
+            case 9:
+              typemask = IOCON_TYPE_W_MASK;
+              break;
+
+            case 12:
+            case 13:
+            case 23:
+            case 24:
+            case 25:
+            case 26:
+              typemask = IOCON_TYPE_A_MASK;
+              break;
+
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_gpio.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_GPIO_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_GPIO_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#ifndef __ASSEMBLY__
+#  include <stdint.h>
+#  include <stdbool.h>
+#endif
+
+#include <arch/lpc17xx_40xx/chip.h>
+
+#include "hardware/lpc17_40_gpio.h"
+#include "hardware/lpc17_40_pinconn.h"
+#include "hardware/lpc17_40_pinconfig.h"
+
+/* Include the GPIO definitions for the selected LPC17xx/LPC40xx family. */
+
+#if defined(LPC176x)
+#  include "lpc176x_gpio.h"
+#elif defined(LPC178x_40xx)
+#  include "lpc178x_40xx_gpio.h"
+#else
+#  error "Unrecognized LPC17xx/LPC40xx family"
+#endif
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+#ifndef __ASSEMBLY__
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
+/* These tables have global scope only because they are shared between
+ * lpc17_40_gpio.c, lpc17_40_gpioint.c, and lpc17_40_gpiodbg.c
+ */
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+extern uint64_t g_intedge0;
+extern uint64_t g_intedge2;
+#endif
+
+extern const uint32_t g_fiobase[GPIO_NPORTS];
+extern const uint32_t g_intbase[GPIO_NPORTS];
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_gpioirqinitialize
+ *
+ * Description:
+ *   Initialize logic to support a second level of interrupt decoding for
+   * GPIO pins.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+void lpc17_40_gpioirqinitialize(void);
+#else
+#  define lpc17_40_gpioirqinitialize()
+#endif
+
+/****************************************************************************
+ * Name: lpc17_40_configgpio
+ *
+ * Description:
+ *   Configure a GPIO pin based on bit-encoded description of the pin.
+ *
+ ****************************************************************************/
+
+int lpc17_40_configgpio(lpc17_40_pinset_t cfgset);
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_PINCONFIG_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_PINCONFIG_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* GPIO pin definitions *****************************************************/
+
+/* NOTE
+ * that functions have a alternate pins that can be selected.  These
+ * alternates are identified with a numerical suffix like _1, _2, or _3.
+ * Your board.h file should select the correct alternative for your board
+ * by including definitions such as:
+ *
+ * #define GPIO_UART1_RXD GPIO_UART1_RXD_1
+ *
+ * (without the suffix)
+ */
+
+#define GPIO_CAN1_RD_1     (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN0)
+#define GPIO_UART3_TXD_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN0)
+#define GPIO_I2C1_SDA_1    (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN0)
+#define GPIO_UART0_TXD_1   (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN0)
+
+#define GPIO_CAN1_TD_1     (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN1)
+#define GPIO_UART3_RXD_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN1)
+#define GPIO_I2C1_SCL_1    (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN1)
+#define GPIO_UART0_RXD_1   (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN1)
+
+#define GPIO_UART0_TXD_2   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN2)
+#define GPIO_UART3_TXD_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN2)
+
+#define GPIO_UART0_RXD_2   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN3)
+#define GPIO_UART3_RXD_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN3)
+
+#define GPIO_I2S_RXCLK_1   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN4)
+#define GPIO_CAN2_RD_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN4)
+#define GPIO_CAP2p0_1      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN4)
+#define GPIO_CMP_ROSC_1    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN4) /* Only on LPC40xx */
+#define GPIO_LCD_VD0_1     (GPIO_ALT7 | GPIO_FLOAT | GPIO_SLEW_FAST | GPIO_PORT0 | GPIO_PIN4)
+
+#define GPIO_I2S_RXWS_1    (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN5)
+#define GPIO_CAN2_TD_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN5)
+#define GPIO_CAP2p1_1      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN5)
+#define GPIO_CMP_RESET     (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN5) /* Only on LPC40xx */
+#define GPIO_LCD_VD1_1     (GPIO_ALT7 | GPIO_FLOAT | GPIO_SLEW_FAST | GPIO_PORT0 | GPIO_PIN5)
+
+#define GPIO_I2S_RXSDA_1   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN6)
+#define GPIO_SSP1_SSEL_1   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN6)
+#define GPIO_MAT2p0_1      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN6)
+#define GPIO_UART1_RTS_1   (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN6)
+=== netinit.c ===
+/****************************************************************************
+ * apps/netutils/netinit/netinit.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+/* Is network initialization debug forced on? */
+
+#ifdef CONFIG_NETINIT_DEBUG
+#  undef  CONFIG_DEBUG_INFO
+#  define CONFIG_DEBUG_INFO 1
+#  undef  CONFIG_DEBUG_NET
+#  define CONFIG_DEBUG_NET 1
+#endif
+
+#include <arpa/inet.h>
+#include <nuttx/debug.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <sched.h>
+#include <semaphore.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <nuttx/net/mii.h>
+#include <sys/boardctl.h>
+
+#include "netutils/netlib.h"
+
+#ifdef CONFIG_NET_6LOWPAN
+#  include <nuttx/net/sixlowpan.h>
+#endif
+
+#ifdef CONFIG_NET_IEEE802154
+#  include <nuttx/net/ieee802154.h>
+#endif
+
+#ifdef CONFIG_NETUTILS_NTPCLIENT
+#  include "netutils/ntpclient.h"
+#endif
+
+#if defined(CONFIG_FSUTILS_IPCFG)
+#  include "fsutils/ipcfg.h"
+#endif
+
+#include "netutils/netinit.h"
+
+#ifdef CONFIG_NETUTILS_NETINIT
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Pick one and at most one supported link layer so that all decisions are
+ * made consistently.
+ *
+ * NOTE: Ethernet should always be selected with IEEE 802.11
+ */
+
+#if defined(CONFIG_NET_ETHERNET)
+#  undef CONFIG_NET_6LOWPAN
+#  undef CONFIG_NET_SLIP
+#  undef CONFIG_NET_TUN
+#  undef CONFIG_NET_LOCAL
+#  undef CONFIG_NET_USRSOCK
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_6LOWPAN)
+#  undef CONFIG_NET_SLIP
+#  undef CONFIG_NET_TUN
+#  undef CONFIG_NET_LOCAL
+#  undef CONFIG_NET_USRSOCK
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_SLIP)
+#  undef CONFIG_NET_TUN
+#  undef CONFIG_NET_LOCAL
+#  undef CONFIG_NET_USRSOCK
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_TUN)
+#  undef CONFIG_NET_LOCAL
+#  undef CONFIG_NET_USRSOCK
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_LOCAL)
+#  undef CONFIG_NET_USRSOCK
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_USRSOCK)
+#  undef CONFIG_NET_IEEE802154
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_IEEE802154)
+#  undef CONFIG_NET_CAN
+#  undef CONFIG_NET_LOOPBACK
+#elif defined(CONFIG_NET_CAN)
+#  undef CONFIG_NET_LOOPBACK
+#endif
+
+/* Only Ethernet and 6LoWPAN have MAC layer addresses */
+
+#undef HAVE_MAC
+#if defined(CONFIG_NET_ETHERNET) || defined(CONFIG_NET_6LOWPAN)
+#  define HAVE_MAC 1
+#endif
+
+/* Currently there is only logic in 6LoWPAN configurations to
+ * set the IEEE 802.15.4 addresses.
+ */
+
+#undef HAVE_EADDR
+
+#if defined(CONFIG_NET_6LOWPAN)
+#  if defined(CONFIG_WIRELESS_IEEE802154)
+#    define HAVE_EADDR 1
+#  elif defined(CONFIG_WIRELESS_PKTRADIO)
+#    warning Missing logic
+#  endif
+#endif
+
+/* Provide a default DNS address */
+
+#if defined(CONFIG_NETINIT_DRIPADDR) && !defined(CONFIG_NETINIT_DNSIPADDR)
+#  define CONFIG_NETINIT_DNSIPADDR CONFIG_NETINIT_DRIPADDR
+#endif
+
+/* Select the single network device name supported this this network
+ * initialization logic.  If multiple interfaces are present with different
+ * link types, the order of definition in the following conditional
+ * logic will select the one interface that will be used (which might
+ * not be the one that you want).
+ */
+
+#undef NETINIT_HAVE_NETDEV
+#if defined(CONFIG_DRIVERS_IEEE80211) /* Usually also has CONFIG_NET_ETHERNET */
+#  define NET_DEVNAME "wlan0"
+#  define NETINIT_HAVE_NETDEV
+#elif defined(CONFIG_NET_ETHERNET)
+#  define NET_DEVNAME "eth0"
+#  define NETINIT_HAVE_NETDEV
+#elif defined(CONFIG_NET_6LOWPAN) || defined(CONFIG_NET_IEEE802154)
+#  define NET_DEVNAME "wpan0"
+#  define NETINIT_HAVE_NETDEV
+#elif defined(CONFIG_NET_BLUETOOTH)
+#  define NET_DEVNAME "bnep0"
+#  define NETINIT_HAVE_NETDEV
+#elif defined(CONFIG_NET_SLIP)
+#  define NET_DEVNAME "sl0"
+#  ifndef CONFIG_NETINIT_NOMAC
+#    error "CONFIG_NETINIT_NOMAC must be defined for SLIP"
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx]

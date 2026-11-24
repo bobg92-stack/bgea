@@ -1,0 +1,1084 @@
+
+         █████████████
+      ███████████████████
+    ███████████████████████
+    ████    ███████    ████
+    ███      █████      ███
+    ███      █████      ███
+    ████    ███ ███    ████
+     █████████ █ █████████
+      ███████████████████
+       ███  ██  ██  ██ █
+         █   █  █   █
+             █
+
+┌──(bg9211014🎃kali)-[~]
+└─$ picocom -b 115200 /dev/ttyUSB0
+picocom v2024-07
+
+port is        : /dev/ttyUSB0
+flowcontrol    : none
+baudrate is    : 115200
+parity is      : none
+databits are   : 8
+stopbits are   : 1
+txdelay is     : 0 ns
+escape is      : C-a
+local echo is  : no
+noinit is      : no
+noreset is     : no
+hangup is      : no
+nolock is      : no
+send_cmd is    : sz -vv
+receive_cmd is : rz -vv -E
+imap is        : 
+omap is        : 
+emap is        : crcrlf,delbs,
+logfile is     : none
+initstring     : none
+exit_after is  : not set
+exit is        : no
+minimal cmds is: no
+
+Type [C-a] [C-h] to see available commands
+Terminal ready
+ble:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0d0a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b8a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b8a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b8a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0d0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0a8a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2954 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c8a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0a8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0a8a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0b0a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0b0a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0b0a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0b0a
+ads7843e_sendcmd: cmd:90 response:0b0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:3082 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0b0a
+ads7843e_sendcmd: cmd:90 response:0b8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b8a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c8a
+ads7843e_sendcmd: cmd:90 response:0d8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c0a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0b0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable:0
+tsc_pendown: penirq:0 z1:2058 pendown:1
+ads7843e_sendcmd: cmd:d3 response:0c0a
+ads7843e_sendcmd: cmd:93 response:0c0a
+ads7843e_sendcmd: cmd:90 response:0c8a
+tsc_enable: enable:1
+tsc_enable: enable

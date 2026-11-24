@@ -1,0 +1,520 @@
+
+         █████████████
+      ███████████████████
+    ███████████████████████
+    ████    ███████    ████
+    ███      █████      ███
+    ███      █████      ███
+    ████    ███ ███    ████
+     █████████ █ █████████
+      ███████████████████
+       ███  ██  ██  ██ █
+         █   █  █   █
+             █
+
+┌──(bg9211014🎃kali)-[~]
+└─$ >....
+    'CONFIG_ARM_TOOLCHAIN_GNU_EABI': 'y',
+    'CONFIG_CROSSDEV': '"arm-none-eabi-"'
+}
+
+lines = content.splitlines()
+new_lines = []
+for line in lines:
+    skip = False
+    for k, v in enables.items():
+        if line.startswith(k + '='):
+            line = f"{k}={v}"
+            break
+    new_lines.append(line + '\n')
+
+existing = "\n".join(new_lines)
+for k, v in enables.items():
+    if f"{k}=" not in existing:
+        new_lines.append(f"{k}={v}\n")
+
+with open(config_path, 'w') as f:
+    f.writelines(new_lines)
+print("Toolchain configuration patched successfully.")
+EOF
+
+# STEP 4: Compile & Convert to Hex
+echo ">>> [4/4] Compiling NuttX (-j4) and converting to Intel HEX..."
+make -j4
+arm-nuttx-elf-objcopy -O ihex nuttx boards/arm/lpc17xx_40xx/open1788/configs/full_all/nuttx.hex
+arm-none-eabi-size nuttx
+
+echo ""
+echo "========================================================"
+echo "=== BUILD COMPLETE & VERIFIED SUCCESSFULLY! ==="
+echo "Intel HEX ready at: boards/arm/lpc17xx_40xx/open1788/configs/full_all/nuttx.hex"
+echo "========================================================"
+========================================================
+ LPC1788 NuttX Clean Baseline Build Pipeline
+========================================================
+>>> [1/4] Switching to NuttX Tree & Cleaning...
+NuttX has not been configured!
+To configure the project:
+  tools/configure.sh <config>
+For a list of available configurations:
+  tools/configure.sh -L
+>>> [2/4] Configuring for open1788:full_all...
+  Copy files
+  Select CONFIG_HOST_LINUX=y
+  Refreshing...
+CP: arch/dummy/Kconfig to /home/bg9211014/nuttxspace/nuttx/arch/dummy/dummy_kconfig
+CP: boards/dummy/Kconfig to /home/bg9211014/nuttxspace/nuttx/boards/dummy/dummy_kconfig
+LN: platform/board to /home/bg9211014/nuttxspace/apps/platform/dummy
+LN: include/arch to arch/arm/include
+LN: include/arch/board to /home/bg9211014/nuttxspace/nuttx/boards/arm/lpc17xx_40xx/open1788/include
+LN: drivers/platform to /home/bg9211014/nuttxspace/nuttx/drivers/dummy
+LN: include/arch/chip to /home/bg9211014/nuttxspace/nuttx/arch/arm/include/lpc17xx_40xx
+LN: arch/arm/src/chip to /home/bg9211014/nuttxspace/nuttx/arch/arm/src/lpc17xx_40xx
+LN: arch/arm/src/board to /home/bg9211014/nuttxspace/nuttx/boards/arm/lpc17xx_40xx/open1788/src
+warning: (EXAMPLES_USBSERIAL && SYSTEM_CDCACM && SYSTEM_COMPOSITE && SYSTEM_USBMSC && ADBD_USB_BOARDCTL) selects BOARDCTL_USBDEVCTRL which has unmet direct dependencies (BOARDCTL && USBDEV)
+#
+# configuration written to .config
+#
+>>> [3/4] Setting GNU ARM Toolchain in .config...
+Toolchain configuration patched successfully.
+>>> [4/4] Compiling NuttX (-j4) and converting to Intel HEX...
+Create version.h
+/home/bg9211014/nuttxspace/nuttx/boards/Board.mk:94: target 'lpc17_40_bringup.o' given more than once in the same rule
+CPP:  pwfb/pwfb_setpixel.c-> pwfb_setpixel_8bpp.i LN: platform/board to /home/bg9211014/nuttxspace/apps/platform/dummy
+CPP:  lcd/nxglib_moverectangle.c-> nxglib_moverectangle_16bpp.i Register: hello
+CPP:  pwfb/pwfb_setpixel.c-> pwfb_setpixel_24bpp.i Register: mount
+CPP:  pwfb/pwfb_getrectangle.c-> pwfb_getrectangle_16bpp.i Register: nxlines
+Register: charset
+CPP:  pwfb/pwfb_copyrectangle.c-> pwfb_copyrectangle_24bpp.i Register: firework
+Register: newdemo
+Register: panel
+Register: rain
+CPP:  lcd/nxglib_fillrectangle.c-> nxglib_fillrectangle_32bpp.i Register: testcurs
+Register: tui
+Register: worm
+Register: xmas
+Register: pwfb
+CPP:  pwfb/pwfb_setpixel.c-> pwfb_setpixel_32bpp.i Register: usbserial
+Register: telnetd
+Register: dd
+/home/bg9211014/nuttxspace/nuttx/boards/Board.mk:94: target 'lpc17_40_bringup.o' given more than once in the same rule
+CC:  pthread/pthread_sigmask.c chip/lpc17_40_allocateheap.c:156:6: warning: #warning "CONFIG_MM_REGIONS < 2: Available AHB SRAM Bank(s) not included in HEAP" [-Wcpp]
+  156 | #    warning "CONFIG_MM_REGIONS < 2: Available AHB SRAM Bank(s) not included in HEAP"
+      |      ^~~~~~~
+CC:  sched/sched_rrgetinterval.c In file included from chip/lpc17_40_pwm.c:44:
+chip/hardware/lpc176x_pinconfig.h:54:9: warning: 'GPIO_UART0_TXD' redefined
+   54 | #define GPIO_UART0_TXD     (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN2)
+      |         ^~~~~~~~~~~~~~
+In file included from chip/lpc17_40_pwm.c:38:
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:311:9: note: this is the location of the previous definition
+  311 | #define GPIO_UART0_TXD             GPIO_UART0_TXD_2
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:56:9: warning: 'GPIO_UART0_RXD' redefined
+   56 | #define GPIO_UART0_RXD     (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN3)
+      |         ^~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:312:9: note: this is the location of the previous definition
+  312 | #define GPIO_UART0_RXD             GPIO_UART0_RXD_2
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:71:9: warning: 'GPIO_SSP1_MISO' redefined
+   71 | #define GPIO_SSP1_MISO     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN8)
+      |         ^~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:436:9: note: this is the location of the previous definition
+  436 | #define GPIO_SSP1_MISO   GPIO_SSP1_MISO_3
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:74:9: warning: 'GPIO_SSP1_MOSI' redefined
+   74 | #define GPIO_SSP1_MOSI     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN9)
+      |         ^~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:437:9: note: this is the location of the previous definition
+  437 | #define GPIO_SSP1_MOSI   GPIO_SSP1_MOSI_2
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:114:9: warning: 'GPIO_I2C0_SDA' redefined
+  114 | #define GPIO_I2C0_SDA      (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN27)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:443:9: note: this is the location of the previous definition
+  443 | #define GPIO_I2C0_SDA    GPIO_I2C0_SDA_1
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:116:9: warning: 'GPIO_I2C0_SCL' redefined
+  116 | #define GPIO_I2C0_SCL      (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN28)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:442:9: note: this is the location of the previous definition
+  442 | #define GPIO_I2C0_SCL    GPIO_I2C0_SCL_1
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:118:9: warning: 'GPIO_USB_DP' redefined
+  118 | #define GPIO_USB_DP        (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN29)
+      |         ^~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:466:9: note: this is the location of the previous definition
+  466 | #define GPIO_USB_DP      GPIO_USB_DP_1
+      |         ^~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:119:9: warning: 'GPIO_USB_DM' redefined
+  119 | #define GPIO_USB_DM        (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN30)
+      |         ^~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:467:9: note: this is the location of the previous definition
+  467 | #define GPIO_USB_DM      GPIO_USB_DM_1
+      |         ^~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:188:9: warning: 'GPIO_USB_CONNECT' redefined
+  188 | #define GPIO_USB_CONNECT   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN9)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/include/arch/board/board.h:465:9: note: this is the location of the previous definition
+  465 | #define GPIO_USB_CONNECT GPIO_USB_CONNECT_1
+      |         ^~~~~~~~~~~~~~~~
+In file included from chip/hardware/lpc17_40_pinconfig.h:41,
+                 from chip/lpc17_40_gpio.h:41,
+                 from chip/lpc17_40_pwm.c:45:
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:60:9: warning: 'GPIO_UART3_TXD_2' redefined
+   60 | #define GPIO_UART3_TXD_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN2)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:110:9: note: this is the location of the previous definition
+  110 | #define GPIO_UART3_TXD_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:63:9: warning: 'GPIO_UART3_RXD_2' redefined
+   63 | #define GPIO_UART3_RXD_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN3)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:113:9: note: this is the location of the previous definition
+  113 | #define GPIO_UART3_RXD_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:80:9: warning: 'GPIO_UART1_RTS_1' redefined
+   80 | #define GPIO_UART1_RTS_1   (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN6)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:100:9: note: this is the location of the previous definition
+  100 | #define GPIO_UART1_RTS_1   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN22)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:117:9: warning: 'GPIO_AD0p6' redefined
+  117 | #define GPIO_AD0p6         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN12)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:57:9: note: this is the location of the previous definition
+   57 | #define GPIO_AD0p6         (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN3)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:121:9: warning: 'GPIO_AD0p7' redefined
+  121 | #define GPIO_AD0p7         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN13)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:55:9: note: this is the location of the previous definition
+   55 | #define GPIO_AD0p7         (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN2)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:156:9: warning: 'GPIO_CAN1_RD_2' redefined
+  156 | #define GPIO_CAN1_RD_2     (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN21)
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:99:9: note: this is the location of the previous definition
+   99 | #define GPIO_CAN1_RD_2     (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN21)
+      |         ^~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:159:9: warning: 'GPIO_UART1_RTS_2' redefined
+  159 | #define GPIO_UART1_RTS_2   (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN22)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:184:9: note: this is the location of the previous definition
+  184 | #define GPIO_UART1_RTS_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN7)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:162:9: warning: 'GPIO_CAN1_TD_2' redefined
+  162 | #define GPIO_CAN1_TD_2     (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN22)
+      |         ^~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:101:9: note: this is the location of the previous definition
+  101 | #define GPIO_CAN1_TD_2     (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN22)
+      |         ^~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:165:9: warning: 'GPIO_AD0p0' redefined
+  165 | #define GPIO_AD0p0         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN23)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:102:9: note: this is the location of the previous definition
+  102 | #define GPIO_AD0p0         (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN23)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:169:9: warning: 'GPIO_AD0p1' redefined
+  169 | #define GPIO_AD0p1         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN24)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:105:9: note: this is the location of the previous definition
+  105 | #define GPIO_AD0p1         (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN24)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:173:9: warning: 'GPIO_AD0p2' redefined
+  173 | #define GPIO_AD0p2         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN25)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:108:9: note: this is the location of the previous definition
+  108 | #define GPIO_AD0p2         (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN25)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:175:9: warning: 'GPIO_UART3_TXD_3' redefined
+  175 | #define GPIO_UART3_TXD_3   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:206:9: note: this is the location of the previous definition
+  206 | #define GPIO_UART3_TXD_3   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT4 | GPIO_PIN28)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:177:9: warning: 'GPIO_AD0p3' redefined
+  177 | #define GPIO_AD0p3         (GPIO_ALT1 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:111:9: note: this is the location of the previous definition
+  111 | #define GPIO_AD0p3         (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:178:9: warning: 'GPIO_AOUT' redefined
+  178 | #define GPIO_AOUT          (GPIO_ALT2 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:112:9: note: this is the location of the previous definition
+  112 | #define GPIO_AOUT          (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:179:9: warning: 'GPIO_UART3_RXD_3' redefined
+  179 | #define GPIO_UART3_RXD_3   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:209:9: note: this is the location of the previous definition
+  209 | #define GPIO_UART3_RXD_3   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT4 | GPIO_PIN29)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:231:9: warning: 'GPIO_ENET_CRS' redefined
+  231 | #define GPIO_ENET_CRS      (GPIO_ENET_CRSDV) /* Alternate pin name for LPC17 Ethernet driver */
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:123:9: note: this is the location of the previous definition
+  123 | #define GPIO_ENET_CRS      (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN8)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:276:9: warning: 'GPIO_SSP1_SCK_2' redefined
+  276 | #define GPIO_SSP1_SCK_2    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN19)
+      |         ^~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:167:9: note: this is the location of the previous definition
+  167 | #define GPIO_SSP1_SCK_2    (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN31)
+      |         ^~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:283:9: warning: 'GPIO_SSP0_SCK_2' redefined
+  283 | #define GPIO_SSP0_SCK_2    (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN20)
+      |         ^~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:138:9: note: this is the location of the previous definition
+  138 | #define GPIO_SSP0_SCK_2    (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN20)
+      |         ^~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:306:9: warning: 'GPIO_SSP0_MOSI_2' redefined
+  306 | #define GPIO_SSP0_MOSI_2   (GPIO_ALT5 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN23)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:150:9: note: this is the location of the previous definition
+  150 | #define GPIO_SSP0_MOSI_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN24)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:359:9: warning: 'GPIO_AD0p4' redefined
+  359 | #define GPIO_AD0p4         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT1 | GPIO_PIN30)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:166:9: note: this is the location of the previous definition
+  166 | #define GPIO_AD0p4         (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN30)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:365:9: warning: 'GPIO_AD0p5' redefined
+  365 | #define GPIO_AD0p5         (GPIO_ALT3 | GPIO_FLOAT | GPIO_MODE_ANALOG | GPIO_PORT1 | GPIO_PIN31)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:168:9: note: this is the location of the previous definition
+  168 | #define GPIO_AD0p5         (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN31)
+      |         ^~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:390:9: warning: 'GPIO_MAT2p1_2' redefined
+  390 | #define GPIO_MAT2p1_2      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN4)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:208:9: note: this is the location of the previous definition
+  208 | #define GPIO_MAT2p1_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT4 | GPIO_PIN29)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:396:9: warning: 'GPIO_MAT2p0_2' redefined
+  396 | #define GPIO_MAT2p0_2      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN5)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:205:9: note: this is the location of the previous definition
+  205 | #define GPIO_MAT2p0_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT4 | GPIO_PIN28)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:417:9: warning: 'GPIO_ENET_MDC_2' redefined
+  417 | #define GPIO_ENET_MDC_2    (GPIO_ALT4 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN8)
+      |         ^~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:187:9: note: this is the location of the previous definition
+  187 | #define GPIO_ENET_MDC_2    (GPIO_ALT3 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN8)
+      |         ^~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:424:9: warning: 'GPIO_ENET_MDIO_2' redefined
+  424 | #define GPIO_ENET_MDIO_2   (GPIO_ALT4 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN9)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:190:9: note: this is the location of the previous definition
+  190 | #define GPIO_ENET_MDIO_2   (GPIO_ALT3 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN9)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:479:9: warning: 'GPIO_SSP0_MISO_2' redefined
+  479 | #define GPIO_SSP0_MISO_2   (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:147:9: note: this is the location of the previous definition
+  147 | #define GPIO_SSP0_MISO_2   (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN23)
+      |         ^~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:551:9: warning: 'GPIO_PWM1p2_3' redefined
+  551 | #define GPIO_PWM1p2_3      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:200:9: note: this is the location of the previous definition
+  200 | #define GPIO_PWM1p2_3      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:552:9: warning: 'GPIO_MAT0p0_2' redefined
+  552 | #define GPIO_MAT0p0_2      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:199:9: note: this is the location of the previous definition
+  199 | #define GPIO_MAT0p0_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN25)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:555:9: warning: 'GPIO_PWM1p3_3' redefined
+  555 | #define GPIO_PWM1p3_3      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:203:9: note: this is the location of the previous definition
+  203 | #define GPIO_PWM1p3_3      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:556:9: warning: 'GPIO_MAT0p1_2' redefined
+  556 | #define GPIO_MAT0p1_2      (GPIO_ALT3 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:202:9: note: this is the location of the previous definition
+  202 | #define GPIO_MAT0p1_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/chip/hardware/lpc178x_40xx_pinconfig.h:557:9: warning: 'GPIO_STCLK' redefined
+  557 | #define GPIO_STCLK         (GPIO_ALT4 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~
+chip/hardware/lpc176x_pinconfig.h:201:9: note: this is the location of the previous definition
+  201 | #define GPIO_STCLK         (GPIO_ALT1 | GPIO_PULLUP | GPIO_PORT3 | GPIO_PIN26)
+      |         ^~~~~~~~~~
+In file included from chip/lpc17_40_pwm.c:46:
+chip/lpc176x_gpio.h:50:9: warning: 'GPIO_FUNC_SHIFT' redefined
+   50 | #define GPIO_FUNC_SHIFT        (13)       /* Bits 13-15: GPIO mode */
+      |         ^~~~~~~~~~~~~~~
+In file included from chip/lpc17_40_gpio.h:48:
+chip/lpc178x_40xx_gpio.h:83:9: note: this is the location of the previous definition
+   83 | #define GPIO_FUNC_SHIFT        (12)    /* Bits 12-15: GPIO mode */
+      |         ^~~~~~~~~~~~~~~
+chip/lpc176x_gpio.h:51:9: warning: 'GPIO_FUNC_MASK' redefined
+   51 | #define GPIO_FUNC_MASK         (7 << GPIO_FUNC_SHIFT)
+      |         ^~~~~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:84:9: note: this is the location of the previous definition
+   84 | #define GPIO_FUNC_MASK         (15 << GPIO_FUNC_SHIFT)
+      |         ^~~~~~~~~~~~~~
+chip/lpc176x_gpio.h:61:9: warning: 'GPIO_EDGE_SHIFT' redefined
+   61 | #define GPIO_EDGE_SHIFT        (13)       /* Bits 13-14: Interrupt edge bits */
+      |         ^~~~~~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:98:9: note: this is the location of the previous definition
+   98 | #define GPIO_EDGE_SHIFT        (12)      /* Bits 12-13: Interrupt edge bits */
+      |         ^~~~~~~~~~~~~~~
+chip/lpc176x_gpio.h:82:11: warning: 'GPIO_PULLUP' redefined
+   82 | #  define GPIO_PULLUP          (0 << GPIO_PUMODE_SHIFT) /* Pull-up resistor enabled */
+      |           ^~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:121:11: note: this is the location of the previous definition
+  121 | #  define GPIO_PULLUP          (2 << GPIO_PUMODE_SHIFT) /* Pull-up resistor enabled */
+      |           ^~~~~~~~~~~
+chip/lpc176x_gpio.h:83:11: warning: 'GPIO_REPEATER' redefined
+   83 | #  define GPIO_REPEATER        (1 << GPIO_PUMODE_SHIFT) /* Repeater mode enabled */
+      |           ^~~~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:122:11: note: this is the location of the previous definition
+  122 | #  define GPIO_REPEATER        (3 << GPIO_PUMODE_SHIFT) /* Repeater mode enabled */
+      |           ^~~~~~~~~~~~~
+chip/lpc176x_gpio.h:84:11: warning: 'GPIO_FLOAT' redefined
+   84 | #  define GPIO_FLOAT           (2 << GPIO_PUMODE_SHIFT) /* Neither pull-up nor -down */
+      |           ^~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:119:11: note: this is the location of the previous definition
+  119 | #  define GPIO_FLOAT           (0 << GPIO_PUMODE_SHIFT) /* Neither pull-up nor -down */
+      |           ^~~~~~~~~~
+chip/lpc176x_gpio.h:85:11: warning: 'GPIO_PULLDN' redefined
+   85 | #  define GPIO_PULLDN          (3 << GPIO_PUMODE_SHIFT) /* Pull-down resistor enabled */
+      |           ^~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:120:11: note: this is the location of the previous definition
+  120 | #  define GPIO_PULLDN          (1 << GPIO_PUMODE_SHIFT) /* Pull-down resistor enabled */
+      |           ^~~~~~~~~~~
+chip/lpc176x_gpio.h:107:9: warning: 'GPIO_NPORTS' redefined
+  107 | #define GPIO_NPORTS            5
+      |         ^~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:145:9: note: this is the location of the previous definition
+  145 | #define GPIO_NPORTS            6
+      |         ^~~~~~~~~~~
+chip/lpc176x_gpio.h:150:18: error: conflicting types for 'lpc17_40_pinset_t'; have 'uint16_t' {aka 'short unsigned int'}
+  150 | typedef uint16_t lpc17_40_pinset_t;
+      |                  ^~~~~~~~~~~~~~~~~
+chip/lpc178x_40xx_gpio.h:188:18: note: previous declaration of 'lpc17_40_pinset_t' with type 'lpc17_40_pinset_t' {aka 'long unsigned int'}
+  188 | typedef uint32_t lpc17_40_pinset_t;
+      |                  ^~~~~~~~~~~~~~~~~
+chip/lpc17_40_pwm.c:179:16: error: 'GPIO_PWM1p1' undeclared here (not in a function); did you mean 'GPIO_PWM1p2_1'?
+  179 |     .pincfg  = GPIO_PWM1p1,
+      |                ^~~~~~~~~~~
+      |                GPIO_PWM1p2_1
+CC:  hello_main.c In file included from chip/lpc17_40_pwm.c:43:
+chip/lpc17_40_pwm.c: In function 'pwm_timer':
+chip/lpc17_40_pwm.h:40:45: error: 'BOARD_CCLKCFG_DIVIDER' undeclared (first use in this function); did you mean 'BOARD_CCLKSEL_DIVIDER'?
+   40 | #define LPC17_40_PWM_CLOCK (LPC17_40_CCLK * BOARD_CCLKCFG_DIVIDER)
+      |                                             ^~~~~~~~~~~~~~~~~~~~~
+chip/lpc17_40_pwm.c:338:38: note: in expansion of macro 'LPC17_40_PWM_CLOCK'
+  338 |   mr0_freq = 1.f / info->frequency * LPC17_40_PWM_CLOCK / 10;
+      |                                      ^~~~~~~~~~~~~~~~~~
+chip/lpc17_40_pwm.h:40:45: note: each undeclared identifier is reported only once for each function it appears in
+   40 | #define LPC17_40_PWM_CLOCK (LPC17_40_CCLK * BOARD_CCLKCFG_DIVIDER)
+      |                                             ^~~~~~~~~~~~~~~~~~~~~
+chip/lpc17_40_pwm.c:338:38: note: in expansion of macro 'LPC17_40_PWM_CLOCK'
+  338 |   mr0_freq = 1.f / info->frequency * LPC17_40_PWM_CLOCK / 10;
+      |                                      ^~~~~~~~~~~~~~~~~~
+CC:  misc/lib_crc8.c In file included from chip/lpc17_40_pwm.c:40:
+chip/lpc17_40_pwm.c: In function 'pwm_setup':
+chip/lpc17_40_pwm.c:572:22: error: 'LPC17_40_SYSCON_PCLKSEL0' undeclared (first use in this function); did you mean 'LPC17_40_SYSCON_PCLKSEL'?
+  572 |   regval  = getreg32(LPC17_40_SYSCON_PCLKSEL0);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/bg9211014/nuttxspace/nuttx/arch/arm/src/common/arm_internal.h:130:48: note: in definition of macro 'getreg32'
+  130 | #define getreg32(a)    (*(volatile uint32_t *)(a))
+      |                                                ^
+chip/lpc17_40_pwm.c:573:14: error: 'SYSCON_PCLKSEL0_PWM1_MASK' undeclared (first use in this function); did you mean 'SYSCON_PCLKSEL_PCLKDIV_MASK'?
+  573 |   regval &= ~SYSCON_PCLKSEL0_PWM1_MASK;                          /* PCLK_MC peripheral clk = CCLK = LPC17_40_CCLK */
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~
+      |              SYSCON_PCLKSEL_PCLKDIV_MASK
+chip/lpc17_40_pwm.c:574:14: error: 'SYSCON_PCLKSEL_CCLK' undeclared (first use in this function); did you mean 'SYSCON_CCLKSEL_CCLKDIV'?
+  574 |   regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL0_PWM1_SHIFT); /* PCLK_MC peripheral clk = CCLK = LPC17_40_CCLK */
+      |              ^~~~~~~~~~~~~~~~~~~
+      |              SYSCON_CCLKSEL_CCLKDIV
+CC:  sched/sched_foreach.c chip/lpc17_40_pwm.c:574:37: error: 'SYSCON_PCLKSEL0_PWM1_SHIFT' undeclared (first use in this function); did you mean 'SYSCON_PCLKSEL_PCLKDIV_SHIFT'?
+  574 |   regval |= (SYSCON_PCLKSEL_CCLK << SYSCON_PCLKSEL0_PWM1_SHIFT); /* PCLK_MC peripheral clk = CCLK = LPC17_40_CCLK */
+      |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                     SYSCON_PCLKSEL_PCLKDIV_SHIFT
+chip/lpc17_40_pwm.c: At top level:
+chip/lpc17_40_pwm.c:266:13: warning: 'pwm_putreg' defined but not used [-Wunused-function]
+  266 | static void pwm_putreg(struct lpc17_40_pwmtimer_s *priv,
+      |             ^~~~~~~~~~
+chip/lpc17_40_pwm.c:246:17: warning: 'pwm_getreg' defined but not used [-Wunused-function]
+  246 | static uint32_t pwm_getreg(struct lpc17_40_pwmtimer_s *priv, int offset)
+      |                 ^~~~~~~~~~
+make[1]: *** [Makefile:194: lpc17_40_pwm.o] Error 1
+make: *** [tools/LibTargets.mk:170: arch/arm/src/libarch.a] Error 2
+make: *** Waiting for unfinished jobs....
+CC:  misc/lib_crc32h04c11db7.c mount_main.c: In function 'show_stat':
+mount_main.c:139:28: warning: format '%d' expects argument of type 'int', but argument 2 has type 'blksize_t' {aka 'long int'} [-Wformat=]
+  139 |   printf("\tblock size  : %d (bytes)\n",  ps->st_blksize);
+      |                           ~^              ~~~~~~~~~~~~~~
+      |                            |                |
+      |                            int              blksize_t {aka long int}
+      |                           %ld
+CC:  net/lib_htonq.c In file included from pwfb_main.c:58:
+pwfb_main.c: In function 'pwfb_state_initialize':
+pwfb_internal.h:99:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '15132410' to '250' [-Woverflow]
+   99 | #    define CONFIG_EXAMPLES_PWFB_COLOR1 0x00e6e6fa
+      |                                         ^~~~~~~~~~
+pwfb_main.c:207:26: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR1'
+  207 |   st->wndo[0].color[0] = CONFIG_EXAMPLES_PWFB_COLOR1;
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_internal.h:109:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '14474460' to '220' [-Woverflow]
+  109 | #    define CONFIG_EXAMPLES_PWFB_COLOR2 0x00dcdcdc
+      |                                         ^~~~~~~~~~
+pwfb_main.c:208:26: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR2'
+  208 |   st->wndo[1].color[0] = CONFIG_EXAMPLES_PWFB_COLOR2;
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_internal.h:119:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '16772275' to '179' [-Woverflow]
+  119 | #    define CONFIG_EXAMPLES_PWFB_COLOR3 0x00ffecb3
+      |                                         ^~~~~~~~~~
+pwfb_main.c:209:26: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR3'
+  209 |   st->wndo[2].color[0] = CONFIG_EXAMPLES_PWFB_COLOR3;
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_internal.h:129:42: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '11119017' to '169' [-Woverflow]
+  129 | #    define CONFIG_EXAMPLES_PWFB_TBCOLOR 0x00a9a9a9
+      |                                          ^~~~~~~~~~
+pwfb_main.c:210:26: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_TBCOLOR'
+  210 |   st->color[0]         = CONFIG_EXAMPLES_PWFB_TBCOLOR;
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CC:  semaphore/sem_destroy.c pwfb_internal.h:99:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '15132410' to '250' [-Woverflow]
+   99 | #    define CONFIG_EXAMPLES_PWFB_COLOR1 0x00e6e6fa
+      |                                         ^~~~~~~~~~
+pwfb_main.c:218:42: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR1'
+  218 |                                          CONFIG_EXAMPLES_PWFB_COLOR1,
+      |                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_internal.h:109:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '14474460' to '220' [-Woverflow]
+  109 | #    define CONFIG_EXAMPLES_PWFB_COLOR2 0x00dcdcdc
+      |                                         ^~~~~~~~~~
+pwfb_main.c:231:42: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR2'
+  231 |                                          CONFIG_EXAMPLES_PWFB_COLOR2,
+      |                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_internal.h:119:41: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '16772275' to '179' [-Woverflow]
+  119 | #    define CONFIG_EXAMPLES_PWFB_COLOR3 0x00ffecb3
+      |                                         ^~~~~~~~~~
+pwfb_main.c:244:42: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_COLOR3'
+  244 |                                          CONFIG_EXAMPLES_PWFB_COLOR3,
+      |                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+pwfb_main.c: In function 'pwfb_main':
+pwfb_internal.h:89:42: warning: unsigned conversion from 'int' to 'nxgl_mxpixel_t' {aka 'unsigned char'} changes value from '8087790' to '238' [-Woverflow]
+   89 | #    define CONFIG_EXAMPLES_PWFB_BGCOLOR 0x007b68ee
+      |                                          ^~~~~~~~~~
+pwfb_main.c:611:11: note: in expansion of macro 'CONFIG_EXAMPLES_PWFB_BGCOLOR'
+  611 |   color = CONFIG_EXAMPLES_PWFB_BGCOLOR;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CC:  semaphore/sem_post.c usbserial_main.c: In function 'usbserial_main':
+usbserial_main.c:218:23: error: 'BOARDIOC_USBDEV_PL2303' undeclared (first use in this function); did you mean 'BOARDIOC_USBDEV_NONE'?
+  218 |       ctrl.usbdev   = BOARDIOC_USBDEV_PL2303;
+      |                       ^~~~~~~~~~~~~~~~~~~~~~
+      |                       BOARDIOC_USBDEV_NONE
+usbserial_main.c:218:23: note: each undeclared identifier is reported only once for each function it appears in
+make[2]: *** [/home/bg9211014/nuttxspace/apps/Application.mk:356: usbserial_main.c.home.bg9211014.nuttxspace.apps.examples.usbserial.o] Error 1
+make[1]: *** [Makefile:54: /home/bg9211014/nuttxspace/apps/examples/usbserial_all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+CC:  pthread/pthread_attr_getinheritsched.c make: *** [tools/LibTargets.mk:248: /home/bg9211014/nuttxspace/apps/libapps.a] Error 2

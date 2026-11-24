@@ -1,0 +1,2051 @@
+=== lpc17_40_irq.c ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_irq.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdint.h>
+#include <assert.h>
+
+#include <nuttx/debug.h>
+#include <nuttx/irq.h>
+#include <nuttx/arch.h>
+#include <arch/irq.h>
+#include <arch/arm_m/nvicpri.h>
+
+#include "nvic.h"
+#include "ram_vectors.h"
+#include "arm_internal.h"
+#include "lpc17_40_gpio.h"
+#include "lpc17_40_clrpend.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Get a 32-bit version of the default priority */
+
+#define DEFPRIORITY32 \
+  (NVIC_SYSH_PRIORITY_DEFAULT << 24 | \
+   NVIC_SYSH_PRIORITY_DEFAULT << 16 | \
+   NVIC_SYSH_PRIORITY_DEFAULT << 8  | \
+   NVIC_SYSH_PRIORITY_DEFAULT)
+
+/* Given the address of a NVIC ENABLE register, this is the offset to
+ * the corresponding CLEAR ENABLE register.
+ */
+
+#define NVIC_ENA_OFFSET    (0)
+#define NVIC_CLRENA_OFFSET (NVIC_IRQ0_31_CLEAR - NVIC_IRQ0_31_ENABLE)
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_dumpnvic
+ *
+ * Description:
+ *   Dump some interesting NVIC registers
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_DEBUG_IRQ_INFO)
+static void lpc17_40_dumpnvic(const char *msg, int irq)
+{
+  irqstate_t flags;
+
+  flags = enter_critical_section();
+
+  irqinfo("NVIC (%s, irq=%d):\n", msg, irq);
+  irqinfo("  INTCTRL:    %08x VECTAB: %08x\n",
+          getreg32(NVIC_INTCTRL), getreg32(NVIC_VECTAB));
+#if 0
+  irqinfo("  SYSH ENABLE MEMFAULT: %08x BUSFAULT: %08x USGFAULT: %08x "
+          "SYSTICK: %08x\n",
+          getreg32(NVIC_SYSHCON_MEMFAULTENA),
+          getreg32(NVIC_SYSHCON_BUSFAULTENA),
+          getreg32(NVIC_SYSHCON_USGFAULTENA),
+          getreg32(NVIC_SYSTICK_CTRL_ENABLE));
+#endif
+  irqinfo("  IRQ ENABLE: %08x\n", getreg32(NVIC_IRQ0_31_ENABLE));
+  irqinfo("  SYSH_PRIO:  %08x %08x %08x\n",
+          getreg32(NVIC_SYSH4_7_PRIORITY),
+          getreg32(NVIC_SYSH8_11_PRIORITY),
+          getreg32(NVIC_SYSH12_15_PRIORITY));
+  irqinfo("  IRQ PRIO:   %08x %08x %08x %08x\n",
+          getreg32(NVIC_IRQ0_3_PRIORITY),
+          getreg32(NVIC_IRQ4_7_PRIORITY),
+          getreg32(NVIC_IRQ8_11_PRIORITY),
+          getreg32(NVIC_IRQ12_15_PRIORITY));
+  irqinfo("              %08x %08x %08x %08x\n",
+          getreg32(NVIC_IRQ16_19_PRIORITY),
+          getreg32(NVIC_IRQ20_23_PRIORITY),
+          getreg32(NVIC_IRQ24_27_PRIORITY),
+          getreg32(NVIC_IRQ28_31_PRIORITY));
+  irqinfo("              %08x %08x %08x %08x\n",
+          getreg32(NVIC_IRQ32_35_PRIORITY),
+          getreg32(NVIC_IRQ36_39_PRIORITY),
+          getreg32(NVIC_IRQ40_43_PRIORITY),
+          getreg32(NVIC_IRQ44_47_PRIORITY));
+
+  leave_critical_section(flags);
+}
+#else
+#  define lpc17_40_dumpnvic(msg, irq)
+#endif
+
+/****************************************************************************
+ * Name: lpc17_40_nmi, lpc17_40_busfault, lpc17_40_usagefault,
+ *       lpc17_40_pendsv, lpc17_40_pendsv, lpc17_40_reserved
+ *
+ * Description:
+ *   Handlers for various exceptions.  None are handled and all are fatal
+ *   error conditions.  The only advantage these provided over the default
+ *   unexpected interrupt handler is that they provide a diagnostic output.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_DEBUG_FEATURES
+static int lpc17_40_nmi(int irq, void *context, void *arg)
+{
+  up_irq_save();
+  _err("PANIC!!! NMI received\n");
+  PANIC();
+  return 0;
+}
+
+static int lpc17_40_pendsv(int irq, void *context, void *arg)
+{
+#ifndef CONFIG_ARCH_HIPRI_INTERRUPT
+  up_irq_save();
+  _err("PANIC!!! PendSV received\n");
+  PANIC();
+#endif
+  return 0;
+}
+
+static int lpc17_40_reserved(int irq, void *context, void *arg)
+{
+  up_irq_save();
+  _err("PANIC!!! Reserved interrupt\n");
+  PANIC();
+  return 0;
+}
+#endif
+
+/****************************************************************************
+ * Name: lpc17_40_prioritize_syscall
+ *
+ * Description:
+ *   Set the priority of an exception.  This function may be needed
+ *   internally even if support for prioritized interrupts is not enabled.
+ *
+ ****************************************************************************/
+
+static inline void lpc17_40_prioritize_syscall(int priority)
+{
+  uint32_t regval;
+
+  /* SVCALL is system handler 11 */
+
+  regval  = getreg32(NVIC_SYSH8_11_PRIORITY);
+  regval &= ~NVIC_SYSH_PRIORITY_PR11_MASK;
+  regval |= (priority << NVIC_SYSH_PRIORITY_PR11_SHIFT);
+  putreg32(regval, NVIC_SYSH8_11_PRIORITY);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_irqinfo
+ *
+ * Description:
+ *   Given an IRQ number, provide the register and bit setting to enable or
+ *   disable the irq.
+ *
+ ****************************************************************************/
+
+static int lpc17_40_irqinfo(int irq, uintptr_t *regaddr, uint32_t *bit,
+                         uintptr_t offset)
+{
+  DEBUGASSERT(irq >= LPC17_40_IRQ_NMI && irq < NR_IRQS);
+
+  /* Check for external interrupt */
+
+  if (irq >= LPC17_40_IRQ_EXTINT)
+    {
+      if (irq < (LPC17_40_IRQ_EXTINT + 32))
+        {
+          *regaddr = (NVIC_IRQ0_31_ENABLE + offset);
+          *bit     = 1 << (irq - LPC17_40_IRQ_EXTINT);
+        }
+      else if (irq < LPC17_40_IRQ_NIRQS)
+        {
+          *regaddr = (NVIC_IRQ32_63_ENABLE + offset);
+          *bit     = 1 << (irq - LPC17_40_IRQ_EXTINT - 32);
+        }
+      else
+        {
+          return ERROR; /* Invalid irq */
+        }
+    }
+
+  /* Handle processor exceptions.  Only a few can be disabled */
+
+  else
+    {
+      *regaddr = NVIC_SYSHCON;
+      if (irq == LPC17_40_IRQ_MEMFAULT)
+        {
+          *bit = NVIC_SYSHCON_MEMFAULTENA;
+        }
+      else if (irq == LPC17_40_IRQ_BUSFAULT)
+        {
+          *bit = NVIC_SYSHCON_BUSFAULTENA;
+        }
+      else if (irq == LPC17_40_IRQ_USAGEFAULT)
+        {
+          *bit = NVIC_SYSHCON_USGFAULTENA;
+        }
+      else if (irq == LPC17_40_IRQ_SYSTICK)
+        {
+          *regaddr = NVIC_SYSTICK_CTRL;
+          *bit = NVIC_SYSTICK_CTRL_ENABLE;
+        }
+      else
+        {
+          return ERROR; /* Invalid or unsupported exception */
+        }
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: up_irqinitialize
+ ****************************************************************************/
+
+void up_irqinitialize(void)
+{
+  uintptr_t regaddr;
+  int nintlines;
+  int i;
+
+  /* The NVIC ICTR register (bits 0-4) holds the number of interrupt
+   * lines that the NVIC supports, defined in groups of 32. That is,
+   * the total number of interrupt lines is up to (32*(INTLINESNUM+1)).
+   *
+   *  0 -> 32 interrupt lines, 1 enable register,   8 priority registers
+   *  1 -> 64 "       " "   ", 2 enable registers, 16 priority registers
+   *  2 -> 96 "       " "   ", 3 enable registers, 24 priority registers
+   *  ...
+   */
+
+  nintlines = (getreg32(NVIC_ICTR) & NVIC_ICTR_INTLINESNUM_MASK) + 1;
+
+  /* Disable all interrupts.  There are nintlines interrupt enable
+   * registers.
+   */
+
+  for (i = nintlines, regaddr = NVIC_IRQ0_31_CLEAR;
+       i > 0;
+       i--, regaddr += 4)
+    {
+      putreg32(0xffffffff, regaddr);
+    }
+
+  /* Make sure that we are using the correct vector table.  The default
+   * vector address is 0x0000:0000 but if we are executing code that is
+   * positioned in SRAM or in external FLASH, then we may need to reset
+   * the interrupt vector so that it refers to the table in SRAM or in
+   * external FLASH.
+   */
+
+  putreg32((uint32_t)_vectors, NVIC_VECTAB);
+
+  /* If CONFIG_ARCH_RAMVECTORS is defined, then we are using a RAM-based
+   * vector table that requires special initialization.
+   *
+   * But even in this case NVIC_VECTAB has to point to the initial table
+   * because arm_ramvec_initialize() initializes RAM table from table
+   * pointed by NVIC_VECTAB register.
+   */
+
+#ifdef CONFIG_ARCH_RAMVECTORS
+  arm_ramvec_initialize();
+#endif
+
+  /* Set all interrupts (and exceptions) to the default priority */
+
+  putreg32(DEFPRIORITY32, NVIC_SYSH4_7_PRIORITY);
+  putreg32(DEFPRIORITY32, NVIC_SYSH8_11_PRIORITY);
+  putreg32(DEFPRIORITY32, NVIC_SYSH12_15_PRIORITY);
+
+  /* Now set all of the interrupt lines to the default priority.  There are
+   * nintlines * 8 priority registers.
+   */
+
+  for (i = (nintlines << 3), regaddr = NVIC_IRQ0_3_PRIORITY;
+       i > 0;
+       i--, regaddr += 4)
+    {
+      putreg32(DEFPRIORITY32, regaddr);
+    }
+
+  /* Attach the SVCall and Hard Fault exception handlers.  The SVCall
+   * exception is used for performing context switches; The Hard Fault
+   * must also be caught because a SVCall may show up as a Hard Fault
+   * under certain conditions.
+   */
+
+  irq_attach(LPC17_40_IRQ_SVCALL, arm_svcall, NULL);
+  irq_attach(LPC17_40_IRQ_HARDFAULT, arm_hardfault, NULL);
+
+  /* Set the priority of the SVCall interrupt */
+
+#ifdef CONFIG_ARCH_IRQPRIO
+  /* up_prioritize_irq(LPC17_40_IRQ_PENDSV, NVIC_SYSH_PRIORITY_MIN); */
+#endif
+
+  lpc17_40_prioritize_syscall(NVIC_SYSH_SVCALL_PRIORITY);
+
+  /* If the MPU is enabled, then attach and enable the Memory Management
+   * Fault handler.
+   */
+
+#ifdef CONFIG_ARM_MPU
+  irq_attach(LPC17_40_IRQ_MEMFAULT, arm_memfault, NULL);
+  up_enable_irq(LPC17_40_IRQ_MEMFAULT);
+#endif
+
+  /* Attach all other processor exceptions (except reset and sys tick) */
+
+#ifdef CONFIG_DEBUG_FEATURES
+  irq_attach(LPC17_40_IRQ_NMI, lpc17_40_nmi, NULL);
+#ifndef CONFIG_ARM_MPU
+  irq_attach(LPC17_40_IRQ_MEMFAULT, arm_memfault, NULL);
+#endif
+  irq_attach(LPC17_40_IRQ_BUSFAULT, arm_busfault, NULL);
+  irq_attach(LPC17_40_IRQ_USAGEFAULT, arm_usagefault, NULL);
+  irq_attach(LPC17_40_IRQ_PENDSV, lpc17_40_pendsv, NULL);
+  arm_enable_dbgmonitor();
+  irq_attach(LPC17_40_IRQ_DBGMONITOR, arm_dbgmonitor, NULL);
+  irq_attach(LPC17_40_IRQ_RESERVED, lpc17_40_reserved, NULL);
+#endif
+
+  lpc17_40_dumpnvic("initial", LPC17_40_IRQ_NIRQS);
+
+  /* Initialize logic to support a second level of interrupt decoding for
+   * GPIO pins.
+   */
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+  lpc17_40_gpioirqinitialize();
+#endif
+
+  /* And finally, enable interrupts */
+
+#ifndef CONFIG_SUPPRESS_INTERRUPTS
+  arm_color_intstack();
+  up_irq_enable();
+#endif
+}
+
+/****************************************************************************
+ * Name: up_disable_irq
+ *
+ * Description:
+ *   Disable the IRQ specified by 'irq'
+ *
+ ****************************************************************************/
+
+void up_disable_irq(int irq)
+{
+  uintptr_t regaddr;
+  uint32_t regval;
+  uint32_t bit;
+
+  if (lpc17_40_irqinfo(irq, &regaddr, &bit, NVIC_CLRENA_OFFSET) == 0)
+    {
+      /* Modify the appropriate bit in the register to disable the interrupt.
+       * For normal interrupts, we need to set the bit in the associated
+       * Interrupt Clear Enable register.  For other exceptions, we need to
+       * clear the bit in the System Handler Control and State Register.
+       */
+
+      if (irq >= LPC17_40_IRQ_EXTINT)
+        {
+          putreg32(bit, regaddr);
+        }
+      else
+        {
+          regval  = getreg32(regaddr);
+          regval &= ~bit;
+          putreg32(regval, regaddr);
+        }
+    }
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+  else if (irq >= LPC17_40_VALID_FIRST0L)
+    {
+      /* Maybe it is a (derived) GPIO IRQ */
+
+      lpc17_40_gpioirqdisable(irq);
+    }
+#endif
+
+  lpc17_40_dumpnvic("disable", irq);
+}
+
+/****************************************************************************
+ * Name: up_enable_irq
+ *
+ * Description:
+ *   Enable the IRQ specified by 'irq'
+ *
+ ****************************************************************************/
+
+void up_enable_irq(int irq)
+{
+  uintptr_t regaddr;
+  uint32_t regval;
+  uint32_t bit;
+
+  if (lpc17_40_irqinfo(irq, &regaddr, &bit, NVIC_ENA_OFFSET) == 0)
+    {
+      /* Modify the appropriate bit in the register to enable the interrupt.
+       * For normal interrupts, we need to set the bit in the associated
+       * Interrupt Set Enable register.  For other exceptions, we need to
+       * set the bit in the System Handler Control and State Register.
+       */
+
+      if (irq >= LPC17_40_IRQ_EXTINT)
+        {
+          putreg32(bit, regaddr);
+        }
+      else
+        {
+          regval  = getreg32(regaddr);
+          regval |= bit;
+          putreg32(regval, regaddr);
+        }
+    }
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+  else if (irq >= LPC17_40_VALID_FIRST0L)
+    {
+      /* Maybe it is a (derived) GPIO IRQ */
+
+      lpc17_40_gpioirqenable(irq);
+    }
+#endif
+
+  lpc17_40_dumpnvic("enable", irq);
+}
+
+/****************************************************************************
+ * Name: arm_ack_irq
+ *
+ * Description:
+ *   Acknowledge the IRQ
+ *
+ ****************************************************************************/
+
+void arm_ack_irq(int irq)
+{
+#if 0 /* Does not appear to be necessary in most cases */
+  lpc17_40_clrpend(irq);
+#endif
+}
+
+/****************************************************************************
+ * Name: up_prioritize_irq
+ *
+ * Description:
+ *   Set the priority of an IRQ.
+ *
+ *   Since this API is not supported on all architectures, it should be
+ *   avoided in common implementations where possible.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_ARCH_IRQPRIO
+int up_prioritize_irq(int irq, int priority)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+  int shift;
+
+  DEBUGASSERT(irq >= LPC17_40_IRQ_MEMFAULT && irq < LPC17_40_IRQ_NIRQS &&
+              (unsigned)priority <= NVIC_SYSH_PRIORITY_MIN);
+
+  if (irq < LPC17_40_IRQ_EXTINT)
+    {
+      /* NVIC_SYSH_PRIORITY() maps {0..15} to one of three priority
+       * registers (0-3 are invalid)
+       */
+
+      regaddr = NVIC_SYSH_PRIORITY(irq);
+      irq    -= 4;
+    }
+  else
+    {
+      /* NVIC_IRQ_PRIORITY() maps {0..} to one of many priority registers */
+
+      irq    -= LPC17_40_IRQ_EXTINT;
+      regaddr = NVIC_IRQ_PRIORITY(irq);
+    }
+
+  regval      = getreg32(regaddr);
+  shift       = ((irq & 3) << 3);
+  regval     &= ~(0xff << shift);
+  regval     |= (priority << shift);
+  putreg32(regval, regaddr);
+
+  lpc17_40_dumpnvic("prioritize", irq);
+  return OK;
+}
+#endif
+=== lpc178x_40xx_irq.h ===
+/****************************************************************************
+ * arch/arm/include/lpc17xx_40xx/lpc178x_40xx_irq.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/* This file should never be included directly but, rather,
+ * only indirectly through nuttx/irq.h
+ */
+
+#ifndef __ARCH_ARM_INCLUDE_LPC17XX_40XX_LPC178X_40XX_IRQ_H
+#define __ARCH_ARM_INCLUDE_LPC17XX_40XX_LPC178X_40XX_IRQ_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+/****************************************************************************
+ * Pre-processor Prototypes
+ ****************************************************************************/
+
+/* IRQ numbers.  The IRQ number corresponds vector number and hence map
+ * directly to bits in the NVIC.  This does, however, waste several words of
+ * memory in the IRQ to handle mapping tables.
+ */
+
+/* External interrupts (vectors >= 16) */
+
+#define LPC17_40_IRQ_WDT           (LPC17_40_IRQ_EXTINT+0)  /* WDT Watchdog Interrupt (WDINT) */
+#define LPC17_40_IRQ_TMR0          (LPC17_40_IRQ_EXTINT+1)  /* Timer 0 Match 0 - 1 (MR0, MR1)
+                                                             * Capture 0 - 1 (CR0, CR1) */
+#define LPC17_40_IRQ_TMR1          (LPC17_40_IRQ_EXTINT+2)  /* Timer 1 Match 0 - 2 (MR0, MR1, MR2)
+                                                             * Capture 0 - 1 (CR0, CR1) */
+#define LPC17_40_IRQ_TMR2          (LPC17_40_IRQ_EXTINT+3)  /* Timer 2 Match 0-3
+                                                             * Capture 0-1 */
+#define LPC17_40_IRQ_TMR3          (LPC17_40_IRQ_EXTINT+4)  /* Timer 3 Match 0-3
+                                                             * Capture 0-1 */
+#define LPC17_40_IRQ_UART0         (LPC17_40_IRQ_EXTINT+5)  /* UART 0 Rx Line Status (RLS)
+                                                             * Transmit Holding Register Empty (THRE)
+                                                             * Rx Data Available (RDA)
+                                                             * Character Time-out Indicator (CTI)
+                                                             * End of Auto-Baud (ABEO)
+                                                             * Auto-Baud Time-Out (ABTO) */
+#define LPC17_40_IRQ_UART1         (LPC17_40_IRQ_EXTINT+6)  /* UART 1 Rx Line Status (RLS)
+                                                             * Transmit Holding Register Empty (THRE)
+                                                             * Rx Data Available (RDA)
+                                                             * Character Time-out Indicator (CTI)
+                                                             * Modem Control Change
+                                                             * End of Auto-Baud (ABEO)
+                                                             * Auto-Baud Time-Out (ABTO) */
+#define LPC17_40_IRQ_UART2         (LPC17_40_IRQ_EXTINT+7)  /* UART 2 Rx Line Status (RLS)
+                                                             * Transmit Holding Register Empty (THRE)
+                                                             * Rx Data Available (RDA)
+                                                             * Character Time-out Indicator (CTI)
+                                                             * End of Auto-Baud (ABEO)
+                                                             * Auto-Baud Time-Out (ABTO) */
+#define LPC17_40_IRQ_UART3         (LPC17_40_IRQ_EXTINT+8)  /* UART 3 Rx Line Status (RLS)
+                                                             * Transmit Holding Register Empty (THRE)
+                                                             * Rx Data Available (RDA)
+                                                             * Character Time-out Indicator (CTI)
+                                                             * End of Auto-Baud (ABEO)
+                                                             * Auto-Baud Time-Out (ABTO) */
+#define LPC17_40_IRQ_PWM1          (LPC17_40_IRQ_EXTINT+9)  /* PWM1 Match 0 - 6 of PWM1
+                                                             * Capture 0-1 of PWM1 */
+#define LPC17_40_IRQ_I2C0          (LPC17_40_IRQ_EXTINT+10) /* I2C0 SI (state change) */
+#define LPC17_40_IRQ_I2C1          (LPC17_40_IRQ_EXTINT+11) /* I2C1 SI (state change) */
+#define LPC17_40_IRQ_I2C2          (LPC17_40_IRQ_EXTINT+12) /* I2C2 SI (state change) */
+#define LPC17_40_IRQ_RESERVED29    (LPC17_40_IRQ_EXTINT+13) /* Unused  */
+#define LPC17_40_IRQ_SSP0          (LPC17_40_IRQ_EXTINT+14) /* SSP0 Tx FIFO half empty of SSP0
+                                                             * Rx FIFO half full of SSP0
+                                                             * Rx Timeout of SSP0
+                                                             * Rx Overrun of SSP0 */
+#define LPC17_40_IRQ_SSP1          (LPC17_40_IRQ_EXTINT+15) /* SSP 1 Tx FIFO half empty
+                                                             * Rx FIFO half full
+                                                             * Rx Timeout
+                                                             * Rx Overrun */
+#define LPC17_40_IRQ_PLL0          (LPC17_40_IRQ_EXTINT+16) /* PLL0 (Main PLL) PLL0 Lock (PLOCK0) */
+#define LPC17_40_IRQ_RTC           (LPC17_40_IRQ_EXTINT+17) /* RTC Counter Increment (RTCCIF)
+                                                             * Alarm (RTCALF) */
+#define LPC17_40_IRQ_EINT0         (LPC17_40_IRQ_EXTINT+18) /* External Interrupt 0 (EINT0) */
+#define LPC17_40_IRQ_EINT1         (LPC17_40_IRQ_EXTINT+19) /* External Interrupt 1 (EINT1) */
+#define LPC17_40_IRQ_EINT2         (LPC17_40_IRQ_EXTINT+20) /* External Interrupt 2 (EINT2) */
+#define LPC17_40_IRQ_EINT3         (LPC17_40_IRQ_EXTINT+21) /* External Interrupt 3 (EINT3)
+                                                             * Note: EINT3 channel is shared with GPIO interrupts */
+#define LPC17_40_IRQ_ADC           (LPC17_40_IRQ_EXTINT+22) /* ADC A/D Converter end of conversion */
+#define LPC17_40_IRQ_BOD           (LPC17_40_IRQ_EXTINT+23) /* BOD Brown Out detect */
+#define LPC17_40_IRQ_USB           (LPC17_40_IRQ_EXTINT+24) /* USB USB_INT_REQ_LP, USB_INT_REQ_HP,
+                                                             * USB_INT_REQ_DMA */
+#define LPC17_40_IRQ_CAN           (LPC17_40_IRQ_EXTINT+25) /* CAN CAN Common, CAN 0 Tx, CAN 0 Rx,
+                                                             *                 CAN 1 Tx, CAN 1 Rx */
+#define LPC17_40_IRQ_GPDMA         (LPC17_40_IRQ_EXTINT+26) /* GPDMA IntStatus of DMA channel 0,
+                                                             *       IntStatus of DMA channel 1 */
+#define LPC17_40_IRQ_I2S           (LPC17_40_IRQ_EXTINT+27) /* I2S irq, dmareq1, dmareq2 */
+#define LPC17_40_IRQ_ETH           (LPC17_40_IRQ_EXTINT+28) /* Ethernet WakeupInt, SoftInt, TxDoneInt,
+                                                             * TxFinishedInt, TxErrorInt,* TxUnderrunInt,
+                                                             * RxDoneInt, RxFinishedInt, RxErrorInt,
+                                                             * RxOverrunInt */
+#define LPC17_40_IRQ_MCI           (LPC17_40_IRQ_EXTINT+29) /* MCI SD Card Interface */
+#define LPC17_40_IRQ_MCPWM         (LPC17_40_IRQ_EXTINT+30) /* Motor Control PWM IPER[2:0], IPW[2:0],
+                                                             * ICAP[2:0], FES */
+#define LPC17_40_IRQ_QEI           (LPC17_40_IRQ_EXTINT+31) /* Quadrature Encoder INX_Int, TIM_Int, VELC_Int,
+                                                             * DIR_Int, ERR_Int, ENCLK_Int, POS0_Int, POS1_Int
+                                                             * POS2_Int, REV_Int, POS0REV_Int, OS1REV_Int,
+                                                             * POS2REV_Int */
+#define LPC17_40_IRQ_PLL1          (LPC17_40_IRQ_EXTINT+32) /* PLL1 (USB PLL) PLL1 Lock (PLOCK1) */
+#define LPC17_40_IRQ_USBACT        (LPC17_40_IRQ_EXTINT+33) /* USB Activity Interrupt USB_NEED_CLK */
+#define LPC17_40_IRQ_CANACT        (LPC17_40_IRQ_EXTINT+34) /* CAN Activity Interrupt CAN1WAKE, CAN2WAKE */
+#define LPC17_40_IRQ_UART4         (LPC17_40_IRQ_EXTINT+35) /* UART 4 Rx Line Status (RLS)
+                                                             * Transmit Holding Register Empty (THRE)
+                                                             * Rx Data Available (RDA)
+                                                             * Character Time-out Indicator (CTI)
+                                                             * End of Auto-Baud (ABEO)
+                                                             * Auto-Baud Time-Out (ABTO) */
+#define LPC17_40_IRQ_SSP2          (LPC17_40_IRQ_EXTINT+36) /* SSP2 Tx FIFO half empty of SSP2
+                                                             * Rx FIFO half full of SSP2
+                                                             * Rx Timeout of SSP2
+                                                             * Rx Overrun of SSP2 */
+#define LPC17_40_IRQ_LCD           (LPC17_40_IRQ_EXTINT+37) /* LCD interrupt
+                                                             * BER, VCompI, LNBUI, FUFI, CrsrI */
+#define LPC17_40_IRQ_GPIO          (LPC17_40_IRQ_EXTINT+38) /* GPIO Interrupt
+                                                             * P0xREI, P2xREI, P0xFEI, P2xFEI */
+#define LPC17_40_IRQ_PWM0          (LPC17_40_IRQ_EXTINT+39) /* PWM0 Match 0 - 6 of PWM0
+                                                             * Capture 0-1 of PWM0 */
+#define LPC17_40_IRQ_EEPROM        (LPC17_40_IRQ_EXTINT+40) /* EEPROM Interrupt
+                                                             * EE_PROG_DONE, EE_RW_DONE */
+#define LPC17_40_IRQ_NEXTINT       (41)
+#define LPC17_40_IRQ_NIRQS         (LPC17_40_IRQ_EXTINT+LPC17_40_IRQ_NEXTINT)
+
+/* GPIO interrupts.
+ * The LPC177x_8x supports several interrupts on ports 0 and 2 (only).
+ * We go through some special efforts to keep the number of IRQs
+ * to a minimum in this sparse interrupt case.
+ *
+ * 31 interrupts on Port 0:  p0.0 - p0.30
+ * 31 interrupts on Port 2:  p2.0 - p2.30
+ * --
+ * 42
+ */
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+#  define LPC17_40_VALID_GPIOINT0   (0xfffffffful) /* GPIO port 0 interrupt set */
+#  define LPC17_40_VALID_GPIOINT2   (0xfffffffful) /* GPIO port 2 interrupt set */
+
+/* Set 1: 16 interrupts p0.0-p0.15 */
+
+#  define LPC17_40_VALID_SHIFT0L    (0)
+#  define LPC17_40_VALID_FIRST0L    (LPC17_40_IRQ_EXTINT+LPC17_40_IRQ_NEXTINT)
+
+#  define LPC17_40_IRQ_P0p0         (LPC17_40_VALID_FIRST0L+0)
+#  define LPC17_40_IRQ_P0p1         (LPC17_40_VALID_FIRST0L+1)
+#  define LPC17_40_IRQ_P0p2         (LPC17_40_VALID_FIRST0L+2)
+#  define LPC17_40_IRQ_P0p3         (LPC17_40_VALID_FIRST0L+3)
+#  define LPC17_40_IRQ_P0p4         (LPC17_40_VALID_FIRST0L+4)
+#  define LPC17_40_IRQ_P0p5         (LPC17_40_VALID_FIRST0L+5)
+#  define LPC17_40_IRQ_P0p6         (LPC17_40_VALID_FIRST0L+6)
+#  define LPC17_40_IRQ_P0p7         (LPC17_40_VALID_FIRST0L+7)
+#  define LPC17_40_IRQ_P0p8         (LPC17_40_VALID_FIRST0L+8)
+#  define LPC17_40_IRQ_P0p9         (LPC17_40_VALID_FIRST0L+9)
+#  define LPC17_40_IRQ_P0p10        (LPC17_40_VALID_FIRST0L+10)
+#  define LPC17_40_IRQ_P0p11        (LPC17_40_VALID_FIRST0L+11)
+#  define LPC17_40_IRQ_P0p12        (LPC17_40_VALID_FIRST0L+12)
+#  define LPC17_40_IRQ_P0p13        (LPC17_40_VALID_FIRST0L+13)
+#  define LPC17_40_IRQ_P0p14        (LPC17_40_VALID_FIRST0L+14)
+#  define LPC17_40_IRQ_P0p15        (LPC17_40_VALID_FIRST0L+15)
+#  define LPC17_40_VALID_NIRQS0L    (16)
+
+/* Set 2: 16 interrupts p0.16-p0.31 */
+
+#  define LPC17_40_VALID_SHIFT0H    (16)
+#  define LPC17_40_VALID_FIRST0H    (LPC17_40_VALID_FIRST0L+LPC17_40_VALID_NIRQS0L)
+
+#  define LPC17_40_IRQ_P0p16        (LPC17_40_VALID_FIRST0H+0)
+#  define LPC17_40_IRQ_P0p17        (LPC17_40_VALID_FIRST0H+1)
+#  define LPC17_40_IRQ_P0p18        (LPC17_40_VALID_FIRST0H+2)
+#  define LPC17_40_IRQ_P0p19        (LPC17_40_VALID_FIRST0H+3)
+#  define LPC17_40_IRQ_P0p20        (LPC17_40_VALID_FIRST0H+4)
+#  define LPC17_40_IRQ_P0p21        (LPC17_40_VALID_FIRST0H+5)
+#  define LPC17_40_IRQ_P0p22        (LPC17_40_VALID_FIRST0H+6)
+#  define LPC17_40_IRQ_P0p23        (LPC17_40_VALID_FIRST0H+7)
+#  define LPC17_40_IRQ_P0p24        (LPC17_40_VALID_FIRST0H+8)
+#  define LPC17_40_IRQ_P0p25        (LPC17_40_VALID_FIRST0H+9)
+#  define LPC17_40_IRQ_P0p26        (LPC17_40_VALID_FIRST0H+10)
+#  define LPC17_40_IRQ_P0p27        (LPC17_40_VALID_FIRST0H+11)
+#  define LPC17_40_IRQ_P0p28        (LPC17_40_VALID_FIRST0H+12)
+#  define LPC17_40_IRQ_P0p29        (LPC17_40_VALID_FIRST0H+13)
+#  define LPC17_40_IRQ_P0p30        (LPC17_40_VALID_FIRST0H+14)
+#  define LPC17_40_IRQ_P0p31        (LPC17_40_VALID_FIRST0H+15)
+#  define LPC17_40_VALID_NIRQS0H    (16)
+
+/* Set 3: 16 interrupts p2.0-p2.15 */
+
+#  define LPC17_40_VALID_SHIFT2L    (0)
+#  define LPC17_40_VALID_FIRST2L    (LPC17_40_VALID_FIRST0H+LPC17_40_VALID_NIRQS0H)
+
+#  define LPC17_40_IRQ_P2p0         (LPC17_40_VALID_FIRST2L+0)
+#  define LPC17_40_IRQ_P2p1         (LPC17_40_VALID_FIRST2L+1)
+#  define LPC17_40_IRQ_P2p2         (LPC17_40_VALID_FIRST2L+2)
+#  define LPC17_40_IRQ_P2p3         (LPC17_40_VALID_FIRST2L+3)
+#  define LPC17_40_IRQ_P2p4         (LPC17_40_VALID_FIRST2L+4)
+#  define LPC17_40_IRQ_P2p5         (LPC17_40_VALID_FIRST2L+5)
+#  define LPC17_40_IRQ_P2p6         (LPC17_40_VALID_FIRST2L+6)
+#  define LPC17_40_IRQ_P2p7         (LPC17_40_VALID_FIRST2L+7)
+#  define LPC17_40_IRQ_P2p8         (LPC17_40_VALID_FIRST2L+8)
+#  define LPC17_40_IRQ_P2p9         (LPC17_40_VALID_FIRST2L+9)
+#  define LPC17_40_IRQ_P2p10        (LPC17_40_VALID_FIRST2L+10)
+#  define LPC17_40_IRQ_P2p11        (LPC17_40_VALID_FIRST2L+11)
+#  define LPC17_40_IRQ_P2p12        (LPC17_40_VALID_FIRST2L+12)
+#  define LPC17_40_IRQ_P2p13        (LPC17_40_VALID_FIRST2L+13)
+#  define LPC17_40_IRQ_P2p14        (LPC17_40_VALID_FIRST2L+14)
+#  define LPC17_40_IRQ_P2p15        (LPC17_40_VALID_FIRST2L+15)
+#  define LPC17_40_VALID_NIRQS2L    (16)
+
+/* Set 4: 16 interrupts p2.16 - p2.31 */
+
+#  define LPC17_40_VALID_SHIFT2H    (16)
+#  define LPC17_40_VALID_FIRST2H    (LPC17_40_VALID_FIRST2L+LPC17_40_VALID_NIRQS2L)
+
+#  define LPC17_40_IRQ_P2p16        (LPC17_40_VALID_FIRST2H+0)
+#  define LPC17_40_IRQ_P2p17        (LPC17_40_VALID_FIRST2H+1)
+#  define LPC17_40_IRQ_P2p18        (LPC17_40_VALID_FIRST2H+2)
+#  define LPC17_40_IRQ_P2p19        (LPC17_40_VALID_FIRST2H+3)
+#  define LPC17_40_IRQ_P2p20        (LPC17_40_VALID_FIRST2H+4)
+#  define LPC17_40_IRQ_P2p21        (LPC17_40_VALID_FIRST2H+5)
+#  define LPC17_40_IRQ_P2p22        (LPC17_40_VALID_FIRST2H+6)
+#  define LPC17_40_IRQ_P2p23        (LPC17_40_VALID_FIRST2H+7)
+#  define LPC17_40_IRQ_P2p24        (LPC17_40_VALID_FIRST2H+8)
+#  define LPC17_40_IRQ_P2p25        (LPC17_40_VALID_FIRST2H+9)
+#  define LPC17_40_IRQ_P2p26        (LPC17_40_VALID_FIRST2H+10)
+#  define LPC17_40_IRQ_P2p27        (LPC17_40_VALID_FIRST2H+11)
+#  define LPC17_40_IRQ_P2p28        (LPC17_40_VALID_FIRST2H+12)
+#  define LPC17_40_IRQ_P2p29        (LPC17_40_VALID_FIRST2H+13)
+#  define LPC17_40_IRQ_P2p30        (LPC17_40_VALID_FIRST2H+14)
+#  define LPC17_40_IRQ_P2p31        (LPC17_40_VALID_FIRST2H+15)
+#  define LPC17_40_VALID_NIRQS2H    (16)
+
+#  define LPC17_40_NGPIOAIRQS       (LPC17_40_VALID_NIRQS0L+LPC17_40_VALID_NIRQS0H+LPC17_40_VALID_NIRQS2L+LPC17_40_VALID_NIRQS2H)
+#else
+#  define LPC17_40_NGPIOAIRQS       (0)
+#endif
+
+/* Total number of IRQ numbers */
+
+#define NR_IRQS                     (LPC17_40_IRQ_EXTINT+LPC17_40_IRQ_NEXTINT+LPC17_40_NGPIOAIRQS)
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Inline functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#endif /* __ARCH_ARM_INCLUDE_LPC17XX_40XX_LPC178X_40XX_IRQ_H */
+=== lpc178x_40xx_memorymap.h ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_memorymap.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_MEMORYMAP_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_MEMORYMAP_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include "chip.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Memory Map ***************************************************************/
+
+#define LPC17_40_FLASH_BASE     0x00000000 /* -0x1fffffff: On-chip non-volatile memory */
+#define LPC17_40_SRAM_BASE      0x10000000 /* -0x10007fff: On-chip SRAM (devices <=32Kb) */
+#define LPC17_40_ROM_BASE       0x1fff0000 /* -0x1fffffff: 8Kb Boot ROM with flash services */
+#define LPC17_40_AHBSRAM_BASE   0x20000000 /* -0x3fffffff: On-chip Peripheral SRAM (devices >32Kb) */
+#  define LPC17_40_SRAM_BANK0   0x20000000 /* -0x20003fff: On-chip Peripheral SRAM Bank0 (devices >=32Kb) */
+#  define LPC17_40_SRAM_BANK1   0x20004000 /* -0x20007fff: On-chip Peripheral SRAM Bank1 (devices 64Kb) */
+#define LPC17_40_AHB_BASE       0x20080000 /* -0x2008ffff: DMA Controller, Ethernet, and USB */
+#define LPC17_40_SPIFI_BASE     0x28000000 /* -0x28ffffff: SPIFI memory mapped region */
+#define LPC17_40_APB_BASE       0x40000000 /* -0x5fffffff: APB Peripherals */
+#  define LPC17_40_APB0_BASE    0x40000000 /* -0x4007ffff: APB0 Peripherals */
+#  define LPC17_40_APB1_BASE    0x40080000 /* -0x400fffff: APB1 Peripherals */
+
+/* Off chip Memory via External Memory Interface */
+
+#define LPC17_40_EXTRAM_BASE    0x80000000 /*  */
+#  define LPC17_40_EXTSRAM_CS0  0x80000000 /* Chip select 0 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS1  0x90000000 /* Chip select 1 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS2  0x98000000 /* Chip select 2 /up to 64MB/  */
+#  define LPC17_40_EXTSRAM_CS3  0x9c000000 /* Chip select 3 /up to 64MB/  */
+
+#  define LPC17_40_EXTDRAM_CS0  0xa0000000 /* Chip select 0 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS1  0xb0000000 /* Chip select 1 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS2  0xc0000000 /* Chip select 2 /up to 256MB/  */
+#  define LPC17_40_EXTDRAM_CS3  0xd0000000 /* Chip select 3 /up to 256MB/  */
+
+#define LPC17_40_CORTEXM3_BASE  0xe0000000 /* -0xe00fffff: (see armv7-m/nvic.h) */
+#define LPC17_40_SCS_BASE       0xe000e000
+#define LPC17_40_DEBUGMCU_BASE  0xe0042000
+
+/* AHB SRAM Bank sizes ******************************************************/
+
+#define LPC17_40_BANK0_SIZE     (16*1024)  /* Size of AHB SRAM Bank0 (if present) */
+#define LPC17_40_BANK1_SIZE     (16*1024)  /* Size of AHB SRAM Bank1 (if present) */
+
+/* APB0 Peripherals *********************************************************/
+
+#define LPC17_40_WDT_BASE       0x40000000 /* -0x40003fff: Watchdog timer */
+#define LPC17_40_TMR0_BASE      0x40004000 /* -0x40007fff: Timer 0 */
+#define LPC17_40_TMR1_BASE      0x40008000 /* -0x4000bfff: Timer 1 */
+#define LPC17_40_UART0_BASE     0x4000c000 /* -0x4000ffff: UART 0 */
+#define LPC17_40_UART1_BASE     0x40010000 /* -0x40013fff: UART 1 */
+#define LPC17_40_PWM0_BASE      0x40014000 /* -0x40017fff: PWM 0 */
+#define LPC17_40_PWM1_BASE      0x40018000 /* -0x4001bfff: PWM 1 */
+#define LPC17_40_I2C0_BASE      0x4001c000 /* -0x4001ffff: I2C 0 */
+#define LPC17_40_CMP_BASE       0x40020000 /* -0x40023fff: Analog Comparators (LPC40xx only)*/
+#define LPC17_40_RTC_BASE       0x40024000 /* -0x40027fff: RTC + backup registers */
+#define LPC17_40_GPIOINT_BASE   0x40028000 /* -0x4002bfff: GPIO interrupts */
+#define LPC17_40_IOCON_BASE     0x4002c000 /* -0x4002ffff: Pin connect block */
+#define LPC17_40_SSP1_BASE      0x40030000 /* -0x40033fff: SSP 1 */
+#define LPC17_40_ADC_BASE       0x40034000 /* -0x40037fff: ADC */
+#define LPC17_40_CANAFRAM_BASE  0x40038000 /* -0x4003bfff: CAN acceptance filter (AF) RAM */
+#define LPC17_40_CANAF_BASE     0x4003c000 /* -0x4003ffff: CAN acceptance filter (AF) registers */
+#define LPC17_40_CAN_BASE       0x40040000 /* -0x40043fff: CAN common registers */
+#define LPC17_40_CAN1_BASE      0x40044000 /* -0x40047fff: CAN controller l */
+#define LPC17_40_CAN2_BASE      0x40048000 /* -0x4004bfff: CAN controller 2 */
+                                           /* -0x4005bfff: Reserved */
+#define LPC17_40_I2C1_BASE      0x4005c000 /* -0x4005ffff: I2C 1 */
+                                           /* -0x4007ffff: Reserved */
+
+/* APB1 Peripherals *********************************************************/
+
+                                           /* -0x40087fff: Reserved */
+#define LPC17_40_SSP0_BASE      0x40088000 /* -0x4008bfff: SSP 0 */
+#define LPC17_40_DAC_BASE       0x4008c000 /* -0x4008ffff: DAC */
+#define LPC17_40_TMR2_BASE      0x40090000 /* -0x40093fff: Timer 2 */
+#define LPC17_40_TMR3_BASE      0x40094000 /* -0x40097fff: Timer 3 */
+#define LPC17_40_UART2_BASE     0x40098000 /* -0x4009bfff: UART 2 */
+#define LPC17_40_UART3_BASE     0x4009c000 /* -0x4009ffff: UART 3 */
+#define LPC17_40_I2C2_BASE      0x400a0000 /* -0x400a3fff: I2C 2 */
+#define LPC17_40_UART4_BASE     0x400a4000 /* -0x400a7fff: UART4 */
+#define LPC17_40_I2S_BASE       0x400a8000 /* -0x400abfff: I2S */
+#define LPC17_40_SSP2_BASE      0x400ac000 /* -0x400affff: SSP2 */
+                                           /* -0x400b3fff: Reserved */
+                                           /* -0x400b7fff: Reserved */
+#define LPC17_40_MCPWM_BASE     0x400b8000 /* -0x400bbfff: Motor control PWM */
+#define LPC17_40_QEI_BASE       0x400bc000 /* -0x400bffff: Quadrature encoder interface */
+#define LPC17_40_MCI_BASE       0x400c0000 /* -0x400fbfff: SD interface */
+#define LPC17_40_SYSCON_BASE    0x400fc000 /* -0x400fffff: System control */
+
+/* AHB Peripherals **********************************************************/
+
+#define LPC17_40_GPDMA_BASE     0x20080000 /*  GPDMA controller */
+#define LPC17_40_ETH_BASE       0x20084000 /*  Ethernet controller */
+#define LPC17_40_LCD_BASE       0x20088000 /*  LCD controller */
+#define LPC17_40_USB_BASE       0x2008c000 /*  USB controller */
+#define LPC17_40_CRC_BASE       0x20090000 /*  CRC engine */
+#define LPC17_40_SPIFICFG_BASE  0x20094000 /*  SPIFI configuration registers */
+#define LPC17_40_GPIO_BASE      0x20098000 /*  GPIO */
+#define LPC17_40_EMC_BASE       0x2009c000 /*  External Memory Controller */
+
+/* EEPROM */
+
+#define LPC17_40_EEPROM_BASE    0x00200000 /* EEPROM controller */
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+#endif /* __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC178X_40XX_MEMORYMAP_H */
+=== lpc17_40_gpio.h ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC17_40_GPIO_H
+#define __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC17_40_GPIO_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include "chip.h"
+#include "hardware/lpc17_40_memorymap.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Register offsets *********************************************************/
+
+/* GPIO block register offsets **********************************************/
+
+#define LPC17_40_FIO0_OFFSET                0x0000
+#define LPC17_40_FIO1_OFFSET                0x0020
+#define LPC17_40_FIO2_OFFSET                0x0040
+#define LPC17_40_FIO3_OFFSET                0x0060
+#define LPC17_40_FIO4_OFFSET                0x0080
+#ifdef LPC178x_40xx
+#  define LPC17_40_FIO5_OFFSET              0x00a0
+#endif
+
+#define LPC17_40_FIO_DIR_OFFSET             0x0000  /* Fast GPIO Port Direction control */
+#define LPC17_40_FIO_MASK_OFFSET            0x0010  /* Fast Mask register for ports */
+#define LPC17_40_FIO_PIN_OFFSET             0x0014  /* Fast Port Pin value registers */
+#define LPC17_40_FIO_SET_OFFSET             0x0018  /* Fast Port Output Set registers */
+#define LPC17_40_FIO_CLR_OFFSET             0x001c  /* Fast Port Output Clear register */
+
+/* GPIO interrupt block register offsets ************************************/
+
+#define LPC17_40_GPIOINT_OFFSET(n)          (0x10*(n) + 0x80)
+#define LPC17_40_GPIOINT0_OFFSET            0x0080
+#define LPC17_40_GPIOINT2_OFFSET            0x00a0
+
+#define LPC17_40_GPIOINT_IOINTSTATUS_OFFSET 0x0000  /* GPIO overall Interrupt Status */
+#define LPC17_40_GPIOINT_INTSTATR_OFFSET    0x0004  /* GPIO Interrupt Status Rising edge */
+#define LPC17_40_GPIOINT_INTSTATF_OFFSET    0x0008  /* GPIO Interrupt Status Falling edge */
+#define LPC17_40_GPIOINT_INTCLR_OFFSET      0x000c  /* GPIO Interrupt Clear */
+#define LPC17_40_GPIOINT_INTENR_OFFSET      0x0010  /* GPIO Interrupt Enable Rising edge */
+#define LPC17_40_GPIOINT_INTENF_OFFSET      0x0014  /* GPIO Interrupt Enable Falling edge */
+
+/* Register addresses *******************************************************/
+
+/* GPIO block register addresses ********************************************/
+
+#define LPC17_40_FIO_BASE(n)                (LPC17_40_GPIO_BASE+LPC17_40_GPIOINT_OFFSET(n))
+#define LPC17_40_FIO0_BASE                  (LPC17_40_GPIO_BASE+LPC17_40_FIO0_OFFSET)
+#define LPC17_40_FIO1_BASE                  (LPC17_40_GPIO_BASE+LPC17_40_FIO1_OFFSET)
+#define LPC17_40_FIO2_BASE                  (LPC17_40_GPIO_BASE+LPC17_40_FIO2_OFFSET)
+#define LPC17_40_FIO3_BASE                  (LPC17_40_GPIO_BASE+LPC17_40_FIO3_OFFSET)
+#define LPC17_40_FIO4_BASE                  (LPC17_40_GPIO_BASE+LPC17_40_FIO4_OFFSET)
+#ifdef LPC178x_40xx
+#  define LPC17_40_FIO5_BASE                (LPC17_40_GPIO_BASE+LPC17_40_FIO5_OFFSET)
+#endif
+
+#define LPC17_40_FIO_DIR(n)                 (LPC17_40_FIO_BASE(n)+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO_MASK(n)                (LPC17_40_FIO_BASE(n)+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO_PIN(n)                 (LPC17_40_FIO_BASE(n)+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO_SET(n)                 (LPC17_40_FIO_BASE(n)+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO_CLR(n)                 (LPC17_40_FIO_BASE(n)+LPC17_40_FIO_CLR_OFFSET)
+
+#define LPC17_40_FIO0_DIR                   (LPC17_40_FIO0_BASE+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO0_MASK                  (LPC17_40_FIO0_BASE+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO0_PIN                   (LPC17_40_FIO0_BASE+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO0_SET                   (LPC17_40_FIO0_BASE+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO0_CLR                   (LPC17_40_FIO0_BASE+LPC17_40_FIO_CLR_OFFSET)
+
+#define LPC17_40_FIO1_DIR                   (LPC17_40_FIO1_BASE+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO1_MASK                  (LPC17_40_FIO1_BASE+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO1_PIN                   (LPC17_40_FIO1_BASE+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO1_SET                   (LPC17_40_FIO1_BASE+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO1_CLR                   (LPC17_40_FIO1_BASE+LPC17_40_FIO_CLR_OFFSET)
+
+#define LPC17_40_FIO2_DIR                   (LPC17_40_FIO2_BASE+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO2_MASK                  (LPC17_40_FIO2_BASE+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO2_PIN                   (LPC17_40_FIO2_BASE+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO2_SET                   (LPC17_40_FIO2_BASE+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO2_CLR                   (LPC17_40_FIO2_BASE+LPC17_40_FIO_CLR_OFFSET)
+
+#define LPC17_40_FIO3_DIR                   (LPC17_40_FIO3_BASE+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO3_MASK                  (LPC17_40_FIO3_BASE+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO3_PIN                   (LPC17_40_FIO3_BASE+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO3_SET                   (LPC17_40_FIO3_BASE+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO3_CLR                   (LPC17_40_FIO3_BASE+LPC17_40_FIO_CLR_OFFSET)
+
+#define LPC17_40_FIO4_DIR                   (LPC17_40_FIO4_BASE+LPC17_40_FIO_DIR_OFFSET)
+#define LPC17_40_FIO4_MASK                  (LPC17_40_FIO4_BASE+LPC17_40_FIO_MASK_OFFSET)
+#define LPC17_40_FIO4_PIN                   (LPC17_40_FIO4_BASE+LPC17_40_FIO_PIN_OFFSET)
+#define LPC17_40_FIO4_SET                   (LPC17_40_FIO4_BASE+LPC17_40_FIO_SET_OFFSET)
+#define LPC17_40_FIO4_CLR                   (LPC17_40_FIO4_BASE+LPC17_40_FIO_CLR_OFFSET)
+
+#ifdef LPC178x_40xx
+#  define LPC17_40_FIO5_DIR                 (LPC17_40_FIO5_BASE+LPC17_40_FIO_DIR_OFFSET)
+#  define LPC17_40_FIO5_MASK                (LPC17_40_FIO5_BASE+LPC17_40_FIO_MASK_OFFSET)
+#  define LPC17_40_FIO5_PIN                 (LPC17_40_FIO5_BASE+LPC17_40_FIO_PIN_OFFSET)
+#  define LPC17_40_FIO5_SET                 (LPC17_40_FIO5_BASE+LPC17_40_FIO_SET_OFFSET)
+#  define LPC17_40_FIO5_CLR                 (LPC17_40_FIO5_BASE+LPC17_40_FIO_CLR_OFFSET)
+#endif
+
+/* GPIO interrupt block register addresses **********************************/
+
+#define LPC17_40_GPIOINTn_BASE(n)           (LPC17_40_GPIOINT_BASE+LPC17_40_GPIOINT_OFFSET(n))
+#define LPC17_40_GPIOINT0_BASE              (LPC17_40_GPIOINT_BASE+LPC17_40_GPIOINT0_OFFSET)
+#define LPC17_40_GPIOINT2_BASE              (LPC17_40_GPIOINT_BASE+LPC17_40_GPIOINT2_OFFSET)
+
+#define LPC17_40_GPIOINT_IOINTSTATUS        (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_IOINTSTATUS_OFFSET)
+
+#define LPC17_40_GPIOINT_INTSTATR(n)        (LPC17_40_GPIOINTn_BASE(n)+LPC17_40_GPIOINT_INTSTATR_OFFSET)
+#define LPC17_40_GPIOINT_INTSTATF(n)        (LPC17_40_GPIOINTn_BASE(n)+LPC17_40_GPIOINT_INTSTATF_OFFSET)
+#define LPC17_40_GPIOINT_INTCLR(n)          (LPC17_40_GPIOINTn_BASE(n)+LPC17_40_GPIOINT_INTCLR_OFFSET)
+#define LPC17_40_GPIOINT_INTENR(n)          (LPC17_40_GPIOINTn_BASE(n)+LPC17_40_GPIOINT_INTENR_OFFSET)
+#define LPC17_40_GPIOINT_INTENF(n)          (LPC17_40_GPIOINTn_BASE(n)+LPC17_40_GPIOINT_INTENF_OFFSET)
+
+/* Pins P0.0-31 */
+
+#define LPC17_40_GPIOINT0_INTSTATR          (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_INTSTATR_OFFSET)
+#define LPC17_40_GPIOINT0_INTSTATF          (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_INTSTATF_OFFSET)
+#define LPC17_40_GPIOINT0_INTCLR            (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_INTCLR_OFFSET)
+#define LPC17_40_GPIOINT0_INTENR            (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_INTENR_OFFSET)
+#define LPC17_40_GPIOINT0_INTENF            (LPC17_40_GPIOINT0_BASE+LPC17_40_GPIOINT_INTENF_OFFSET)
+
+/* Pins P2.0-31 */
+
+#define LPC17_40_GPIOINT2_INTSTATR          (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTSTATR_OFFSET)
+#define LPC17_40_GPIOINT2_INTSTATF          (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTSTATF_OFFSET)
+#define LPC17_40_GPIOINT2_INTCLR            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTCLR_OFFSET)
+#define LPC17_40_GPIOINT2_INTENR            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTENR_OFFSET)
+#define LPC17_40_GPIOINT2_INTENF            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTENF_OFFSET)
+
+/* Register bit definitions *************************************************/
+
+/* GPIO block register bit definitions **************************************/
+
+/* Fast GPIO Port Direction control registers (FIODIR) */
+
+/* Fast Mask register for ports (FIOMASK) */
+
+/* Fast Port Pin value registers using FIOMASK (FIOPIN) */
+
+/* Fast Port Output Set registers using FIOMASK (FIOSET) */
+
+/* Fast Port Output Clear register using FIOMASK (FIOCLR) */
+
+#define FIO(n)                              (1 << (n)) /* n=0,1,..31 */
+
+/* GPIO interrupt block register bit definitions ****************************/
+
+/* GPIO overall Interrupt Status (IOINTSTATUS) */
+#define GPIOINT_IOINTSTATUS_P0INT           (1 << 0)  /* Bit 0: Port 0 GPIO interrupt pending */
+                                                      /* Bit 1: Reserved */
+#define GPIOINT_IOINTSTATUS_P2INT           (1 << 2)  /* Bit 2: Port 2 GPIO interrupt pending */
+                                                      /* Bits 3-31: Reserved */
+
+/* GPIO Interrupt Status for Rising edge (INTSTATR)
+ * GPIO Interrupt Status for Falling edge (INTSTATF)
+ * GPIO Interrupt Clear (INTCLR)
+ * GPIO Interrupt Enable for Rising edge (INTENR)
+ * GPIO Interrupt Enable for Falling edge (INTENF)
+ */
+
+#define GPIOINT(n)                          (1 << (n)) /* n=0,1,..31 */
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+#endif /* __ARCH_ARM_SRC_LPC17XX_40XX_HARDWARE_LPC17_40_GPIO_H */
+=== lpc178x_40xx_iocon.h (P0_20, P2_15) ===
+57:#define LPC17_40_IOCON_PP15_OFFSET      (0x003c) /* IOCON Port(n) register 15  */
+62:#define LPC17_40_IOCON_PP20_OFFSET      (0x0050) /* IOCON Port(n) register 20  */
+78:#define LPC17_40_IOCON_P0_BASE          (LPC17_40_IOCON_BASE + 0x0000)
+80:#define LPC17_40_IOCON_P2_BASE          (LPC17_40_IOCON_BASE + 0x0100)
+87:#define LPC17_40_IOCON_P0_0             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP0_OFFSET)
+88:#define LPC17_40_IOCON_P0_1             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP1_OFFSET)
+89:#define LPC17_40_IOCON_P0_2             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP2_OFFSET)
+90:#define LPC17_40_IOCON_P0_3             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP3_OFFSET)
+91:#define LPC17_40_IOCON_P0_4             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP4_OFFSET)
+92:#define LPC17_40_IOCON_P0_5             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP5_OFFSET)
+93:#define LPC17_40_IOCON_P0_6             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP6_OFFSET)
+94:#define LPC17_40_IOCON_P0_7             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP7_OFFSET)
+95:#define LPC17_40_IOCON_P0_8             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP8_OFFSET)
+96:#define LPC17_40_IOCON_P0_9             (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP9_OFFSET)
+97:#define LPC17_40_IOCON_P0_10            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP10_OFFSET)
+98:#define LPC17_40_IOCON_P0_11            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP11_OFFSET)
+99:#define LPC17_40_IOCON_P0_12            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP12_OFFSET)
+100:#define LPC17_40_IOCON_P0_13            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP13_OFFSET)
+101:#define LPC17_40_IOCON_P0_14            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP14_OFFSET)
+102:#define LPC17_40_IOCON_P0_15            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP15_OFFSET)
+103:#define LPC17_40_IOCON_P0_16            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP16_OFFSET)
+104:#define LPC17_40_IOCON_P0_17            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP17_OFFSET)
+105:#define LPC17_40_IOCON_P0_18            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP18_OFFSET)
+106:#define LPC17_40_IOCON_P0_19            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP19_OFFSET)
+107:#define LPC17_40_IOCON_P0_20            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP20_OFFSET)
+108:#define LPC17_40_IOCON_P0_21            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP21_OFFSET)
+109:#define LPC17_40_IOCON_P0_22            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP22_OFFSET)
+110:#define LPC17_40_IOCON_P0_23            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP23_OFFSET)
+111:#define LPC17_40_IOCON_P0_24            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP24_OFFSET)
+112:#define LPC17_40_IOCON_P0_25            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP25_OFFSET)
+113:#define LPC17_40_IOCON_P0_26            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP26_OFFSET)
+114:#define LPC17_40_IOCON_P0_27            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP27_OFFSET)
+115:#define LPC17_40_IOCON_P0_28            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP28_OFFSET)
+116:#define LPC17_40_IOCON_P0_29            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP29_OFFSET)
+117:#define LPC17_40_IOCON_P0_30            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP30_OFFSET)
+118:#define LPC17_40_IOCON_P0_31            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP31_OFFSET)
+135:#define LPC17_40_IOCON_P1_15            (LPC17_40_IOCON_P1_BASE + LPC17_40_IOCON_PP15_OFFSET)
+140:#define LPC17_40_IOCON_P1_20            (LPC17_40_IOCON_P1_BASE + LPC17_40_IOCON_PP20_OFFSET)
+153:#define LPC17_40_IOCON_P2_0             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP0_OFFSET)
+154:#define LPC17_40_IOCON_P2_1             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP1_OFFSET)
+155:#define LPC17_40_IOCON_P2_2             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP2_OFFSET)
+156:#define LPC17_40_IOCON_P2_3             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP3_OFFSET)
+157:#define LPC17_40_IOCON_P2_4             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP4_OFFSET)
+158:#define LPC17_40_IOCON_P2_5             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP5_OFFSET)
+159:#define LPC17_40_IOCON_P2_6             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP6_OFFSET)
+160:#define LPC17_40_IOCON_P2_7             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP7_OFFSET)
+161:#define LPC17_40_IOCON_P2_8             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP8_OFFSET)
+162:#define LPC17_40_IOCON_P2_9             (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP9_OFFSET)
+163:#define LPC17_40_IOCON_P2_10            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP10_OFFSET)
+164:#define LPC17_40_IOCON_P2_11            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP11_OFFSET)
+165:#define LPC17_40_IOCON_P2_12            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP12_OFFSET)
+166:#define LPC17_40_IOCON_P2_13            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP13_OFFSET)
+167:#define LPC17_40_IOCON_P2_14            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP14_OFFSET)
+168:#define LPC17_40_IOCON_P2_15            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP15_OFFSET)
+169:#define LPC17_40_IOCON_P2_16            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP16_OFFSET)
+170:#define LPC17_40_IOCON_P2_17            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP17_OFFSET)
+171:#define LPC17_40_IOCON_P2_18            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP18_OFFSET)
+172:#define LPC17_40_IOCON_P2_19            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP19_OFFSET)
+173:#define LPC17_40_IOCON_P2_20            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP20_OFFSET)
+174:#define LPC17_40_IOCON_P2_21            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP21_OFFSET)
+175:#define LPC17_40_IOCON_P2_22            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP22_OFFSET)
+176:#define LPC17_40_IOCON_P2_23            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP23_OFFSET)
+177:#define LPC17_40_IOCON_P2_24            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP24_OFFSET)
+178:#define LPC17_40_IOCON_P2_25            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP25_OFFSET)
+179:#define LPC17_40_IOCON_P2_26            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP26_OFFSET)
+180:#define LPC17_40_IOCON_P2_27            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP27_OFFSET)
+181:#define LPC17_40_IOCON_P2_28            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP28_OFFSET)
+182:#define LPC17_40_IOCON_P2_29            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP29_OFFSET)
+183:#define LPC17_40_IOCON_P2_30            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP30_OFFSET)
+184:#define LPC17_40_IOCON_P2_31            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP31_OFFSET)
+201:#define LPC17_40_IOCON_P3_15            (LPC17_40_IOCON_P3_BASE + LPC17_40_IOCON_PP15_OFFSET)
+206:#define LPC17_40_IOCON_P3_20            (LPC17_40_IOCON_P3_BASE + LPC17_40_IOCON_PP20_OFFSET)
+234:#define LPC17_40_IOCON_P4_15            (LPC17_40_IOCON_P4_BASE + LPC17_40_IOCON_PP15_OFFSET)
+239:#define LPC17_40_IOCON_P4_20            (LPC17_40_IOCON_P4_BASE + LPC17_40_IOCON_PP20_OFFSET)
+267:#define LPC17_40_IOCON_P5_15            (LPC17_40_IOCON_P5_BASE + LPC17_40_IOCON_PP15_OFFSET)
+272:#define LPC17_40_IOCON_P5_20            (LPC17_40_IOCON_P5_BASE + LPC17_40_IOCON_PP20_OFFSET)
+=== lpc17_40_boardinitialize.c ===
+/****************************************************************************
+ * boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_boardinitialize.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <nuttx/debug.h>
+
+#include <nuttx/board.h>
+#include <arch/board/board.h>
+
+#include "arm_internal.h"
+#include "lpc17_40_emc.h"
+
+#include "open1788.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_boardinitialize
+ *
+ * Description:
+ *   All LPC17xx/LPC40xx architectures must provide the following entry
+ *   point.
+ *   This entry point is called early in the initialization -- after all
+ *   memory has been configured and mapped but before any devices have been
+ *   initialized.
+ *
+ ****************************************************************************/
+
+void lpc17_40_boardinitialize(void)
+{
+  /* Initialize the EMC, SDRAM, NOR FLASH, and NAND FLASH */
+
+#ifdef CONFIG_LPC17_40_EMC
+  lpc17_40_emcinitialize();
+
+#ifdef CONFIG_LPC17_40_EXTDRAM
+  open1788_sdram_initialize();
+#endif
+
+#ifdef CONFIG_LPC17_40_EXTNOR
+  open1788_nor_initialize();
+#endif
+
+#ifdef CONFIG_LPC17_40_EXTNAND
+  open1788_nand_initialize();
+#endif
+#endif
+
+#if defined(CONFIG_LPC17_40_SSP0) || defined(CONFIG_LPC17_40_SSP1) || \
+    defined(CONFIG_LPC17_40_SSP2)
+  /* Configure SSP chip selects if 1) at least one SSP is enabled, and 2)
+   * the weak function open1788_sspdev_initialize() has been brought into
+   * the link.
+   */
+
+  if (open1788_sspdev_initialize)
+    {
+      open1788_sspdev_initialize();
+    }
+#endif
+
+#ifdef CONFIG_ARCH_LEDS
+  /* Configure on-board LEDs if LED support has been selected. */
+
+  board_autoled_initialize();
+#endif
+
+#ifdef CONFIG_LPC17_40_LCD
+  /* Configure the LCD GPIOs if LCD support has been selected. */
+
+  open1788_lcd_initialize();
+#endif
+}
+
+/****************************************************************************
+ * Name: board_late_initialize
+ *
+ * Description:
+ *   If CONFIG_BOARD_LATE_INITIALIZE is selected, then an additional
+ *   initialization call will be performed in the boot-up sequence to a
+ *   function called board_late_initialize(). board_late_initialize() will be
+ *   called immediately after up_initialize() is called and just before the
+ *   initial application is started.  This additional initialization phase
+ *   may be used, for example, to initialize board-specific device drivers.
+ *
+ ****************************************************************************/
+
+#ifdef CONFIG_BOARD_LATE_INITIALIZE
+void board_late_initialize(void)
+{
+  /* Perform board-specific initialization */
+
+  open1788_bringup();
+}
+#endif
+=== nxwmconfig.hxx ===
+/****************************************************************************
+ * apps/include/graphics/nxwm/nxwmconfig.hxx
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+#ifndef __APPS_INCLUDE_GRAPHICS_NXWM_NXWMCONFIG_HXX
+#define __APPS_INCLUDE_GRAPHICS_NXWM_NXWMCONFIG_HXX
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <nuttx/input/touchscreen.h>
+
+#include "graphics/nxwidgets/nxconfig.hxx"
+#include "graphics/nxwidgets/crlepalettebitmap.hxx"
+
+/****************************************************************************
+ * Pre-Processor Definitions
+ ****************************************************************************/
+/* General Configuration ****************************************************/
+/**
+ * Required settings:
+ *
+ * CONFIG_HAVE_CXX        : C++ support is required
+ * CONFIG_NX              : NX must enabled
+ * CONFIG_NXTERM=y     : For NxTerm support
+ * CONFIG_SCHED_ONEXIT    : Support for on_exit()
+ *
+ * General settings:
+ *
+ * CONFIG_NXWM_DEFAULT_FONTID - the NxWM default font ID. Default:
+ *   NXFONT_DEFAULT
+ * CONFIG_NXWM_TOUCHSCREEN - Define to build in touchscreen support.
+ * CONFIG_NXWM_KEYBOARD - Define to build in touchscreen support.
+ */
+
+#ifndef CONFIG_HAVE_CXX
+#  error "C++ support is required (CONFIG_HAVE_CXX)"
+#endif
+
+/**
+ * NX Multi-user support is required
+ */
+
+#ifndef CONFIG_NX
+#  error "NX support is required (CONFIG_NX)"
+#endif
+
+/**
+ * NxTerm support is (probably) required if CONFIG_NXWM_NXTERM is
+ * selected
+ */
+
+#if defined(CONFIG_NXWM_NXTERM) && !defined(CONFIG_NXTERM)
+#  warning "NxTerm support may be needed (CONFIG_NXTERM)"
+#endif
+
+/**
+ * on_exit() support is (probably) required.  on_exit() is the normal
+ * mechanism used by NxWM applications to clean-up on a application task
+ * exit.
+ */
+
+#if CONFIG_LIBC_MAX_EXITFUNS == 0
+#  warning "on_exit() support may be needed (CONFIG_LIBC_MAX_EXITFUNS)"
+#endif
+
+/**
+ * Default font ID
+ */
+
+#ifndef CONFIG_NXWM_DEFAULT_FONTID
+#  define CONFIG_NXWM_DEFAULT_FONTID NXFONT_DEFAULT
+#endif
+
+/* Colors *******************************************************************/
+/**
+ * Color configuration
+ *
+ * CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR - Normal background color.  Default:
+ *    MKRGB(148,189,215)
+ * CONFIG_NXWM_DEFAULT_SELECTEDBACKGROUNDCOLOR - Select background color.
+ *    Default:  MKRGB(206,227,241)
+ * CONFIG_NXWM_DEFAULT_SHINEEDGECOLOR - Color of the bright edge of a border.
+ *    Default: MKRGB(255,255,255)
+ * CONFIG_NXWM_DEFAULT_SHADOWEDGECOLOR - Color of the shadowed edge of a border.
+ *    Default: MKRGB(0,0,0)
+ * CONFIG_NXWM_DEFAULT_FONTCOLOR - Default font color.  Default:
+ *    MKRGB(0,0,0)
+ * CONFIG_NXWM_TRANSPARENT_COLOR - The "transparent" color.  Default:
+ *    MKRGB(0,0,0)
+ */
+
+/**
+ * Normal background color
+ */
+
+#ifndef CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+#  define CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR  MKRGB(148,189,215)
+#endif
+
+/**
+ * Default selected background color
+ */
+
+#ifndef CONFIG_NXWM_DEFAULT_SELECTEDBACKGROUNDCOLOR
+#  define CONFIG_NXWM_DEFAULT_SELECTEDBACKGROUNDCOLOR  MKRGB(206,227,241)
+#endif
+
+/**
+ * Border colors
+ */
+
+#ifndef CONFIG_NXWM_DEFAULT_SHINEEDGECOLOR
+#  define CONFIG_NXWM_DEFAULT_SHINEEDGECOLOR  MKRGB(248,248,248)
+#endif
+
+#ifndef CONFIG_NXWM_DEFAULT_SHADOWEDGECOLOR
+#  define CONFIG_NXWM_DEFAULT_SHADOWEDGECOLOR  MKRGB(35,58,73)
+#endif
+
+/**
+ * The default font color
+ */
+
+#ifndef CONFIG_NXWM_DEFAULT_FONTCOLOR
+#  define CONFIG_NXWM_DEFAULT_FONTCOLOR  MKRGB(255,255,255)
+#endif
+
+/**
+ * The transparent color
+ */
+
+#ifndef CONFIG_NXWM_TRANSPARENT_COLOR
+#  define CONFIG_NXWM_TRANSPARENT_COLOR  MKRGB(0,0,0)
+#endif
+
+/* Task Bar Configuration  **************************************************/
+/**
+ * Horizontal and vertical spacing of icons in the task bar.
+ *
+ * CONFIG_NXWM_TASKBAR_VSPACING - Vertical spacing.  Default: 2 pixels
+ * CONFIG_NXWM_TASKBAR_HSPACING - Horizontal spacing.  Default: 2 rows
+ *
+ * Task bar location.  Default is CONFIG_NXWM_TASKBAR_TOP.
+ *
+ * CONFIG_NXWM_TASKBAR_TOP - Task bar is at the top of the display
+ * CONFIG_NXWM_TASKBAR_BOTTOM - Task bar is at the bottom of the display
+ * CONFIG_NXWM_TASKBAR_LEFT - Task bar is on the left side of the display
+ * CONFIG_NXWM_TASKBAR_RIGHT - Task bar is on the right side of the display
+ *
+ * CONFIG_NXWM_TASKBAR_WIDTH - Task bar thickness (either vertical or
+ *   horizontal).  Default: 25 + 2*spacing unless large icons are selected.
+ *   Then the default is 50 + 2*spacing.
+ */
+
+/**
+ * Horizontal and vertical spacing of icons in the task bar.
+ */
+
+#ifndef CONFIG_NXWM_TASKBAR_VSPACING
+#  define CONFIG_NXWM_TASKBAR_VSPACING (2)
+#endif
+
+#ifndef CONFIG_NXWM_TASKBAR_HSPACING
+#  define CONFIG_NXWM_TASKBAR_HSPACING (2)
+#endif
+
+/**
+ * Check task bar location
+ */
+
+#if defined(CONFIG_NXWM_TASKBAR_TOP)
+#  if defined(CONFIG_NXWM_TASKBAR_BOTTOM) || defined (CONFIG_NXWM_TASKBAR_LEFT) || defined (CONFIG_NXWM_TASKBAR_RIGHT)
+#    warning "Multiple task bar positions specified"
+#  endif
+#elif defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+#  if defined (CONFIG_NXWM_TASKBAR_LEFT) || defined (CONFIG_NXWM_TASKBAR_RIGHT)
+#    warning "Multiple task bar positions specified"
+#  endif
+#elif defined(CONFIG_NXWM_TASKBAR_LEFT)
+#  if defined (CONFIG_NXWM_TASKBAR_RIGHT)
+#    warning "Multiple task bar positions specified"
+#  endif
+#elif !defined(CONFIG_NXWM_TASKBAR_RIGHT)
+#  warning "No task bar position specified"
+#  define CONFIG_NXWM_TASKBAR_TOP 1
+#endif
+
+// Taskbar ICON scaling
+
+#if defined(CONFIG_NXWM_TASKBAR_ICONSCALE)
+#  ifndef CONFIG_NXWM_TASKBAR_ICONWIDTH
+#    error Scaling requires CONFIG_NXWM_TASKBAR_ICONWIDTH
+#    define CONFIG_NXWM_TASKBAR_ICONWIDTH  50
+#  endif
+#  ifndef CONFIG_NXWM_TASKBAR_ICONHEIGHT
+#    error Scaling requires CONFIG_NXWM_TASKBAR_ICONHEIGHT
+#    define CONFIG_NXWM_TASKBAR_ICONHEIGHT 42
+#  endif
+#elif defined(CONFIG_NXWM_LARGE_ICONS)
+#  undef CONFIG_NXWM_TASKBAR_ICONWIDTH
+#  define CONFIG_NXWM_TASKBAR_ICONWIDTH  50
+#  undef CONFIG_NXWM_TASKBAR_ICONHEIGHT
+#  define CONFIG_NXWM_TASKBAR_ICONHEIGHT 42
+#else
+#  undef CONFIG_NXWM_TASKBAR_ICONWIDTH
+#  define CONFIG_NXWM_TASKBAR_ICONWIDTH  25
+#  undef CONFIG_NXWM_TASKBAR_ICONHEIGHT
+#  define CONFIG_NXWM_TASKBAR_ICONHEIGHT 21
+#endif
+
+/**
+ * At present, all icons are 25 pixels in "width" and, hence require a
+ * task bar of at least that size.
+ */
+
+#ifndef CONFIG_NXWM_TASKBAR_WIDTH
+#  if defined(CONFIG_NXWM_TASKBAR_TOP) || defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+#    define CONFIG_NXWM_TASKBAR_WIDTH \
+       (CONFIG_NXWM_TASKBAR_ICONWIDTH+2*CONFIG_NXWM_TASKBAR_HSPACING)
+#  else
+#    define CONFIG_NXWM_TASKBAR_WIDTH \
+       (CONFIG_NXWM_TASKBAR_ICONWIDTH+2*CONFIG_NXWM_TASKBAR_VSPACING)
+#  endif
+#endif
+
+/* Tool Bar Configuration ***************************************************/
+/**
+ * CONFIG_NXWM_TOOLBAR_HEIGHT.  The height of the tool bar in each
+ *   application window. At present, all icons are 21 or 42 pixels in height
+ *   (depending on the setting of CONFIG_NXWM_LARGE_ICONS) and, hence require
+ *   a task bar of at least that size.
+ */
+
+#ifndef CONFIG_NXWM_TOOLBAR_HEIGHT
+#    define CONFIG_NXWM_TOOLBAR_HEIGHT \
+       (CONFIG_NXWM_TASKBAR_ICONHEIGHT + 2*CONFIG_NXWM_TASKBAR_HSPACING)
+#endif
+
+/* CONFIG_NXWM_TOOLBAR_FONTID overrides the default NxWM font selection */
+
+#ifndef CONFIG_NXWM_TOOLBAR_FONTID
+#  define CONFIG_NXWM_TOOLBAR_FONTID  CONFIG_NXWM_DEFAULT_FONTID
+#endif
+
+/* Background Image **********************************************************/
+/**
+ * CONFIG_NXWM_BACKGROUND_IMAGE - The name of the image to use in the
+ *   background window.  Default:NXWidgets::g_nuttxBitmap160x160
+ */
+
+#ifndef CONFIG_NXWM_BACKGROUND_IMAGE
+#  define CONFIG_NXWM_BACKGROUND_IMAGE NXWidgets::g_nuttxBitmap160x160
+#endif
+
+/* Start Window Configuration ***********************************************/
+/**
+ * Horizontal and vertical spacing of icons in the task bar.
+ *
+ * CONFIG_NXWM_STARTWINDOW_VSPACING - Vertical spacing.  Default: 4 pixels
+ * CONFIG_NXWM_STARTWINDOW_HSPACING - Horizontal spacing.  Default: 4 rows
+ * CONFIG_NXWM_STARTWINDOW_ICON - The glyph to use as the start window icon
+ * CONFIG_NXWM_STARTWINDOW_MQNAME - The well known name of the message queue
+ *   Used to communicated from CWindowMessenger to the start window thread.
+ *   Default: "nxwm"
+ * CONFIG_NXWM_STARTWINDOW_MXMSGS - The maximum number of messages to queue
+ *   before blocking.  Default 32
+ * CONFIG_NXWM_STARTWINDOW_MXMPRIO - The message priority. Default: 42.
+ * CONFIG_NXWM_STARTWINDOW_PRIO - Priority of the StartWindow task.  Default:
+ *   SCHED_PRIORITY_DEFAULT.  NOTE:  This priority should be less than
+ *   CONFIG_NXSTART_SERVERPRIO or else there may be data overrun errors.
+ *   Such errors would most likely appear as duplicated rows of data on the
+ *   display.
+ * CONFIG_NXWM_STARTWINDOW_STACKSIZE - The stack size to use when starting the
+ *   StartWindow task.  Default: 2048 bytes.
+ */
+
+#ifndef CONFIG_NXWM_STARTWINDOW_VSPACING
+#  define CONFIG_NXWM_STARTWINDOW_VSPACING (4)
+#endif
+
+#ifndef CONFIG_NXWM_STARTWINDOW_HSPACING
+#  define CONFIG_NXWM_STARTWINDOW_HSPACING (4)
+#endif
+
+/**
+ * The start window glyph
+ */
+
+#ifndef CONFIG_NXWM_STARTWINDOW_ICON
+#  define CONFIG_NXWM_STARTWINDOW_ICON NXWidgets::g_playBitmap
+#endif
+
+/**
+ * Start window task parameters
+ */
+
+#ifndef CONFIG_NXWM_STARTWINDOW_MQNAME
+#  define CONFIG_NXWM_STARTWINDOW_MQNAME  "nxwm"
+#endif
+
+#ifndef CONFIG_NXWM_STARTWINDOW_MXMSGS
+#  ifdef CONFIG_NX_MXCLIENTMSGS
+#    define CONFIG_NXWM_STARTWINDOW_MXMSGS CONFIG_NX_MXCLIENTMSGS
+#  else
+#    define CONFIG_NXWM_STARTWINDOW_MXMSGS 32
+#  endif
+#endif
+
+#ifndef CONFIG_NXWM_STARTWINDOW_MXMPRIO
+#  define CONFIG_NXWM_STARTWINDOW_MXMPRIO 42
+#endif
+
+#ifndef CONFIG_NXWM_STARTWINDOW_PRIO
+#  define CONFIG_NXWM_STARTWINDOW_PRIO  SCHED_PRIORITY_DEFAULT
+#endif
+
+#if CONFIG_NXSTART_SERVERPRIO <= CONFIG_NXWM_STARTWINDOW_PRIO
+#  warning "CONFIG_NXSTART_SERVERPRIO <= CONFIG_NXWM_STARTWINDOW_PRIO"
+#  warning" -- This can result in data overrun errors"
+#endif
+
+#ifndef CONFIG_NXWM_STARTWINDOW_STACKSIZE
+#  define CONFIG_NXWM_STARTWINDOW_STACKSIZE  2048
+#endif
+
+/* NxTerm Window *********************************************************/
+/**
+ * NxTerm Window Configuration
+ *
+ * CONFIG_NXWM_NXTERM_PRIO - Priority of the NxTerm task.  Default:
+ *   SCHED_PRIORITY_DEFAULT.  NOTE:  This priority should be less than
+ *   CONFIG_NXSTART_SERVERPRIO or else there may be data overrun errors.
+ *   Such errors would most likely appear as duplicated rows of data on the
+ *   display.
+ * CONFIG_NXWM_NXTERM_STACKSIZE - The stack size to use when starting the
+ *   NxTerm task.  Default: 2048 bytes.
+ * CONFIG_NXWM_NXTERM_WCOLOR - The color of the NxTerm window background.
+ *   Default:  MKRGB(192,192,192)
+ * CONFIG_NXWM_NXTERM_FONTCOLOR - The color of the fonts to use in the
+ *   NxTerm window.  Default: MKRGB(0,0,0)
+ * CONFIG_NXWM_NXTERM_FONTID - The ID of the font to use in the NxTerm
+ *   window.  Default: CONFIG_NXWM_DEFAULT_FONTID
+ * CONFIG_NXWM_NXTERM_ICON - The glyph to use as the NxTerm icon
+ */
+
+#ifdef CONFIG_NXWM_NXTERM
+#  ifndef CONFIG_NXWM_NXTERM_PRIO
+#    define CONFIG_NXWM_NXTERM_PRIO  SCHED_PRIORITY_DEFAULT
+#  endif
+
+#  if CONFIG_NXSTART_SERVERPRIO <= CONFIG_NXWM_NXTERM_PRIO
+#    warning "CONFIG_NXSTART_SERVERPRIO <= CONFIG_NXWM_NXTERM_PRIO"
+#    warning" -- This can result in data overrun errors"
+#  endif
+
+#  ifndef CONFIG_NXWM_NXTERM_STACKSIZE
+#    define CONFIG_NXWM_NXTERM_STACKSIZE  2048
+#  endif
+
+#  ifndef CONFIG_NXWM_NXTERM_WCOLOR
+#    define CONFIG_NXWM_NXTERM_WCOLOR  CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+#  endif
+
+#  ifndef CONFIG_NXWM_NXTERM_FONTCOLOR
+#    define CONFIG_NXWM_NXTERM_FONTCOLOR  CONFIG_NXWM_DEFAULT_FONTCOLOR
+#  endif
+
+#  ifndef CONFIG_NXWM_NXTERM_FONTID
+#    define CONFIG_NXWM_NXTERM_FONTID  CONFIG_NXWM_DEFAULT_FONTID
+#  endif
+
+  /**
+   * The NxTerm window glyph
+   */
+
+#  ifndef CONFIG_NXWM_NXTERM_ICON
+#    define CONFIG_NXWM_NXTERM_ICON NXWidgets::g_cmdBitmap
+#  endif
+#endif
+
+/* Touchscreen device *******************************************************/
+/**
+ * Touchscreen device settings
+ *
+ * CONFIG_NXWM_TOUCHSCREEN_DEVNO - Touchscreen device minor number, i.e., the
+ *   N in /dev/inputN.  Default: 0
+ * CONFIG_NXWM_TOUCHSCREEN_DEVPATH - The full path to the touchscreen device.
+ *   Default: "/dev/input0"
+ * CONFIG_NXWM_TOUCHSCREEN_SIGNO - The realtime signal used to wake up the
+ *   touchscreen listener thread.  Default: 5
+ * CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO - Priority of the touchscreen listener
+ *   thread.  Default: (SCHED_PRIORITY_DEFAULT + 20)
+ * CONFIG_NXWM_TOUCHSCREEN_LISTENERSTACK - Touchscreen listener thread stack
+ *   size.  Default 1024
+ */
+
+#ifndef CONFIG_NXWM_TOUCHSCREEN_DEVNO
+#  define CONFIG_NXWM_TOUCHSCREEN_DEVNO 0
+#endif
+
+#ifndef CONFIG_NXWM_TOUCHSCREEN_DEVPATH
+#  define CONFIG_NXWM_TOUCHSCREEN_DEVPATH "/dev/input0"
+#endif
+
+#ifndef CONFIG_NXWM_TOUCHSCREEN_SIGNO
+#  define CONFIG_NXWM_TOUCHSCREEN_SIGNO 32
+#endif
+
+#ifndef CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO
+#  define CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO (SCHED_PRIORITY_DEFAULT + 20)
+#endif
+
+#if CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO <= CONFIG_NXWM_CALIBRATION_LISTENERPRIO
+#  warning You should have CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO > CONFIG_NXWM_CALIBRATION_LISTENERPRIO
+#endif
+
+#ifndef CONFIG_NXWM_TOUCHSCREEN_LISTENERSTACK
+#  define CONFIG_NXWM_TOUCHSCREEN_LISTENERSTACK 1024
+#endif
+
+/* Keyboard device **********************************************************/
+/**
+ * Keyboard device settings
+ *
+ * CONFIG_NXWM_KEYBOARD_DEVPATH - The full path to the keyboard device.
+ *   Default: "/dev/console"
+ * CONFIG_NXWM_KEYBOARD_SIGNO - The realtime signal used to wake up the
+ *   touchscreen listener thread.  Default: 6
+ * CONFIG_NXWM_KEYBOARD_BUFSIZE - The size of the keyboard read data buffer.
+ *   Default: 16
+ * CONFIG_NXWM_KEYBOARD_LISTENERPRIO - Priority of the touchscreen listener
+ *   thread.  Default: (SCHED_PRIORITY_DEFAULT + 20)
+ * CONFIG_NXWM_KEYBOARD_LISTENERSTACK - Keyboard listener thread stack
+ *   size.  Default 1024
+ */
+
+#ifndef CONFIG_NXWM_KEYBOARD_DEVPATH
+#  define CONFIG_NXWM_KEYBOARD_DEVPATH "/dev/console"
+#endif
+
+#ifndef CONFIG_NXWM_KEYBOARD_SIGNO
+#  define CONFIG_NXWM_KEYBOARD_SIGNO 33
+#endif
+
+#ifndef CONFIG_NXWM_KEYBOARD_BUFSIZE
+#  define CONFIG_NXWM_KEYBOARD_BUFSIZE 6
+#endif
+
+#ifndef CONFIG_NXWM_KEYBOARD_LISTENERPRIO
+#  define CONFIG_NXWM_KEYBOARD_LISTENERPRIO (SCHED_PRIORITY_DEFAULT + 20)
+#endif
+
+#ifndef CONFIG_NXWM_KEYBOARD_LISTENERSTACK
+#  define CONFIG_NXWM_KEYBOARD_LISTENERSTACK 1024
+#endif
+
+/* Calibration display ******************************************************/
+/**
+ * Calibration display settings:
+ *
+ * CONFIG_NXWM_CALIBRATION_BACKGROUNDCOLOR - The background color of the
+ *   touchscreen calibration display.  Default:  Same as
+ *   CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+ * CONFIG_NXWM_CALIBRATION_LINECOLOR - The color of the lines used in the
+ *   touchscreen calibration display.  Default:  MKRGB(0, 0, 128) (dark blue)
+ * CONFIG_NXWM_CALIBRATION_CIRCLECOLOR - The color of the circle in the
+ *   touchscreen calibration display.  Default:  MKRGB(255, 255, 255) (white)
+ * CONFIG_NXWM_CALIBRATION_TOUCHEDCOLOR - The color of the circle in the
+ *   touchscreen calibration display after the touch is recorder.  Default:
+ *   MKRGB(255, 255, 96) (very light yellow)
+ * CONFIG_NXWM_CALIBRATION_FONTID - Use this default NxWidgets font ID
+ *   instead of the system font ID (NXFONT_DEFAULT).
+ * CONFIG_NXWM_CALIBRATION_ICON - The ICON to use for the touchscreen
+ *   calibration application.  Default:  NXWidgets::g_calibrationBitmap
+ * CONFIG_NXWM_CALIBRATION_SIGNO - The realtime signal used to wake up the
+ *   touchscreen calibration thread.  Default: 5
+ * CONFIG_NXWM_CALIBRATION_LISTENERPRIO - Priority of the calibration listener
+ *   thread.  Default: SCHED_PRIORITY_DEFAULT
+ * CONFIG_NXWM_CALIBRATION_LISTENERSTACK - Calibration listener thread stack
+ *   size.  Default 2048
+ * CONFIG_NXWM_CALIBRATION_MARGIN
+ *   The Calbration display consists of a target press offset from the edges
+ *   of the display by this number of pixels (in the horizontal direction)
+ *   or rows (in the vertical).  The closer that you can comfortably
+ *   position the press positions to the edge, the more accurate will be the
+ *   linear interpolation (provide that the hardware provides equally good
+ *   measurements near the edges).
+ */
+
+#ifndef CONFIG_NXWM_CALIBRATION_BACKGROUNDCOLOR
+#  define CONFIG_NXWM_CALIBRATION_BACKGROUNDCOLOR CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_LINECOLOR
+#  define CONFIG_NXWM_CALIBRATION_LINECOLOR MKRGB(0, 0, 128)
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_CIRCLECOLOR
+#  define CONFIG_NXWM_CALIBRATION_CIRCLECOLOR MKRGB(255, 255, 255)
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_TOUCHEDCOLOR
+#  define CONFIG_NXWM_CALIBRATION_TOUCHEDCOLOR MKRGB(255, 255, 96)
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_FONTID
+#  define CONFIG_NXWM_CALIBRATION_FONTID NXFONT_DEFAULT
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_ICON
+#  define CONFIG_NXWM_CALIBRATION_ICON NXWidgets::g_calibrationBitmap
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_SIGNO
+#  define CONFIG_NXWM_CALIBRATION_SIGNO 32
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_LISTENERPRIO
+#  define CONFIG_NXWM_CALIBRATION_LISTENERPRIO SCHED_PRIORITY_DEFAULT
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_LISTENERSTACK
+#  define CONFIG_NXWM_CALIBRATION_LISTENERSTACK 2048
+#endif
+
+#ifndef CONFIG_NXWM_CALIBRATION_MARGIN
+#  define CONFIG_NXWM_CALIBRATION_MARGIN 40
+#endif
+
+// Calibration sample averaging
+
+#ifndef CONFIG_NXWM_CALIBRATION_AVERAGE
+#  undef CONFIG_NXWM_CALIBRATION_AVERAGE
+#  undef CONFIG_NXWM_CALIBRATION_NSAMPLES
+#  define CONFIG_NXWM_CALIBRATION_NSAMPLES 1
+#  undef CONFIG_NXWM_CALIBRATION_DISCARD_MINMAX
+#endif
+
+#if !defined(CONFIG_NXWM_CALIBRATION_NSAMPLES) || CONFIG_NXWM_CALIBRATION_NSAMPLES < 2
+#  undef CONFIG_NXWM_CALIBRATION_AVERAGE
+#  undef CONFIG_NXWM_CALIBRATION_NSAMPLES
+#  define CONFIG_NXWM_CALIBRATION_NSAMPLES 1
+#  undef CONFIG_NXWM_CALIBRATION_DISCARD_MINMAX
+#endif
+
+#if CONFIG_NXWM_CALIBRATION_NSAMPLES < 3
+#  undef CONFIG_NXWM_CALIBRATION_DISCARD_MINMAX
+#endif
+
+#if CONFIG_NXWM_CALIBRATION_NSAMPLES > 255
+#  define CONFIG_NXWM_CALIBRATION_NSAMPLES 255
+#endif
+
+#ifdef CONFIG_NXWM_CALIBRATION_DISCARD_MINMAX
+#  define NXWM_CALIBRATION_NAVERAGE (CONFIG_NXWM_CALIBRATION_NSAMPLES - 2)
+#else
+#  define NXWM_CALIBRATION_NAVERAGE CONFIG_NXWM_CALIBRATION_NSAMPLES
+#endif
+
+/* Hexcalculator applications ***********************************************/
+/**
+ * Calibration display settings:
+ *
+ * CONFIG_NXWM_HEXCALCULATOR_BACKGROUNDCOLOR - The background color of the
+ *   calculator display.  Default:  Same as CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+ * CONFIG_NXWM_HEXCALCULATOR_ICON - The ICON to use for the hex calculator
+ *   application.  Default:  NXWidgets::g_calculatorBitmap
+ * CONFIG_NXWM_HEXCALCULATOR_FONTID - The font used with the calculator.
+ *   Default: CONFIG_NXWM_DEFAULT_FONTID
+ */
+
+#ifndef CONFIG_NXWM_HEXCALCULATOR_BACKGROUNDCOLOR
+#  define CONFIG_NXWM_HEXCALCULATOR_BACKGROUNDCOLOR CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+#endif
+
+#ifndef CONFIG_NXWM_HEXCALCULATOR_ICON
+#  define CONFIG_NXWM_HEXCALCULATOR_ICON NXWidgets::g_calculatorBitmap
+#endif
+
+#ifndef CONFIG_NXWM_HEXCALCULATOR_FONTID
+#  define CONFIG_NXWM_HEXCALCULATOR_FONTID CONFIG_NXWM_DEFAULT_FONTID
+#endif
+
+/* Media Player application ***********************************************/
+/**
+ *
+ * CONFIG_NXWM_HEXCALCULATOR_BACKGROUNDCOLOR - The background color of the
+ *   calculator display.  Default:  Same as CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+ * CONFIG_NXWM_HEXCALCULATOR_ICON - The ICON to use for the hex calculator
+ *   application.  Default:  NXWidgets::g_calculatorBitmap
+ * CONFIG_NXWM_HEXCALCULATOR_FONTID - The font used with the calculator.
+ *   Default: CONFIG_NXWM_DEFAULT_FONTID
+ */
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_PREFERRED_DEVICE
+#  define CONFIG_NXWM_MEDIAPLAYER_PREFERRED_DEVICE "pcm0"
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_MEDIAPATH
+#  define CONFIG_NXWM_MEDIAPLAYER_MEDIAPATH "/mnt/sdcard"
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_BACKGROUNDCOLOR
+#  define CONFIG_NXWM_MEDIAPLAYER_BACKGROUNDCOLOR CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_XSPACING
+#  define CONFIG_NXWM_MEDIAPLAYER_XSPACING 12
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_YSPACING
+#  define CONFIG_NXWM_MEDIAPLAYER_YSPACING 8
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_VOLUMESTEP
+#  define CONFIG_NXWM_MEDIAPLAYER_VOLUMESTEP 5
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_MINVOLUMEHEIGHT
+#  define CONFIG_NXWM_MEDIAPLAYER_MINVOLUMEHEIGHT 6
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_VOLUMECOLOR
+#  define CONFIG_NXWM_MEDIAPLAYER_VOLUMECOLOR MKRGB(63,90,192)
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_ICON
+#  define CONFIG_NXWM_MEDIAPLAYER_ICON NXWidgets::g_mediaplayerBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MPLAYER_FWD_ICON
+#  define CONFIG_NXWM_MPLAYER_FWD_ICON NXWidgets::g_mplayerFwdBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MPLAYER_PLAY_ICON
+#  define CONFIG_NXWM_MPLAYER_PLAY_ICON NXWidgets::g_mplayerPlayBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MPLAYER_PAUSE_ICON
+#  define CONFIG_NXWM_MPLAYER_PAUSE_ICON NXWidgets::g_mplayerPauseBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MPLAYER_REW_ICON
+#  define CONFIG_NXWM_MPLAYER_REW_ICON NXWidgets::g_mplayerRewBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MPLAYER_VOL_ICON
+#  define CONFIG_NXWM_MPLAYER_VOL_ICON NXWidgets::g_mplayerVolBitmap
+#endif
+
+#ifndef CONFIG_NXWM_MEDIAPLAYER_FONTID
+#  define CONFIG_NXWM_MEDIAPLAYER_FONTID CONFIG_NXWM_DEFAULT_FONTID
+#endif
+
+/****************************************************************************
+ * Global Function Prototypes
+ ****************************************************************************/
+
+#endif // __APPS_INCLUDE_GRAPHICS_NXWM_NXWMCONFIG_HXX

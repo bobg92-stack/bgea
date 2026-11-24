@@ -1,0 +1,1031 @@
+
+         █████████████
+      ███████████████████
+    ███████████████████████
+    ████    ███████    ████
+    ███      █████      ███
+    ███      █████      ███
+    ████    ███ ███    ████
+     █████████ █ █████████
+      ███████████████████
+       ███  ██  ██  ██ █
+         █   █  █   █
+             █
+
+┌──(bg9211014🎃kali)-[~]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && \
+grep -nE "GPIO_(ENET|SD_)" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h && \
+sed -n '165,215p;295,345p;2365,2445p' arch/arm/src/lpc17xx_40xx/lpc17_40_ethernet.c && \
+cat arch/arm/src/lpc17xx_40xx/lpc17_40_allocateheap.c && \
+grep -rnE "CONFIG_NET|CONFIG_ETH0_PHY|CONFIG_LPC17_40_ETHERNET|CONFIG_MM_REGIONS|CONFIG_SYSTEM_PING|CONFIG_NSH_DHCPC|CONFIG_NETUTILS_DHCPC" boards/arm/lpc17xx_40xx/*/configs/*/defconfig
+144:#define GPIO_SD_CLK_1      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN19)
+149:#define GPIO_SD_CMD_1      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN20)
+154:#define GPIO_SD_PWR_1      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN21)
+160:#define GPIO_SD_DAT0_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN22)
+195:#define GPIO_ENET_TXD0     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN0)
+199:#define GPIO_ENET_TXD1     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN1)
+203:#define GPIO_ENET_TXD2     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN2)
+204:#define GPIO_SD_CLK_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN2)
+207:#define GPIO_ENET_TXD3     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN3)
+208:#define GPIO_SD_CMD_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN3)
+211:#define GPIO_ENET_TXEN     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN4)
+215:#define GPIO_ENET_TX_ER    (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN5)
+216:#define GPIO_SD_PWR_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN5)
+220:#define GPIO_ENET_TX_CLK   (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN6)
+221:#define GPIO_SD_DAT0_2     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN6)
+225:#define GPIO_ENET_COL      (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN7)
+226:#define GPIO_SD_DAT1_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN7)
+230:#define GPIO_ENET_CRSDV    (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN8)
+231:#define GPIO_ENET_CRS      (GPIO_ENET_CRSDV) /* Alternate pin name for LPC17 Ethernet driver */
+235:#define GPIO_ENET_RXD0     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN9)
+238:#define GPIO_ENET_RXD1     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN10)
+241:#define GPIO_ENET_RXD2     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN11)
+242:#define GPIO_SD_DAT2_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN11)
+245:#define GPIO_ENET_RXD3     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN12)
+246:#define GPIO_SD_DAT3_1     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN12)
+250:#define GPIO_ENET_RX_DV    (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN13)
+252:#define GPIO_ENET_RXER     (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN14)
+256:#define GPIO_ENET_REFCLK   (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN15)
+259:#define GPIO_ENET_MDC_1    (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN16)
+263:#define GPIO_ENET_MDIO_1   (GPIO_ALT1 | GPIO_FLOAT  | GPIO_PORT1 | GPIO_PIN17)
+417:#define GPIO_ENET_MDC_2    (GPIO_ALT4 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN8)
+424:#define GPIO_ENET_MDIO_2   (GPIO_ALT4 | GPIO_FLOAT  | GPIO_PORT2 | GPIO_PIN9)
+432:#define GPIO_SD_DAT1_2     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN11)
+437:#define GPIO_SD_DAT2_2     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN12)
+445:#define GPIO_SD_DAT3_2     (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT2 | GPIO_PIN13)
+
+/* This is the number of ethernet GPIO pins that must be configured */
+
+#define GPIO_NENET_PINS      10
+
+/* PHYs *********************************************************************/
+
+/* Select PHY-specific values.  Add more PHYs as needed. */
+
+#if defined(CONFIG_ETH0_PHY_KS8721)
+#  define LPC17_40_PHYNAME      "KS8721"
+#  define LPC17_40_PHYID1       MII_PHYID1_KS8721
+#  define LPC17_40_PHYID2       MII_PHYID2_KS8721
+#  define LPC17_40_HAVE_PHY     1
+#elif defined(CONFIG_ETH0_PHY_KSZ8041)
+#  define LPC17_40_PHYNAME      "KSZ8041"
+#  define LPC17_40_PHYID1       MII_PHYID1_KSZ8041
+#  define LPC17_40_PHYID2       MII_PHYID2_KSZ8041
+#  define LPC17_40_HAVE_PHY     1
+#elif defined(CONFIG_ETH0_PHY_DP83848C)
+#  define LPC17_40_PHYNAME      "DP83848C"
+#  define LPC17_40_PHYID1       MII_PHYID1_DP83848C
+#  define LPC17_40_PHYID2       MII_PHYID2_DP83848C
+#  define LPC17_40_HAVE_PHY     1
+#elif defined(CONFIG_ETH0_PHY_LAN8720)
+#  define LPC17_40_PHYNAME      "LAN8720"
+#  define LPC17_40_PHYID1       MII_PHYID1_LAN8720
+#  define LPC17_40_PHYID2       MII_PHYID2_LAN8720
+#  define LPC17_40_HAVE_PHY     1
+#elif defined(CONFIG_ETH0_PHY_KSZ8081)
+#  define LPC17_40_PHYNAME      "KSZ8081"
+#  define LPC17_40_PHYID1       MII_PHYID1_KSZ8081
+#  define LPC17_40_PHYID2       MII_PHYID2_KSZ8081
+#  define LPC17_40_HAVE_PHY     1
+#else
+#  warning "No PHY specified!"
+#  undef LPC17_40_HAVE_PHY
+#endif
+
+#define MII_BIG_TIMEOUT      666666
+
+/* These definitions are used to remember the speed/duplex settings */
+
+#define LPC17_40_SPEED_MASK     0x01
+#define LPC17_40_SPEED_100      0x01
+#define LPC17_40_SPEED_10       0x00
+
+#define LPC17_40_DUPLEX_MASK    0x02
+#define LPC17_40_DUPLEX_FULL    0x02
+#define LPC17_40_DUPLEX_HALF    0x00
+
+  struct wdog_s lp_txtimeout;   /* TX timeout timer */
+
+  struct work_s lp_txwork;      /* TX work continuation */
+  struct work_s lp_rxwork;      /* RX work continuation */
+  struct work_s lp_pollwork;    /* Poll work continuation */
+  uint32_t status;
+
+  /* This holds the information visible to the NuttX networking layer */
+
+  struct net_driver_s lp_dev;  /* Interface understood by the network layer */
+};
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+/* A single packet buffer per interface is used */
+
+static uint8_t g_pktbuf[CONFIG_LPC17_40_NINTERFACES][PKTBUF_SIZE];
+
+/* Array of ethernet driver status structures */
+
+static struct lpc17_40_driver_s g_ethdrvr[CONFIG_LPC17_40_NINTERFACES];
+
+/* ENET pins are on P1[0,1,4,6,8,9,10,14,15] + MDC on P1[16] or P2[8] and
+ * MDIO on P1[17] or P2[9].  The board.h file will define GPIO_ENET_MDC and
+ * PGIO_ENET_MDIO to selec which pin setting to use.
+ *
+ * On older Rev '-' devices, P1[6] ENET-TX_CLK would also have be to
+ * configured.
+ */
+
+static const uint16_t g_enetpins[GPIO_NENET_PINS] =
+{
+  GPIO_ENET_TXD0, GPIO_ENET_TXD1, GPIO_ENET_TXEN, GPIO_ENET_CRS,
+  GPIO_ENET_RXD0, GPIO_ENET_RXD1, GPIO_ENET_RXER, GPIO_ENET_REFCLK,
+  GPIO_ENET_MDC, GPIO_ENET_MDIO
+};
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+/* Register operations */
+
+#ifdef CONFIG_LPC17_40_NET_REGDEBUG
+static void lpc17_40_printreg(uint32_t addr, uint32_t val, bool iswrite);
+static void lpc17_40_checkreg(uint32_t addr, uint32_t val, bool iswrite);
+static uint32_t lpc17_40_getreg(uint32_t addr);
+static void lpc17_40_putreg(uint32_t val, uint32_t addr);
+#else
+{
+  unsigned int phyaddr;
+  uint16_t phyreg;
+  uint32_t regval;
+  int ret;
+
+  /* MII configuration: host clocked divided per board.h, no suppress
+   * preamble, no scan increment.
+   */
+
+  lpc17_40_putreg(ETH_MCFG_CLKSEL_DIV, LPC17_40_ETH_MCFG);
+  lpc17_40_putreg(0, LPC17_40_ETH_MCMD);
+
+  /* Enter RMII mode and select 100 MBPS support */
+
+  lpc17_40_putreg(ETH_CMD_RMII, LPC17_40_ETH_CMD);
+  lpc17_40_putreg(ETH_SUPP_SPEED, LPC17_40_ETH_SUPP);
+
+  /* Find PHY Address.  Because the controller has a pull-up and the
+   * PHY has pull-down resistors on RXD lines some times the PHY
+   * latches different at different addresses.
+   */
+
+  for (phyaddr = 0; phyaddr < 32; phyaddr++)
+    {
+      /* Check if we can see the selected device ID at this
+       * PHY address.
+       */
+
+      phyreg = (unsigned int)lpc17_40_phyread(phyaddr, MII_PHYID1);
+      ninfo("Addr: %d PHY ID1: %04x\n", phyaddr, phyreg);
+
+      /* Compare OUI bits 3-18 */
+
+      if (phyreg == LPC17_40_PHYID1)
+        {
+          phyreg = lpc17_40_phyread(phyaddr, MII_PHYID2);
+          ninfo("Addr: %d PHY ID2: %04x\n", phyaddr, phyreg);
+
+          /* Compare OUI bits 19-24 and the 6-bit model number (ignoring the
+           * 4-bit revision number).
+           */
+
+          if ((phyreg & 0xfff0) == (LPC17_40_PHYID2 & 0xfff0))
+            {
+              break;
+            }
+        }
+    }
+
+  /* Check if the PHY device address was found */
+
+  if (phyaddr > 31)
+    {
+      /* Failed to find PHY at any location */
+
+      nerr("ERROR: No PHY detected\n");
+      return -ENODEV;
+    }
+
+  ninfo("phyaddr: %d\n", phyaddr);
+
+  /* Save the discovered PHY device address */
+
+  priv->lp_phyaddr = phyaddr;
+
+  /* Reset the PHY */
+
+  ret = lpc17_40_phyreset(phyaddr);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  lpc17_40_showmii(phyaddr, "After reset");
+
+  /* Check for preamble suppression support */
+
+  phyreg = lpc17_40_phyread(phyaddr, MII_MSR);
+  if ((phyreg & MII_MSR_MFRAMESUPPRESS) != 0)
+    {
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_allocateheap.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <sys/types.h>
+#include <assert.h>
+#include <nuttx/debug.h>
+
+#include <nuttx/arch.h>
+#include <nuttx/board.h>
+#include <nuttx/kmalloc.h>
+#include <arch/board/board.h>
+
+#include "chip.h"
+#include "mpu.h"
+#include "arm_internal.h"
+#include "hardware/lpc17_40_memorymap.h"
+#include "lpc17_40_emacram.h"
+#include "lpc17_40_ohciram.h"
+#include "lpc17_40_mpuinit.h"
+#include "lpc17_40_start.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Configuration ************************************************************/
+
+/* The configured RAM start address must be the beginning of CPU SRAM */
+
+#if CONFIG_RAM_START != LPC17_40_SRAM_BASE
+#  warning "CONFIG_RAM_START is not at LPC17_40_SRAM_BASE"
+#  undef CONFIG_RAM_START
+#  undef CONFIG_RAM_END
+#  define CONFIG_RAM_START LPC17_40_SRAM_BASE
+#  define CONFIG_RAM_END  (LPC17_40_SRAM_BASE+LPC17_40_CPUSRAM_SIZE)
+#endif
+
+/* The configured RAM size must be less then or equal to the CPU SRAM size */
+
+#if CONFIG_RAM_SIZE > LPC17_40_CPUSRAM_SIZE
+#  warning "CONFIG_RAM_SIZE is larger than the size of CPU SRAM"
+#  undef CONFIG_RAM_SIZE
+#  undef CONFIG_RAM_END
+#  define CONFIG_RAM_SIZE LPC17_40_CPUSRAM_SIZE
+#  define CONFIG_RAM_END (LPC17_40_SRAM_BASE+LPC17_40_CPUSRAM_SIZE)
+#elif CONFIG_RAM_SIZE < LPC17_40_CPUSRAM_SIZE
+#  warning "CONFIG_RAM_END is before end of CPU SRAM... not all of CPU SRAM used"
+#endif
+
+/* Figure out how much heap be have in AHB SRAM (if any).  Complications:
+ * 1) AHB SRAM Bank 0 or 1 may on may not be supported in the hardware.
+ * 2) Some or all of Bank 0 may be used for Ethernet Packet buffering.
+ *    Ethernet packet buffering is used from the beginning of Bank 0 and
+ *    any free memory at the end of Bank 0 will be contiguous with any
+ *    free memory at the beginning of Bank 1.
+ * 3) Some or all of Bank 1 may be used for OHCI descriptor memory.  OCHI
+ *    memory is used from the end of Bank 1 and any free memory at the
+ *    beginning of Bank 1 will be contiguous with any free memory at the
+ *    end of Bank 0.
+ */
+
+#undef LPC17_40_AHB_HEAPBASE /* Assume that nothing is available */
+#undef LPC17_40_AHB_HEAPSIZE
+
+/* If we have Bank 0, then we may possibly also have Bank 1 */
+
+#ifdef LPC17_40_HAVE_BANK0
+
+/* We have BANK0 (and, hence, possibly Bank1).  Is Bank0 all used for
+ * Ethernet packet buffering?  Or is there any part of Bank0 available for
+ * the heap.
+ */
+
+#  ifdef LPC17_40_BANK0_HEAPSIZE
+
+/* Some or all of Bank0 is available for the heap.  The heap will begin
+ * in bank 1.
+ */
+
+#     define LPC17_40_AHB_HEAPBASE LPC17_40_BANK0_HEAPBASE
+
+/* Is Bank1 present? Has there available heap memory in Bank 1? */
+
+#    if defined(LPC17_40_HAVE_BANK1) && defined(LPC17_40_BANK1_HEAPSIZE)
+
+/* Yes... the heap space available is the unused memory at the end
+ * of Bank0 plus the unused memory at the beginning of Bank 1.
+ */
+
+#       define LPC17_40_AHB_HEAPSIZE (LPC17_40_BANK0_HEAPSIZE + LPC17_40_BANK1_HEAPSIZE)
+#    else
+
+/* No... the heap space available is only the unused memory at the
+ * end of Bank 0.
+ */
+
+#       define LPC17_40_AHB_HEAPSIZE LPC17_40_BANK0_HEAPSIZE
+
+#    endif /* LPC17_40_HAVE_BANK1 && LPC17_40_BANK1_HEAPSIZE */
+#  else /* !LPC17_40_BANK0_HEAPSIZE */
+
+/* We have Bank 0, but no memory is available for the heap there.
+ * Do we have Bank 1? Is any heap memory available in Bank 1?
+ */
+
+#    if defined(LPC17_40_HAVE_BANK1) && defined(LPC17_40_BANK1_HEAPSIZE)
+
+/* Yes... the heap space available is the unused memory at the
+ * beginning of Bank1.
+ */
+
+#      define LPC17_40_AHB_HEAPBASE LPC17_40_BANK1_HEAPBASE
+#      define LPC17_40_AHB_HEAPSIZE LPC17_40_BANK1_HEAPSIZE
+
+#    endif /* LPC17_40_HAVE_BANK1 && LPC17_40_BANK1_HEAPSIZE */
+#  endif /* LPC17_40_BANK0_HEAPSIZE */
+#endif /* LPC17_40_HAVE_BANK0 */
+
+/* Sanity checking */
+
+#if !defined(CONFIG_LPC17_40_EXTDRAMHEAP) && !defined(CONFIG_LPC17_40_EXTSRAM0HEAP)
+#  define LPC17_40_EXT_MM_REGIONS 0
+#elif defined(CONFIG_LPC17_40_EXTDRAMHEAP) && defined(CONFIG_LPC17_40_EXTSRAM0HEAP)
+#  define LPC17_40_EXT_MM_REGIONS 2
+#else
+#  define LPC17_40_EXT_MM_REGIONS 1
+#endif
+
+#ifdef LPC17_40_AHB_HEAPBASE
+#  if CONFIG_MM_REGIONS < 2 + LPC17_40_EXT_MM_REGIONS
+#    warning "CONFIG_MM_REGIONS < 2: Available AHB SRAM Bank(s) not included in HEAP"
+#  endif
+#  if (CONFIG_MM_REGIONS > 2 + LPC17_40_EXT_MM_REGIONS)
+#    warning "CONFIG_MM_REGIONS > 2: Are additional regions handled by application?"
+#  endif
+#else
+#  if CONFIG_MM_REGIONS > 1 + LPC17_40_EXT_MM_REGIONS
+#    warning "CONFIG_MM_REGIONS > 1: This configuration has no available AHB SRAM Bank0/1"
+#    warning "CONFIG_MM_REGIONS > 1: Are additional regions handled by application?"
+#  endif
+#endif
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: up_allocate_heap
+ *
+ * Description:
+ *   This function will be called to dynamically set aside the heap region.
+ *
+ *   For the kernel build (CONFIG_BUILD_PROTECTED=y) with both kernel- and
+ *   user-space heaps (CONFIG_MM_KERNEL_HEAP=y), this function provides the
+ *   size of the unprotected, user-space heap.
+ *
+ *   If a protected kernel-space heap is provided, the kernel heap must be
+ *   allocated (and protected) by an analogous up_allocate_kheap().
+ *
+ *   The following memory map is assumed for the flat build:
+ *
+ *     .data region.  Size determined at link time.
+ *     .bss  region  Size determined at link time.
+ *     IDLE thread stack.  Size determined by CONFIG_IDLETHREAD_STACKSIZE.
+ *     Heap.  Extends to the end of SRAM.
+ *
+ *   The following memory map is assumed for the kernel build:
+ *
+ *     Kernel .data region.  Size determined at link time.
+ *     Kernel .bss  region  Size determined at link time.
+ *     Kernel IDLE thread stack.  Size determined by
+ *            CONFIG_IDLETHREAD_STACKSIZE.
+ *     Padding for alignment
+ *     User .data region.  Size determined at link time.
+ *     User .bss region  Size determined at link time.
+ *     Kernel heap.  Size determined by CONFIG_MM_KERNEL_HEAPSIZE.
+ *     User heap.  Extends to the end of SRAM.
+ *
+ ****************************************************************************/
+
+void up_allocate_heap(void **heap_start, size_t *heap_size)
+{
+#if defined(CONFIG_BUILD_PROTECTED) && defined(CONFIG_MM_KERNEL_HEAP)
+  /* Get the unaligned size and position of the user-space heap.
+   * This heap begins after the user-space .bss section at an offset
+   * of CONFIG_MM_KERNEL_HEAPSIZE (subject to alignment).
+   */
+
+  uintptr_t ubase = (uintptr_t)USERSPACE->us_bssend +
+                     CONFIG_MM_KERNEL_HEAPSIZE;
+  size_t    usize = CONFIG_RAM_END - ubase;
+  int       log2;
+
+  DEBUGASSERT(ubase < (uintptr_t)CONFIG_RAM_END);
+
+  /* Adjust that size to account for MPU alignment requirements.
+   * NOTE that there is an implicit assumption that the CONFIG_RAM_END
+   * is aligned to the MPU requirement.
+   */
+
+  log2  = (int)mpu_log2regionfloor(usize);
+  DEBUGASSERT((CONFIG_RAM_END & ((1 << log2) - 1)) == 0);
+
+  usize = (1 << log2);
+  ubase = CONFIG_RAM_END - usize;
+
+  /* Return the user-space heap settings */
+
+  board_autoled_on(LED_HEAPALLOCATE);
+  *heap_start = (void *)ubase;
+  *heap_size  = usize;
+
+  /* Allow user-mode access to the user heap memory */
+
+  lpc17_40_mpu_uheap((uintptr_t)ubase, usize);
+
+#elif CONFIG_MM_REGIONS >= 3 && defined(CONFIG_LPC17_40_EXTDRAM) && \
+    defined(CONFIG_LPC17_40_EXTDRAMHEAP)
+  /* We are going to allocate a DRAM heap.  In the case where a bootloader
+   * is used (and has initialized SDRAM), it is possible that .data, .bss,
+   * and the IDLE stack reside in SDRAM.
+   */
+
+  uintptr_t sram_start = CONFIG_RAM_START;
+
+  /* Is SRAM the primary RAM? I.e., do .data, .bss, and the IDLE thread
+   * stack lie in SRAM?
+   */
+
+  if (g_idle_topstack >= CONFIG_RAM_START &&
+      g_idle_topstack < CONFIG_RAM_END)
+    {
+      /* Yes, then the SRAM heap starts in SRAM after the IDLE stack */
+
+      sram_start = g_idle_topstack;
+    }
+  else
+    {
+      /* Use the entire SRAM for heap */
+
+      sram_start = CONFIG_RAM_START;
+    }
+
+  board_autoled_on(LED_HEAPALLOCATE);
+  *heap_start = (void *)sram_start;
+  *heap_size  = CONFIG_RAM_END - sram_start;
+
+#else
+
+  /* Return the heap settings (assuming that .data, .bss, and the IDLE
+   * stack lie in SRAM).
+   */
+
+  board_autoled_on(LED_HEAPALLOCATE);
+  *heap_start = (void *)g_idle_topstack;
+  *heap_size  = CONFIG_RAM_END - g_idle_topstack;
+#endif
+}
+
+/****************************************************************************
+ * Name: up_allocate_kheap
+ *
+ * Description:
+ *   For the kernel build (CONFIG_BUILD_PROTECTED=y) with both kernel- and
+ *   user-space heaps (CONFIG_MM_KERNEL_HEAP=y), this function allocates
+ *   (and protects) the kernel-space heap.
+ *
+ *   REVISIT:  This does not account for the possibility that the kernel
+ *   heap might lie in SDRAM.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_BUILD_PROTECTED) && defined(CONFIG_MM_KERNEL_HEAP)
+void up_allocate_kheap(void **heap_start, size_t *heap_size)
+{
+  /* Get the unaligned size and position of the user-space heap.
+   * This heap begins after the user-space .bss section at an offset
+   * of CONFIG_MM_KERNEL_HEAPSIZE (subject to alignment).
+   */
+
+  uintptr_t ubase = (uintptr_t)USERSPACE->us_bssend +
+                    CONFIG_MM_KERNEL_HEAPSIZE;
+  size_t    usize = CONFIG_RAM_END - ubase;
+  int       log2;
+
+  DEBUGASSERT(ubase < (uintptr_t)CONFIG_RAM_END);
+
+  /* Adjust that size to account for MPU alignment requirements.
+   * NOTE that there is an implicit assumption that the CONFIG_RAM_END
+   * is aligned to the MPU requirement.
+   */
+
+  log2  = (int)mpu_log2regionfloor(usize);
+  DEBUGASSERT((CONFIG_RAM_END & ((1 << log2) - 1)) == 0);
+
+  usize = (1 << log2);
+  ubase = CONFIG_RAM_END - usize;
+
+  /* Return the kernel heap settings (i.e., the part of the heap region
+   * that was not dedicated to the user heap).
+   */
+
+  *heap_start = (void *)USERSPACE->us_bssend;
+  *heap_size  = ubase - (uintptr_t)USERSPACE->us_bssend;
+}
+#endif
+
+/****************************************************************************
+ * Name: arm_addregion
+ *
+ * Description:
+ *   Memory may be added in non-contiguous chunks.  Additional chunks are
+ *   added by calling this function.
+ *
+ ****************************************************************************/
+
+#if CONFIG_MM_REGIONS > 1
+void arm_addregion(void)
+{
+  /* Banks 0 and 1 are each 16Kb.  If both are present, they occupy a
+   * contiguous 32Kb memory region.
+   *
+   * If Ethernet is enabled, it will take some or all of bank 0 for packet
+   * buffering and descriptor tables; If USB host is enabled, it will take
+   * some or all of bank 1 for descriptor memory.  The complex conditional
+   * compilation above should boil this all down to a very simple check
+   * here:
+   *
+   * Is any memory available in AHB SRAM for the heap?
+   */
+
+#ifdef LPC17_40_AHB_HEAPBASE
+#if defined(CONFIG_BUILD_PROTECTED) && defined(CONFIG_MM_KERNEL_HEAP)
+
+  /* Yes.. allow user-mode access to the AHB SRAM user heap memory */
+
+#if defined(LPC17_40_BANK0_HEAPBASE) && defined(LPC17_40_BANK0_HEAPSIZE)
+  lpc17_40_mpu_uheap((uintptr_t)LPC17_40_BANK0_HEAPBASE,
+                     LPC17_40_BANK0_HEAPSIZE);
+#endif
+
+#if defined(LPC17_40_BANK1_HEAPBASE) && defined(LPC17_40_BANK1_HEAPSIZE)
+  lpc17_40_mpu_uheap((uintptr_t)LPC17_40_BANK1_HEAPBASE,
+                      LPC17_40_BANK1_HEAPSIZE);
+#endif
+
+#endif /* CONFIG_BUILD_PROTECTED && CONFIG_MM_KERNEL_HEAP */
+
+  /* Add the AHB SRAM user heap region. */
+
+  kumm_addregion((void *)LPC17_40_AHB_HEAPBASE, LPC17_40_AHB_HEAPSIZE);
+#endif
+
+#if CONFIG_MM_REGIONS >= 3
+#if defined(CONFIG_LPC17_40_EXTDRAM) && defined(CONFIG_LPC17_40_EXTDRAMHEAP)
+    {
+      /* Memory may be reserved at the beginning of DRAM for other purposes
+       * (for example for video framebuffers).  Memory can similar be
+       * reserved at the end of DRAM using LPC17_40_EXTDRAMSIZE.  The amount
+       * to be added to the heap will be from DRAM_BASE +
+       * LPC17_40_EXTDRAMHEAP_OFFSET through DRAM_BASE + LPC17_40_EXTDRAMSIZE
+       * where (DRAM_BASE is the base address of CS0).
+       */
+
+      uintptr_t dram_end = LPC17_40_EXTDRAM_CS0 +
+                           CONFIG_LPC17_40_EXTDRAMSIZE;
+      uintptr_t dram_start;
+      uintptr_t heap_size;
+
+      /* Is SDRAM the primary RAM? I.e., do .data, .bss, and the IDLE thread
+       * stack lie in SDRAM?
+       */
+
+      if (g_idle_topstack >= LPC17_40_EXTDRAM_CS0 &&
+          g_idle_topstack < dram_end)
+        {
+          /* Yes, then the SDRAM heap starts in SDRAM after the IDLE stack */
+
+          dram_start = g_idle_topstack;
+        }
+      else
+        {
+          /* Use the entire SDRAM for heap (possible reserving a portion at
+           * the beginning of DRAM).
+           */
+
+          dram_start = LPC17_40_EXTDRAM_CS0 +
+                       CONFIG_LPC17_40_EXTDRAMHEAP_OFFSET;
+        }
+
+      heap_size = dram_end - dram_start;
+
+#if defined(CONFIG_BUILD_PROTECTED) && defined(CONFIG_MM_KERNEL_HEAP)
+      /* Allow user-mode access to the external DRAM heap memory.
+       *
+       * REVISIT:  In PROTECTED mode, it would be necessary to align
+       * dram_start to an address that is easily spanned by an MPU
+       * region if dram_start is not at the beginning of CS0.
+       */
+
+      lpc17_40_mpu_uheap(dram_start, heap_size);
+#endif
+
+      /* Add external DRAM heap memory to the user heap */
+
+      kumm_addregion((void *)dram_start, heap_size);
+    }
+#endif
+
+#if !defined(CONFIG_LPC17_40_EXTDRAMHEAP) || (CONFIG_MM_REGIONS >= 4)
+#if defined(CONFIG_LPC17_40_EXTSRAM0) && defined(CONFIG_LPC17_40_EXTSRAM0HEAP)
+#if defined(CONFIG_BUILD_PROTECTED) && defined(CONFIG_MM_KERNEL_HEAP)
+  /* Allow user-mode access to external SRAM heap memory */
+
+  lpc17_40_mpu_uheap((uintptr_t)LPC17_40_EXTSRAM_CS0,
+                      CONFIG_LPC17_40_EXTSRAM0SIZE);
+
+#endif
+  /* Add external SRAM heap memory to the user heap */
+
+  kumm_addregion((void *)LPC17_40_EXTSRAM_CS0,
+                  CONFIG_LPC17_40_EXTSRAM0SIZE);
+#endif
+#endif
+#endif /* CONFIG_MM_REGIONS >= 3 */
+}
+#endif
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:19:CONFIG_ETH0_PHY_KSZ8041=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:25:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:31:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:32:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:33:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:34:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:35:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:36:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:37:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:38:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:39:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:40:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:41:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:42:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:43:CONFIG_NET_STATISTICS=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:44:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:45:CONFIG_NET_TCP_WRITE_BUFFERS=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:46:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:47:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/netnsh/defconfig:60:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/nsh/defconfig:23:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:22:CONFIG_ETH0_PHY_KSZ8041=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:34:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:39:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:40:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:41:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:42:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:43:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:44:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:45:CONFIG_NET_PREALLOC_DEVIF_CALLBACKS=12
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:46:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:47:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:48:CONFIG_NET_TCP_PREALLOC_CONNS=12
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:49:CONFIG_NET_TCP_WRITE_BUFFERS=y
+boards/arm/lpc17xx_40xx/lincoln60/configs/thttpd-binfs/defconfig:62:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/knsh/defconfig:35:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:25:CONFIG_ETH0_PHY_LAN8720=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:35:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:44:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:45:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:46:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:47:CONFIG_NETDEV_PHY_IOCTL=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:48:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:49:CONFIG_NETUTILS_DISCOVER=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:50:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:51:CONFIG_NETUTILS_WEBSERVER=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:52:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:53:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:54:CONFIG_NET_TCP_NOTIFIER=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:55:CONFIG_NET_TCP_WRITE_BUFFERS=y
+boards/arm/lpc17xx_40xx/lpc4088-devkit/configs/nsh/defconfig:56:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/lpc4088-quickstart/configs/knsh/defconfig:32:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpc4088-quickstart/configs/nsh/defconfig:30:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:8:# CONFIG_NETUTILS_DHCPD_IGNOREBROADCAST is not set
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:21:CONFIG_ETH0_PHY_LAN8720=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:27:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:30:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:31:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:32:CONFIG_NETUTILS_DHCPD=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:33:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:34:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:35:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:36:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/dhcpd/defconfig:37:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:22:CONFIG_ETH0_PHY_LAN8720=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:28:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:35:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:37:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:38:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:39:CONFIG_NETDB_DNSCLIENT_ENTRIES=4
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:40:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:41:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:42:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:43:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:44:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:45:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:46:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:47:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:48:CONFIG_NET_STATISTICS=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:49:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:50:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:51:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nsh/defconfig:65:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/nx/defconfig:39:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:20:CONFIG_ETH0_PHY_LAN8720=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:28:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:31:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:32:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:33:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:34:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:35:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:36:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:37:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/thttpd/defconfig:38:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/lpcxpresso-lpc1768/configs/usbmsc/defconfig:29:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:39:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:75:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:95:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:98:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:99:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:100:CONFIG_NETDEV_PHY_IOCTL=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:101:CONFIG_NETINIT_DHCPC=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:102:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:103:CONFIG_NETUTILS_FTPC=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:104:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:105:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:106:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:107:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:108:CONFIG_NET_CDCECM=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:109:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:110:CONFIG_NET_LOOPBACK=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:111:CONFIG_NET_PKT=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:112:CONFIG_NET_ROUTE=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:113:CONFIG_NET_SOLINGER=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:114:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:115:CONFIG_NET_TCP_KEEPALIVE=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:116:CONFIG_NET_TCP_WRITE_BUFFERS=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:117:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:118:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/lx_cpu/configs/nsh/defconfig:152:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/mbed/configs/nsh/defconfig:30:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/mbed/configs/userled/defconfig:33:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/mcb1700/configs/nsh/defconfig:31:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:22:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:30:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:37:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:38:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:39:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:40:CONFIG_NETDB_DNSCLIENT_ENTRIES=4
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:41:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:42:CONFIG_NETUTILS_FTPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:43:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:44:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:45:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:46:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:47:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:48:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:49:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/ftpc/defconfig:68:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidkbd/defconfig:33:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:31:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:34:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:35:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:36:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:37:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:38:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:39:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:40:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:41:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:42:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:43:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:44:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:45:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:46:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:47:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/hidmouse/defconfig:64:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:22:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:28:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:33:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:34:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:35:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:36:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:37:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nettest/defconfig:38:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:24:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:33:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:41:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:42:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:43:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:44:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:45:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:46:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:47:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:48:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:49:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:50:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:51:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:52:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:53:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:54:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:55:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/nsh/defconfig:73:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:8:# CONFIG_NET_ETHERNET is not set
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:29:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:30:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:31:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:32:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:33:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:34:CONFIG_NET_SLIP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:35:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:36:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/slip-httpd/defconfig:37:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:21:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:32:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:35:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:36:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:37:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:38:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:39:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:40:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:41:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-binfs/defconfig:42:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:21:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:29:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:32:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:33:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:34:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:35:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:36:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:37:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:38:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/thttpd-nxflat/defconfig:39:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/usbmsc/defconfig:30:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/usbserial/defconfig:25:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:24:CONFIG_ETH0_PHY_KS8721=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:32:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:41:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:42:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:43:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:44:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:45:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:46:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:47:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:48:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:49:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:50:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:51:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:52:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:53:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/olimex-lpc1766stk/configs/zmodem/defconfig:71:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/open1788/configs/fb/defconfig:31:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/open1788/configs/knsh/defconfig:35:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/open1788/configs/knxterm/defconfig:40:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/open1788/configs/nsh/defconfig:33:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/open1788/configs/nxlines/defconfig:35:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/open1788/configs/pdcurses/defconfig:42:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/open1788/configs/pwfb/defconfig:41:CONFIG_MM_REGIONS=3
+boards/arm/lpc17xx_40xx/pnev5180b/configs/knsh/defconfig:19:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:24:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:25:CONFIG_NETDEV_LATEINIT=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:26:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:27:CONFIG_NET_CDCECM=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:28:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:29:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:30:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:31:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh-cdcecm/defconfig:37:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/nsh/defconfig:17:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:27:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:28:CONFIG_NETDEV_LATEINIT=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:29:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:30:CONFIG_NET_CDCECM=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:31:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:32:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:33:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:34:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh-cdcecm/defconfig:41:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/pnev5180b/configs/usbnsh/defconfig:22:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:27:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:47:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:58:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:60:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:61:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:62:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:63:CONFIG_NETDEV_LATEINIT=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:64:CONFIG_NETINIT_DHCPC=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:65:CONFIG_NETINIT_DRIPADDR=0xc0a80101
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:66:CONFIG_NETINIT_MACADDR_1=0x55add7e5
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:67:CONFIG_NETINIT_MACADDR_2=0xbada
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:68:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:69:CONFIG_NETINIT_THREAD=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:70:CONFIG_NETUTILS_CODECS=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:71:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:72:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:73:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:74:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:75:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:76:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:77:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:78:CONFIG_NET_STATISTICS=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:79:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:80:CONFIG_NET_TCP_WRITE_BUFFERS=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:81:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:82:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/u-blox-c027/configs/nsh/defconfig:97:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:21:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:28:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:31:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:32:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:33:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:34:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:35:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/hello/defconfig:36:CONFIG_NET_TCP_PREALLOC_CONNS=16
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:25:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:33:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:41:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:42:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:43:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:44:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:45:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:46:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:47:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:48:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:49:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:50:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:51:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:52:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:53:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:54:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:55:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nsh/defconfig:69:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:28:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:40:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:48:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:50:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:51:CONFIG_NETDB_DNSCLIENT=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:52:CONFIG_NETDB_DNSSERVER_NOADDR=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:53:CONFIG_NETINIT_NOMAC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:54:CONFIG_NETUTILS_DHCPC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:55:CONFIG_NETUTILS_TELNETD=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:56:CONFIG_NETUTILS_TFTPC=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:57:CONFIG_NETUTILS_WEBCLIENT=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:58:CONFIG_NET_BROADCAST=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:59:CONFIG_NET_ICMP_SOCKET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:60:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:61:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:62:CONFIG_NET_UDP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:63:CONFIG_NET_UDP_CHECKSUMS=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/nxhello/defconfig:86:CONFIG_SYSTEM_PING=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:21:CONFIG_ETH0_PHY_DP83848C=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:29:CONFIG_LPC17_40_ETHERNET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:34:CONFIG_MM_REGIONS=2
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:35:CONFIG_NET=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:36:CONFIG_NETUTILS_NETLIB=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:37:CONFIG_NETUTILS_THTTPD=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:38:CONFIG_NET_MAX_LISTENPORTS=8
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:39:CONFIG_NET_SOCKOPTS=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:40:CONFIG_NET_TCP=y
+boards/arm/lpc17xx_40xx/zkit-arm-1769/configs/thttpd/defconfig:41:CONFIG_NET_TCP_PREALLOC_CONNS=16
+
+┌──(bg9211014🎃kali)-[~/nuttxspace/nuttx

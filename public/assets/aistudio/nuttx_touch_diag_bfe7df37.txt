@@ -1,0 +1,3594 @@
+=== .config ===
+CONFIG_DEBUG_ALERT=y
+CONFIG_DEBUG_FEATURES=y
+CONFIG_DEBUG_ERROR=y
+CONFIG_DEBUG_WARN=y
+# CONFIG_DEBUG_INFO is not set
+CONFIG_DEBUG_ASSERTIONS=y
+# CONFIG_DEBUG_ASSERTIONS_EXPRESSION is not set
+CONFIG_DEBUG_ASSERTIONS_FILENAME=y
+# CONFIG_DEBUG_BINFMT is not set
+CONFIG_DEBUG_FS=y
+CONFIG_DEBUG_FS_ERROR=y
+CONFIG_DEBUG_FS_WARN=y
+# CONFIG_DEBUG_GRAPHICS is not set
+# CONFIG_DEBUG_LIB is not set
+# CONFIG_DEBUG_MM is not set
+# CONFIG_DEBUG_NET is not set
+# CONFIG_DEBUG_POWER is not set
+# CONFIG_DEBUG_BATTERY is not set
+# CONFIG_DEBUG_SCHED is not set
+# CONFIG_DEBUG_DMA is not set
+# CONFIG_DEBUG_IRQ is not set
+# CONFIG_DEBUG_LEDS is not set
+# CONFIG_DEBUG_INPUT is not set
+# CONFIG_DEBUG_ANALOG is not set
+# CONFIG_DEBUG_GPIO is not set
+# CONFIG_DEBUG_I2C is not set
+# CONFIG_DEBUG_SPI is not set
+# CONFIG_DEBUG_THERMAL is not set
+# CONFIG_DEBUG_TIMER is not set
+# CONFIG_DEBUG_VIDEO is not set
+# CONFIG_DEBUG_IPC is not set
+CONFIG_DEBUG_SYMBOLS=y
+CONFIG_DEBUG_SYMBOLS_LEVEL="-g"
+# CONFIG_DEBUG_NOOPT is not set
+# CONFIG_DEBUG_CUSTOMOPT is not set
+CONFIG_DEBUG_FULLOPT=y
+CONFIG_DEBUG_OPT_UNUSED_SECTIONS=y
+# CONFIG_DEBUG_LINK_WHOLE_ARCHIVE is not set
+CONFIG_DEBUG_LINK_MAP=y
+# CONFIG_DEBUG_LINK_ORPHAN_WARN is not set
+# CONFIG_DEBUG_HARDFAULT_ALERT is not set
+# CONFIG_DEBUG_BUSFAULT is not set
+# CONFIG_DEBUG_USAGEFAULT is not set
+CONFIG_LPC17_40_SSP0=y
+# CONFIG_LPC17_40_SSP1 is not set
+# CONFIG_LPC17_40_SSP2 is not set
+CONFIG_LPC17_40_GPIOIRQ=y
+CONFIG_INPUT=y
+# CONFIG_INPUT_GOLDFISH_EVENTS is not set
+# CONFIG_INPUT_FF is not set
+# CONFIG_INPUT_MOUSE is not set
+CONFIG_INPUT_TOUCHSCREEN=y
+# CONFIG_INPUT_KEYBOARD is not set
+# CONFIG_INPUT_UINPUT is not set
+# CONFIG_INPUT_ST7123 is not set
+# CONFIG_INPUT_MAX11802 is not set
+# CONFIG_INPUT_TSC2007 is not set
+# CONFIG_INPUT_FT5X06 is not set
+CONFIG_INPUT_ADS7843E=y
+# CONFIG_ADS7843E_MULTIPLE is not set
+CONFIG_ADS7843E_NPOLLWAITERS=4
+CONFIG_ADS7843E_SPIDEV=0
+CONFIG_ADS7843E_DEVMINOR=0
+CONFIG_ADS7843E_SPIMODE=0
+CONFIG_ADS7843E_FREQUENCY=500000
+# CONFIG_ADS7843E_SWAPXY is not set
+CONFIG_ADS7843E_THRESHX=12
+CONFIG_ADS7843E_THRESHY=12
+# CONFIG_INPUT_MXT is not set
+# CONFIG_INPUT_STMPE811 is not set
+# CONFIG_INPUT_CYPRESS_MBR3108 is not set
+# CONFIG_INPUT_GT9XX is not set
+# CONFIG_INPUT_BUTTONS is not set
+# CONFIG_INPUT_SBUTTON is not set
+# CONFIG_INPUT_DJOYSTICK is not set
+# CONFIG_INPUT_AJOYSTICK is not set
+# CONFIG_INPUT_NUNCHUCK is not set
+# CONFIG_INPUT_SPQ10KBD is not set
+# CONFIG_INPUT_KMATRIX is not set
+# CONFIG_INPUT_MPR121_KEYPAD is not set
+CONFIG_NX=y
+CONFIG_NX_NDISPLAYS=1
+CONFIG_NX_NPLANES=1
+# CONFIG_NX_RAMBACKED is not set
+CONFIG_NX_NOCURSOR=y
+# CONFIG_NX_SWCURSOR is not set
+CONFIG_NX_BGCOLOR=0x0
+# CONFIG_NX_ANTIALIASING is not set
+# CONFIG_NX_WRITEONLY is not set
+# CONFIG_NX_UPDATE is not set
+CONFIG_NX_DISABLE_1BPP=y
+CONFIG_NX_DISABLE_2BPP=y
+CONFIG_NX_DISABLE_4BPP=y
+CONFIG_NX_DISABLE_8BPP=y
+# CONFIG_NX_DISABLE_16BPP is not set
+CONFIG_NX_DISABLE_24BPP=y
+CONFIG_NX_DISABLE_32BPP=y
+CONFIG_NX_PACKEDMSFIRST=y
+CONFIG_NX_XYINPUT=y
+# CONFIG_NX_XYINPUT_NONE is not set
+# CONFIG_NX_XYINPUT_MOUSE is not set
+CONFIG_NX_XYINPUT_TOUCHSCREEN=y
+CONFIG_NX_KBD=y
+CONFIG_NXTK_BORDERWIDTH=4
+CONFIG_NXTK_DEFAULT_BORDERCOLORS=y
+# CONFIG_NXTK_AUTORAISE is not set
+CONFIG_NXTERM=y
+CONFIG_NXTERM_BPP=16
+CONFIG_NXTERM_CURSORCHAR=137
+CONFIG_NXTERM_MXCHARS=128
+CONFIG_NXTERM_CACHESIZE=16
+CONFIG_NXTERM_LINESEPARATION=0
+# CONFIG_NXTERM_NOWRAP is not set
+# CONFIG_NXTERM_NXKBDIN is not set
+CONFIG_NXTERM_KBDBUFSIZE=16
+CONFIG_NXTERM_NPOLLWAITERS=4
+# CONFIG_NX_BLOCKING is not set
+CONFIG_NX_MXSERVERMSGS=32
+CONFIG_NX_MXCLIENTMSGS=16
+# CONFIG_NXSTART_EXTERNINIT is not set
+CONFIG_NXSTART_SERVERPRIO=110
+CONFIG_NXSTART_SERVERSTACK=2048
+CONFIG_NXFONTS=y
+CONFIG_NXFONTS_CHARBITS=7
+CONFIG_NXFONT_MONO5X8=y
+# CONFIG_NXFONT_SANS17X22 is not set
+# CONFIG_NXFONT_SANS20X26 is not set
+CONFIG_NXFONT_SANS23X27=y
+# CONFIG_NXFONT_SANS22X29 is not set
+# CONFIG_NXFONT_SANS28X37 is not set
+# CONFIG_NXFONT_SANS39X48 is not set
+# CONFIG_NXFONT_SANS17X23B is not set
+# CONFIG_NXFONT_SANS20X27B is not set
+# CONFIG_NXFONT_SANS22X29B is not set
+CONFIG_NXFONT_SANS28X37B=y
+# CONFIG_NXFONT_SANS40X49B is not set
+# CONFIG_NXFONT_SERIF22X29 is not set
+# CONFIG_NXFONT_SERIF29X37 is not set
+# CONFIG_NXFONT_SERIF38X48 is not set
+# CONFIG_NXFONT_SERIF22X28B is not set
+# CONFIG_NXFONT_SERIF27X38B is not set
+# CONFIG_NXFONT_SERIF38X49B is not set
+# CONFIG_NXFONT_PIXEL_UNICODE is not set
+# CONFIG_NXFONT_PIXEL_LCD_MACHINE is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_4X6 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_5X7 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_5X8 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X9 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X10 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X12 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X13 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X13B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_6X13O is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_7X13 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_7X13B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_7X13O is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_7X14 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_7X14B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_8X13 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_8X13B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_8X13O is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_9X15 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_9X15B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_9X18 is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_9X18B is not set
+# CONFIG_NXFONT_X11_MISC_FIXED_10X20 is not set
+# CONFIG_NXFONT_TOM_THUMB_4X6 is not set
+CONFIG_NXFONTS_DISABLE_1BPP=y
+CONFIG_NXFONTS_DISABLE_2BPP=y
+CONFIG_NXFONTS_DISABLE_4BPP=y
+CONFIG_NXFONTS_DISABLE_8BPP=y
+CONFIG_NXFONTS_DISABLE_16BPP=y
+CONFIG_NXFONTS_DISABLE_24BPP=y
+CONFIG_NXFONTS_DISABLE_32BPP=y
+CONFIG_NXFONTS_PACKEDMSFIRST=y
+CONFIG_NXGLIB=y
+CONFIG_MM_REGIONS=2
+# CONFIG_NXFLAT is not set
+CONFIG_NXGLYPHS_LARGE_ICONS=y
+CONFIG_NXGLYPHS_BACKGROUNDCOLOR=0x0000
+CONFIG_NXWIDGETS=y
+# CONFIG_NXWIDGETS_FLICKERFREE is not set
+CONFIG_NXWIDGET_SERVERINIT=y
+CONFIG_NXWIDGETS_CLIENTPRIO=100
+CONFIG_NXWIDGETS_LISTENERPRIO=100
+CONFIG_NXWIDGETS_LISTENERSTACK=2048
+# CONFIG_NXWIDGET_EVENTWAIT is not set
+CONFIG_NXWIDGETS_BPP=16
+# CONFIG_NXWIDGETS_GREYSCALE is not set
+CONFIG_NXWIDGETS_SIZEOFCHAR=1
+# CONFIG_NXWIDGETS_SYSTEM_CUSTOM_FONTID is not set
+CONFIG_NXWIDGETS_TNXARRAY_INITIALSIZE=16
+CONFIG_NXWIDGETS_TNXARRAY_SIZEINCREMENT=8
+# CONFIG_NXWIDGETS_CUSTOM_FILLCOLORS is not set
+# CONFIG_NXWIDGETS_CUSTOM_EDGECOLORS is not set
+# CONFIG_NXWIDGETS_CUSTOM_TEXTCOLORS is not set
+CONFIG_NXWIDGETS_TRANSPARENT_COLOR=0x0
+CONFIG_NXWIDGETS_FIRST_REPEAT_TIME=500
+CONFIG_NXWIDGETS_CONTINUE_REPEAT_TIME=200
+CONFIG_NXWIDGETS_DOUBLECLICK_TIME=350
+CONFIG_NXWIDGETS_KBDBUFFER_SIZE=16
+CONFIG_NXWIDGETS_CURSORCONTROL_SIZE=4
+CONFIG_NXWM=y
+CONFIG_NXWM_LARGE_ICONS=y
+# CONFIG_NXWM_CUSTOM_FONTID is not set
+# CONFIG_NXWM_CUSTOM_FILLCOLORS is not set
+# CONFIG_NXWM_CUSTOM_EDGECOLORS is not set
+# CONFIG_NXWM_CUSTOM_TEXTCOLORS is not set
+# CONFIG_NXWM_DISABLE_BACKGROUND_IMAGE is not set
+CONFIG_NXWM_BACKGROUND_IMAGE="NXWidgets::g_nuttxBitmap160x160"
+CONFIG_NXWM_TASKBAR_VSPACING=2
+CONFIG_NXWM_TASKBAR_HSPACING=2
+CONFIG_NXWM_TASKBAR_TOP=y
+# CONFIG_NXWM_TASKBAR_BOTTOM is not set
+# CONFIG_NXWM_TASKBAR_LEFT is not set
+# CONFIG_NXWM_TASKBAR_RIGHT is not set
+# CONFIG_NXWM_CUSTOM_TASKBAR_WIDTH is not set
+# CONFIG_NXWM_TASKBAR_ICONSCALE is not set
+# CONFIG_NXWM_DISABLE_MINIMIZE is not set
+# CONFIG_NXWM_TASKBAR_NO_BORDER is not set
+# CONFIG_NXWM_CUSTOM_TOOLBAR_HEIGHT is not set
+# CONFIG_NXWM_TOOLBAR_CUSTOM_FONTID is not set
+# CONFIG_NXWM_CUSTOM_APPWINDOW_ICONS is not set
+CONFIG_NXWM_STARTWINDOW_VSPACING=4
+CONFIG_NXWM_STARTWINDOW_HSPACING=4
+# CONFIG_NXWM_CUSTOM_STARTWINDOW_ICON is not set
+CONFIG_NXWM_STARTWINDOW_MQNAME="nxwm"
+CONFIG_NXWM_STARTWINDOW_MXMSGS=32
+CONFIG_NXWM_STARTWINDOW_MXMPRIO=42
+CONFIG_NXWM_STARTWINDOW_PRIO=100
+CONFIG_NXWM_STARTWINDOW_STACKSIZE=2048
+CONFIG_NXWM_NXTERM=y
+CONFIG_NXWM_NXTERM_PRIO=100
+CONFIG_NXWM_NXTERM_STACKSIZE=2048
+# CONFIG_NXWM_NXTERM_CUSTOM_COLORS is not set
+# CONFIG_NXWM_NXTERM_CUSTOM_FONTID is not set
+# CONFIG_NXWM_CUSTOM_NXTERM_ICON is not set
+CONFIG_NXWM_TOUCHSCREEN=y
+CONFIG_NXWM_TOUCHSCREEN_DEVNO=0
+CONFIG_NXWM_TOUCHSCREEN_DEVPATH="/dev/input0"
+CONFIG_NXWM_TOUCHSCREEN_SIGNO=32
+CONFIG_NXWM_TOUCHSCREEN_LISTENERPRIO=120
+CONFIG_NXWM_TOUCHSCREEN_LISTENERSTACK=2048
+# CONFIG_NXWM_KEYBOARD is not set
+CONFIG_NXWM_CALIBRATION_MARGIN=40
+# CONFIG_NXWM_CALIBRATION_CUSTOM_COLORS is not set
+# CONFIG_NXWM_CALIBRATION_MESSAGES is not set
+# CONFIG_NXWM_CALIBRATION_ANISOTROPIC is not set
+# CONFIG_NXWM_CUSTOM_CALIBRATION_ICON is not set
+CONFIG_NXWM_CALIBRATION_SIGNO=32
+CONFIG_NXWM_CALIBRATION_LISTENERPRIO=100
+CONFIG_NXWM_CALIBRATION_LISTENERSTACK=2048
+# CONFIG_NXWM_HEXCALCULATOR_CUSTOM_COLORS is not set
+# CONFIG_NXWM_CUSTOM_HEXCALCULATOR_ICON is not set
+# CONFIG_NXWM_HEXCALCULATOR_CUSTOM_FONTID is not set
+=== open1788/src ===
+CMakeLists.txt
+libboard.a
+lpc17_40_autoleds.c
+lpc17_40_autoleds.o
+lpc17_40_boardinitialize.c
+lpc17_40_boardinitialize.o
+lpc17_40_bringup.c
+lpc17_40_bringup.o
+lpc17_40_buttons.c
+lpc17_40_djoystick.c
+lpc17_40_lcd.c
+lpc17_40_lcd.o
+lpc17_40_nandinitialize.c
+lpc17_40_norinitialize.c
+lpc17_40_sdraminitialize.c
+lpc17_40_sdraminitialize.o
+lpc17_40_ssp.c
+lpc17_40_ssp.o
+lpc17_40_touchscreen.c
+lpc17_40_touchscreen.o
+lpc17_40_userleds.c
+lpc17_40_userleds.o
+Make.dep
+Makefile
+open1788.h
+=== nxwm_main.cxx ===
+/////////////////////////////////////////////////////////////////////////////
+// apps/graphics/nxwm/src/nxwm_main.cxx
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements.  See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.  The
+// ASF licenses this file to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance with the
+// License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+// License for the specific language governing permissions and limitations
+// under the License.
+//
+//////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// Included Files
+/////////////////////////////////////////////////////////////////////////////
+
+#include <nuttx/config.h>
+
+#include <cstdio>
+#include <cstdlib>
+
+#include <unistd.h>
+#include <sys/boardctl.h>
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN_CONFIGDATA
+#  include "platform/configdata.h"
+#endif
+
+#include "graphics/nxwm/ctaskbar.hxx"
+#include "graphics/nxwm/cstartwindow.hxx"
+
+#ifdef CONFIG_NXWM_NXTERM
+#  include "graphics/nxwm/cnxterm.hxx"
+#endif
+
+#include "graphics/nxwm/chexcalculator.hxx"
+
+#ifdef CONFIG_NXWM_MEDIAPLAYER
+#  include "graphics/nxwm/cmediaplayer.hxx"
+#endif
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+#  include "graphics/nxwm/ctouchscreen.hxx"
+#  include "graphics/nxwm/ccalibration.hxx"
+#endif
+
+#ifdef CONFIG_NXWM_KEYBOARD
+#  include "graphics/nxwm/ckeyboard.hxx"
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Private Types
+/////////////////////////////////////////////////////////////////////////////
+
+struct SNxWmTest
+{
+  NxWM::CTaskbar     *taskbar;             // The task bar
+  NxWM::CStartWindow *startwindow;         // The start window
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+  NxWM::CTouchscreen *touchscreen;         // The touchscreen
+  struct NxWM::SCalibrationData calibData; // Calibration data
+  bool                calibrated;          // True: Touchscreen has been calibrated
+#endif
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// Private Data
+/////////////////////////////////////////////////////////////////////////////
+
+static struct SNxWmTest g_nxwmtest;
+
+/////////////////////////////////////////////////////////////////////////////
+// Public Function Prototypes
+/////////////////////////////////////////////////////////////////////////////
+
+// Suppress name-mangling
+
+extern "C" int main(int argc, char *argv[]);
+
+/////////////////////////////////////////////////////////////////////////////
+// Public Functions
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: cleanup
+/////////////////////////////////////////////////////////////////////////////
+
+static void testCleanUpAndExit(int exitCode)
+{
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+  if (g_nxwmtest.touchscreen)
+    {
+      delete g_nxwmtest.touchscreen;
+    }
+#endif
+
+  // Delete the task bar then the start window.  the order is important because
+  // we must bet all of the application references out of the task bar before
+  // deleting the start window.  When the start window is deleted, it will
+  // also delete of of the resources contained within the start window.
+
+  if (g_nxwmtest.taskbar)
+    {
+      delete g_nxwmtest.taskbar;
+    }
+
+  if (g_nxwmtest.startwindow)
+    {
+      delete g_nxwmtest.startwindow;
+    }
+
+  // And exit
+
+  exit(exitCode);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createTaskbar
+/////////////////////////////////////////////////////////////////////////////
+
+static bool createTaskbar(void)
+{
+  // Create an instance of the Task Bar.
+  //
+  // The general sequence for initializing the task bar is:
+  //
+  // 1. Create the CTaskbar instance,
+  // 2. Call the CTaskbar::connect() method to connect to the NX server (CTaskbar
+  //    inherits the connect method from CNxServer),
+  // 3. Call the CTaskbar::initWindowManager() method to initialize the task bar.
+  // 3. Call CTaskBar::startApplication repeatedly to add applications to the task bar
+  // 4. Call CTaskBar::startWindowManager to start the display with applications in place
+
+  printf("createTaskbar: Create CTaskbar instance\n");
+  g_nxwmtest.taskbar = new NxWM::CTaskbar();
+  if (!g_nxwmtest.taskbar)
+    {
+      printf("createTaskbar: ERROR: Failed to instantiate CTaskbar\n");
+      return false;
+    }
+
+  // Connect to the NX server
+
+  printf("createTaskbar: Connect CTaskbar instance to the NX server\n");
+  if (!g_nxwmtest.taskbar->connect())
+    {
+      printf("createTaskbar: ERROR: Failed to connect CTaskbar instance to the NX server\n");
+      return false;
+    }
+
+  // Initialize the task bar
+  //
+  // Taskbar::initWindowManager() prepares the task bar to receive applications.
+  // CTaskBar::startWindowManager() brings the window manager up with those applications
+  // in place.
+
+  printf("createTaskbar: Initialize CTaskbar instance\n");
+  if (!g_nxwmtest.taskbar->initWindowManager())
+    {
+      printf("createTaskbar: ERROR: Failed to initialize CTaskbar instance\n");
+      return false;
+    }
+
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createStartWindow
+/////////////////////////////////////////////////////////////////////////////
+
+static bool createStartWindow(void)
+{
+  // Create the start window.  The start window is unique among applications
+  // because it has no factory.  The general sequence for setting up the
+  // start window is:
+  //
+  // 1. Create and open a CApplicationWindow
+  // 2. Use the window to create the CStartWindow the start window application
+  // 2. Call Cstartwindow::addApplication numerous times to install applications
+  //    in the start window.
+  // 3. Call CTaskBar::startApplication (initially minimized) to start the start
+  //    window application.
+  //
+  // NOTE: that the start window should not have a stop button.
+
+  NxWM::CApplicationWindow *window = g_nxwmtest.taskbar->openApplicationWindow(NxWM::CApplicationWindow::WINDOW_PERSISTENT);
+  if (!window)
+    {
+      printf("createStartWindow: ERROR: Failed to create CApplicationWindow\n");
+      return false;
+    }
+
+  // Open the window (it is hot in here)
+
+  if (!window->open())
+    {
+      printf("createStartWindow: ERROR: Failed to open CApplicationWindow\n");
+      delete window;
+      return false;
+    }
+
+  // Instantiate the application, providing the window to the application's
+  // constructor
+
+  g_nxwmtest.startwindow = new NxWM::CStartWindow(g_nxwmtest.taskbar, window);
+  if (!g_nxwmtest.startwindow)
+    {
+      gerr("ERROR: Failed to instantiate CStartWindow\n");
+      delete window;
+      return false;
+    }
+
+  // Add the CStartWindow application to the task bar (minimized)
+
+  printf("createStartWindow: Start the start window application\n");
+  if (!g_nxwmtest.taskbar->startApplication(g_nxwmtest.startwindow, true))
+    {
+      printf("createStartWindow: ERROR: Failed to start the start window application\n");
+      return false;
+    }
+
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: startWindowManager
+/////////////////////////////////////////////////////////////////////////////
+
+static bool startWindowManager(void)
+{
+  // Start the window manager
+
+  printf("startWindowManager: Start the window manager\n");
+  if (!g_nxwmtest.taskbar->startWindowManager())
+    {
+      printf("startWindowManager: ERROR: Failed to start the window manager\n");
+      return false;
+    }
+
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createTouchScreen
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+static bool createTouchScreen(void)
+{
+  // Get the physical size of the display in pixels
+
+  struct nxgl_size_s displaySize;
+  g_nxwmtest.taskbar->getDisplaySize(displaySize);
+
+    // Create the touchscreen device
+
+  printf("createTouchScreen: Creating CTouchscreen\n");
+  g_nxwmtest.touchscreen = new NxWM::CTouchscreen(g_nxwmtest.taskbar, &displaySize);
+  if (!g_nxwmtest.touchscreen)
+    {
+      printf("createTouchScreen: ERROR: Failed to create CTouchscreen\n");
+      return false;
+    }
+
+  printf("createTouchScreen: Start touchscreen listener\n");
+  if (!g_nxwmtest.touchscreen->start())
+    {
+      printf("createTouchScreen: ERROR: Failed start the touchscreen listener\n");
+      delete g_nxwmtest.touchscreen;
+      return false;
+    }
+
+  return true;
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createKeyboard
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef CONFIG_NXWM_KEYBOARD
+static bool createKeyboard(void)
+{
+  printf("createKeyboard: Creating CKeyboard\n");
+  NxWM::CKeyboard *keyboard = new NxWM::CKeyboard(g_nxwmtest.taskbar);
+  if (!keyboard)
+    {
+      printf("createKeyboard: ERROR: Failed to create CKeyboard\n");
+      return false;
+    }
+
+  printf("createKeyboard: Start keyboard listener\n");
+  if (!keyboard->start())
+    {
+      printf("createKeyboard: ERROR: Failed start the keyboard listener\n");
+      delete keyboard;
+      return false;
+    }
+
+  return true;
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createCalibration
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+static bool createCalibration(void)
+{
+  // 1Create the CCalibrationFactory application factory
+
+  printf("createCalibration: Creating CCalibrationFactory\n");
+  NxWM::CCalibrationFactory *factory = new NxWM::CCalibrationFactory(g_nxwmtest.taskbar, g_nxwmtest.touchscreen);
+  if (!factory)
+    {
+      printf("createCalibration: ERROR: Failed to create CCalibrationFactory\n");
+      return false;
+    }
+
+  // Add the calibration application to the start window.
+
+  printf("createCalibration: Adding CCalibration to the start window\n");
+  if (!g_nxwmtest.startwindow->addApplication(factory))
+    {
+      printf("createCalibration: ERROR: Failed to add CCalibrationto the start window\n");
+      delete factory;
+      return false;
+    }
+
+  // Call StartWindowFactory::create to create the start window application
+
+  printf("createCalibration: Creating CCalibration\n");
+  NxWM::IApplication *calibration = factory->create();
+  if (!calibration)
+    {
+      printf("createCalibration: ERROR: Failed to create CCalibration\n");
+      return false;
+    }
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN_CONFIGDATA
+  // Check if we have previously stored calibration data
+
+  int ret = platform_getconfig(CONFIGDATA_TSCALIBRATION, 0,
+                               (FAR uint8_t *)&g_nxwmtest.calibData,
+                               sizeof(struct NxWM::SCalibrationData));
+  if (ret == OK)
+    {
+      // We successfully got the calibration data from the platform-specific
+      // logic.  This might fail if (1) calibration data was never saved, or
+      // (2) if some failure occurred while trying to obtain the configuration
+      // data.  In either event, the appropriate thing to do is to perform
+      // the calibration.
+
+      // Provide the calibration data to the touchscreen thread
+
+      g_nxwmtest.touchscreen->setCalibrationData(g_nxwmtest.calibData);
+      g_nxwmtest.touchscreen->setEnabled(true);
+      g_nxwmtest.calibrated = true;
+    }
+  else
+#endif
+    {
+      // Call CTaskBar::startApplication to start the Calibration application.
+      // Nothing will be displayed because the window manager has not yet been
+      // started.
+
+      printf("createCalibration: Start the calibration application\n");
+      g_nxwmtest.calibrated = false;
+
+      if (!g_nxwmtest.taskbar->startApplication(calibration, false))
+        {
+          printf("createCalibration ERROR: Failed to start the calibration application\n");
+          delete calibration;
+          return false;
+        }
+    }
+
+  return true;
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createNxTerm
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef CONFIG_NXWM_NXTERM
+static bool createNxTerm(void)
+{
+  // Add the NxTerm application to the start window
+
+  printf("createNxTerm: Creating the NxTerm application\n");
+  NxWM::CNxTermFactory *console = new  NxWM::CNxTermFactory(g_nxwmtest.taskbar);
+  if (!console)
+    {
+      printf("createNxTerm: ERROR: Failed to instantiate CNxTermFactory\n");
+      return false;
+    }
+
+  printf("createNxTerm: Adding the NxTerm application to the start window\n");
+  if (!g_nxwmtest.startwindow->addApplication(console))
+    {
+      printf("createNxTerm: ERROR: Failed to add CNxTermFactory to the start window\n");
+      delete console;
+      return false;
+    }
+
+  return true;
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createHexCalculator
+/////////////////////////////////////////////////////////////////////////////
+
+static bool createHexCalculator(void)
+{
+  // Add the hex calculator application to the start window
+
+  printf("createHexCalculator: Creating the hex calculator application\n");
+  NxWM::CHexCalculatorFactory *calculator = new  NxWM::CHexCalculatorFactory(g_nxwmtest.taskbar);
+  if (!calculator)
+    {
+      printf("createHexCalculator: ERROR: Failed to instantiate CHexCalculatorFactory\n");
+      return false;
+    }
+
+  printf("createHexCalculator: Adding the hex calculator application to the start window\n");
+  if (!g_nxwmtest.startwindow->addApplication(calculator))
+    {
+      printf("createHexCalculator: ERROR: Failed to add CHexCalculatorFactory to the start window\n");
+      delete calculator;
+      return false;
+    }
+
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Name: createMediaPlayer
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef CONFIG_NXWM_MEDIAPLAYER
+static bool createMediaPlayer(void)
+{
+  // Add the hex calculator application to the start window
+
+  printf("createHexCalculator: Creating the hex calculator application\n");
+  NxWM::CMediaPlayerFactory *mediaplayer = new  NxWM::CMediaPlayerFactory(g_nxwmtest.taskbar);
+  if (!mediaplayer)
+    {
+      printf("createMediaPlayer: ERROR: Failed to instantiate CMediaPlayerFactory\n");
+      return false;
+    }
+
+  printf("createMediaPlayer: Adding the hex calculator application to the start window\n");
+  if (!g_nxwmtest.startwindow->addApplication(mediaplayer))
+    {
+      printf("createMediaPlayer: ERROR: Failed to add CMediaPlayerFactory to the start window\n");
+      delete mediaplayer;
+      return false;
+    }
+
+  return true;
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// Public Functions
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// nxwm_main
+/////////////////////////////////////////////////////////////////////////////
+
+int main(int argc, char *argv[])
+{
+#ifdef CONFIG_NXWM_NXTERM
+  // Initialize the NSH library
+
+  printf("nxwm_main: Initialize the NSH library\n");
+  if (!NxWM::nshlibInitialize())
+    {
+      printf("nxwm_main: ERROR: Failed to initialize the NSH library\n");
+      return EXIT_FAILURE;
+    }
+#endif
+
+  // Create the task bar.
+
+  if (!createTaskbar())
+    {
+      printf("nxwm_main: ERROR: Failed to create the task bar\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+
+  // Create the start window.
+
+  if (!createStartWindow())
+    {
+      printf("nxwm_main: ERROR: Failed to create the start window\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+
+#ifdef CONFIG_NXWM_KEYBOARD
+  // Create the keyboard device
+
+  if (!createKeyboard())
+    {
+      printf("nxwm_main: ERROR: Failed to create the keyboard\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+#endif
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+  // Create the touchscreen device
+
+  if (!createTouchScreen())
+    {
+      printf("nxwm_main ERROR: Failed to create the touchscreen\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+#endif
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+  // Create the calibration application and add it to the start window
+
+  if (!createCalibration())
+    {
+      printf("nxwm_main ERROR: Failed to create the calibration application\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+#endif
+
+#ifdef CONFIG_NXWM_NXTERM
+  // Create the NxTerm application and add it to the start window
+
+  if (!createNxTerm())
+    {
+      printf("nxwm_main: ERROR: Failed to create the NxTerm application\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+#endif
+
+  // Create the hex calculator application and add it to the start window
+
+  if (!createHexCalculator())
+    {
+      printf("nxwm_main: ERROR: Failed to create the hex calculator application\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+
+#ifdef CONFIG_NXWM_MEDIAPLAYER
+  // Create the media player application and add it to the start window
+
+  if (!createMediaPlayer())
+    {
+      printf("nxwm_main: ERROR: Failed to create the media player application\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+#endif
+
+  // Call CTaskBar::startWindowManager to start the display with applications in place.
+
+  if (!startWindowManager())
+    {
+      printf("nxwm_main: ERROR: Failed to start the window manager\n");
+      testCleanUpAndExit(EXIT_FAILURE);
+    }
+
+#ifdef CONFIG_NXWM_TOUCHSCREEN
+#ifdef CONFIG_NXWM_TOUCHSCREEN_CONFIGDATA
+  // There are two possibilities:  (1) We started the calibration earlier and now
+  // need to obtain the calibration data from the calibration process, or (2)
+  // We have already obtained stored calibration data in which case, the calibration
+  // process never ran.
+
+  if (!g_nxwmtest.calibrated)
+#endif
+    {
+      // Since we started the touchscreen calibration program maximized, it will
+      // run immediately when we start the window manager.  There is no positive
+      // handshake to know when the touchscreen has been calibrated.  If we really
+      // want to know, we have to poll
+
+      printf("nxwm_main: Waiting for touchscreen calibration\n");
+      while (!g_nxwmtest.touchscreen->isCalibrated())
+        {
+          sleep(2);
+        }
+
+      // This is how we would then recover the calibration data.  After the
+      // calibration application creates the calibration data, it hands it to
+      // the touchscreen driver.  After the touchscreen driver gets it, it will
+      // report isCalibrated() == true and then we can read the calibration data
+      // from the touchscreen driver.
+
+      printf("nxwm_main: Getting calibration data from the touchscreen\n");
+      if (!g_nxwmtest.touchscreen->getCalibrationData(g_nxwmtest.calibData))
+        {
+          printf("nxwm_main: ERROR: Failed to get calibration data from the touchscreen\n");
+        }
+      else
+        {
+#if 0 // ifdef CONFIG_NXWM_TOUCHSCREEN_CONFIGDATA.  Done in CCalibration
+          // Save the new calibration data so that we do not have to do this
+          // again the next time we start up.
+
+          int ret = platform_setconfig(CONFIGDATA_TSCALIBRATION, 0,
+                                       (FAR const uint8_t *)&g_nxwmtest.calibData,
+                                       sizeof(struct NxWM::SCalibrationData));
+          if (ret != 0)
+            {
+              printf("nxwm_main: ERROR: Failed to save calibration data\n");
+            }
+#endif
+          g_nxwmtest.calibrated = true;
+        }
+    }
+#endif
+
+  return EXIT_SUCCESS;
+}
+=== cstartwindow.cxx ===
+/********************************************************************************************
+ * apps/graphics/nxwm/src/cstartwindow.cxx
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ********************************************************************************************/
+
+/********************************************************************************************
+ * Included Files
+ ********************************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <cstdlib>
+#include <cerrno>
+
+#include <fcntl.h>
+#include <sched.h>
+
+#include "graphics/nxwidgets/cwidgetcontrol.hxx"
+
+#include "graphics/nxwm/nxwmconfig.hxx"
+#include "graphics/nxglyphs.hxx"
+#include "graphics/nxwm/ctaskbar.hxx"
+#include "graphics/nxwm/cstartwindow.hxx"
+
+/********************************************************************************************
+ * Pre-Processor Definitions
+ ********************************************************************************************/
+
+/********************************************************************************************
+ * Global Data
+ ********************************************************************************************/
+
+/**
+ * The well-known name for the Start Window's message queue.
+ */
+
+FAR const char *NxWM::g_startWindowMqName = CONFIG_NXWM_STARTWINDOW_MQNAME;
+
+/********************************************************************************************
+ * CStartWindow Method Implementations
+ ********************************************************************************************/
+
+extern const struct NXWidgets::SRlePaletteBitmap CONFIG_NXWM_STARTWINDOW_ICON;
+
+using namespace NxWM;
+
+/**
+ * CStartWindow Constructor
+ *
+ * @param taskbar.  A pointer to the parent task bar instance
+ * @param window.  The window to be used by this application.
+ */
+
+CStartWindow::CStartWindow(CTaskbar *taskbar, CApplicationWindow *window)
+{
+  // Save the constructor data
+
+  m_taskbar = taskbar;
+  m_window  = window;
+
+  // Add our personalized window label
+
+  NXWidgets::CNxString myName = getName();
+  window->setWindowLabel(myName);
+
+  // Add our callbacks to the application window
+
+  window->registerCallbacks(static_cast<IApplicationCallback *>(this));
+}
+
+/**
+ * CStartWindow Constructor
+ */
+
+CStartWindow::~CStartWindow(void)
+{
+  // There would be a problem if we were stopped with the start window task
+  // running... that should never happen but we'll check anyway:
+
+  stop();
+
+  // Although we didn't create it, we are responsible for deleting the
+  // application window
+
+  delete m_window;
+
+  // Then stop and delete all applications
+
+  removeAllApplications();
+}
+
+/**
+ * Each implementation of IApplication must provide a method to recover
+ * the contained IApplicationWindow instance.
+ */
+
+IApplicationWindow *CStartWindow::getWindow(void) const
+{
+  return static_cast<IApplicationWindow*>(m_window);
+}
+
+/**
+ * Get the icon associated with the application
+ *
+ * @return An instance if IBitmap that may be used to rend the
+ *   application's icon.  This is an new IBitmap instance that must
+ *   be deleted by the caller when it is no long needed.
+ */
+
+NXWidgets::IBitmap *CStartWindow::getIcon(void)
+{
+  NXWidgets::CRlePaletteBitmap *bitmap =
+    new NXWidgets::CRlePaletteBitmap(&CONFIG_NXWM_STARTWINDOW_ICON);
+
+  return bitmap;
+}
+
+/**
+ * Get the name string associated with the application
+ *
+ * @return A copy if CNxString that contains the name of the application.
+ */
+
+NXWidgets::CNxString CStartWindow::getName(void)
+{
+  return NXWidgets::CNxString("Start Window");
+}
+
+/**
+ * Start the application.
+ *
+ * @return True if the application was successfully started.
+ */
+
+bool CStartWindow::run(void)
+{
+  return true;
+}
+
+/**
+ * Stop the application.
+ */
+
+void CStartWindow::stop(void)
+{
+}
+
+/**
+ * Destroy the application and free all of its resources.  This method
+ * will initiate blocking of messages from the NX server.  The server
+ * will flush the window message queue and reply with the blocked
+ * message.  When the block message is received by CWindowMessenger,
+ * it will send the destroy message to the start window task which
+ * will, finally, safely delete the application.
+ */
+
+void CStartWindow::destroy(void)
+{
+  // What are we doing?  This should never happen because the start
+  // window task is persistent!
+
+  // Block any further window messages
+
+  m_window->block(this);
+
+  // Make sure that the application is stopped
+
+  stop();
+}
+
+/**
+ * The application window is hidden (either it is minimized or it is
+ * maximized, but not at the top of the hierarchy
+ */
+
+void CStartWindow::hide(void)
+{
+  // Disable drawing and events on all icons
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      NXWidgets::CImage *image = m_slots.at(i).image;
+      image->disableDrawing();
+      image->setRaisesEvents(false);
+    }
+}
+
+/**
+ * Redraw the entire window.  The application has been maximized or
+ * otherwise moved to the top of the hierarchy
+ */
+
+void CStartWindow::redraw(void)
+{
+  // Recover the NXTK window instance contained in the application window
+
+  NXWidgets::INxWindow *window = m_window->getWindow();
+
+  // Get the widget control associated with the NXTK window
+
+  NXWidgets::CWidgetControl *control =  window->getWidgetControl();
+
+  // Get the graphics port for drawing on the widget control
+
+  NXWidgets::CGraphicsPort *port = control->getGraphicsPort();
+
+  // Get the size of the application window
+
+  struct nxgl_size_s windowSize;
+  if (!window->getSize(&windowSize))
+    {
+      return;
+    }
+
+  // Fill the entire window with the background color
+
+  port->drawFilledRect(0, 0, windowSize.w, windowSize.h,
+                       CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR);
+
+  // Begin adding icons in the upper left corner
+
+  struct nxgl_point_s iconPos;
+  iconPos.x = CONFIG_NXWM_STARTWINDOW_HSPACING;
+  iconPos.y = CONFIG_NXWM_STARTWINDOW_VSPACING;
+
+  // Add each icon in the list of applications
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      // Get the icon associated with this application
+
+      NXWidgets::CImage *image = m_slots.at(i).image;
+
+      // Disable drawing of the icon image; disable events from the icon
+
+      image->disableDrawing();
+      image->setRaisesEvents(false);
+
+      // Get the size of the icon image
+
+      NXWidgets::CRect rect;
+      image->getPreferredDimensions(rect);
+
+      // Center the image in the region defined by the maximum icon size
+
+      struct nxgl_point_s imagePos;
+      imagePos.x = iconPos.x;
+      imagePos.y = iconPos.y;
+
+      if (rect.getWidth() < m_iconSize.w)
+        {
+          imagePos.x += ((m_iconSize.w - rect.getWidth()) >> 1);
+        }
+
+      if (rect.getHeight() < m_iconSize.h)
+        {
+          imagePos.y += ((m_iconSize.h - rect.getHeight()) >> 1);
+        }
+
+      // Set the position of the icon bitmap
+
+      image->moveTo(imagePos.x, imagePos.y);
+
+      // Then re-draw the icon at the new position
+
+      image->enableDrawing();
+      image->redraw();
+      image->setRaisesEvents(true);
+
+      // Advance the next icon position to the left
+
+      iconPos.x +=  m_iconSize.w + CONFIG_NXWM_TASKBAR_HSPACING;
+
+      // If there is insufficient space on on this row for the next
+      // max-sized icon, then advance to the next row
+
+      if (iconPos.x + m_iconSize.w >= windowSize.w)
+        {
+          iconPos.x  = CONFIG_NXWM_STARTWINDOW_HSPACING;
+          iconPos.y += m_iconSize.h + CONFIG_NXWM_TASKBAR_VSPACING;
+
+          // Don't try drawing past the bottom of the window
+
+          if (iconPos.y >= windowSize.w)
+            {
+              break;
+            }
+        }
+    }
+}
+
+/**
+ * Report of this is a "normal" window or a full screen window.  The
+ * primary purpose of this method is so that window manager will know
+ * whether or not it show draw the task bar.
+ *
+ * @return True if this is a full screen window.
+ */
+
+bool CStartWindow::isFullScreen(void) const
+{
+  return m_window->isFullScreen();
+}
+
+/**
+ * Add the application to the start window.  The general sequence is:
+ *
+ * 1. Call IApplicationFactory::create to a new instance of the application
+ * 2. Call CStartWindow::addApplication to add the application to the
+ *    start window.
+ *
+ * @param app.  The new application to add to the start window
+ * @return true on success
+ */
+
+bool CStartWindow::addApplication(IApplicationFactory *app)
+{
+  // Recover the NXTK window instance contained in the application window
+
+  NXWidgets::INxWindow *window = m_window->getWindow();
+
+  // Get the widget control associated with the NXTK window
+
+  NXWidgets::CWidgetControl *control =  window->getWidgetControl();
+
+  // Get the bitmap icon that goes with this application
+
+  NXWidgets::IBitmap *bitmap = app->getIcon();
+
+  // Create a CImage instance to manage the application icon
+
+  NXWidgets::CImage *image =
+    new NXWidgets::CImage(control, 0, 0, bitmap->getWidth(),
+                          bitmap->getHeight(), bitmap, 0);
+  if (!image)
+    {
+      return false;
+    }
+
+  // Configure the image, disabling drawing for now
+
+  image->setBorderless(true);
+  image->disableDrawing();
+
+  // Register to get events from the mouse clicks on the image
+
+  image->addWidgetEventHandler(this);
+
+  // Add the application to end of the list of applications managed by
+  // the start window
+
+  struct SStartWindowSlot slot;
+  slot.app   = app;
+  slot.image = image;
+  m_slots.push_back(slot);
+
+  // Re-calculate the icon bounding box
+
+  getIconBounds();
+  return true;
+}
+
+/**
+ * Called when the window minimize button is pressed.
+ */
+
+void CStartWindow::minimize(void)
+{
+  m_taskbar->minimizeApplication(static_cast<IApplication*>(this));
+}
+
+/**
+ * Called when the window minimize close is pressed.
+ */
+
+void CStartWindow::close(void)
+{
+  // Do nothing... you can't close the start window!!!
+}
+
+/**
+ * Calculate the icon bounding box
+ */
+
+void CStartWindow::getIconBounds(void)
+{
+  // Visit each icon
+
+  struct nxgl_size_s maxSize;
+  maxSize.w = 0;
+  maxSize.h = 0;
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      // Get the icon associated with this application
+
+      NXWidgets::CImage *image = m_slots.at(i).image;
+
+      // Get the size of the icon image
+
+      NXWidgets::CRect rect;
+      image->getPreferredDimensions(rect);
+
+      // Keep the maximum height and width
+
+      if (rect.getWidth() > maxSize.h)
+        {
+          maxSize.w = rect.getWidth() ;
+        }
+
+      if (rect.getHeight() > maxSize.h)
+        {
+          maxSize.h = rect.getHeight();
+        }
+    }
+
+  // And save the new maximum size
+
+  m_iconSize.w = maxSize.w;
+  m_iconSize.h = maxSize.h;
+}
+
+/**
+ * Stop all applications
+ */
+
+void CStartWindow::removeAllApplications(void)
+{
+  // Stop all applications and remove them from the start window.  Clearly, there
+  // are some ordering issues here... On an orderly system shutdown, disconnection
+  // should really occur priority to deleting instances
+
+  while (!m_slots.empty())
+    {
+      // Remove the application factory from the start menu
+
+      IApplicationFactory *app = m_slots.at(0).app;
+
+      // Now, delete the image and the application
+
+      delete app;
+      delete m_slots.at(0).image;
+
+      // And discard the data in this slot
+
+      m_slots.erase(0);
+    }
+}
+
+/**
+ * Handle a widget action event.  For CImage, this is a mouse button pre-release event.
+ *
+ * @param e The event data.
+ */
+
+void CStartWindow::handleActionEvent(const NXWidgets::CWidgetEventArgs &e)
+{
+  // Was an ICON clicked?
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      // Is this the clicked icon?
+
+      NXWidgets::CImage *image = m_slots.at(i).image;
+      if (image->isClicked())
+        {
+          // Create a new copy of the application
+
+          IApplication *app = m_slots.at(i).app->create();
+          if (app)
+            {
+              // Start the new copy of the application
+
+              if (m_taskbar->startApplication(app, false))
+                {
+                  // Then break out of the loop
+
+                  break;
+                }
+              else
+                {
+                  // If we cannot start the app.  Destroy the instance we
+                  // created and see what happens next.  Could be interesting.
+
+                  app->stop();
+                  app->destroy();
+                }
+            }
+        }
+    }
+}
+=== ctaskbar.cxx ===
+/********************************************************************************************
+ * apps/graphics/nxwm/src/ctaskbar.cxx
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ********************************************************************************************/
+
+/********************************************************************************************
+ * Included Files
+ ********************************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <nuttx/debug.h>
+
+#include <nuttx/nx/nxglib.h>
+
+#include "graphics/nxwidgets/crect.hxx"
+#include "graphics/nxwidgets/cwidgetcontrol.hxx"
+#include "graphics/nxwidgets/cnxtkwindow.hxx"
+#include "graphics/nxwidgets/cscaledbitmap.hxx"
+
+#include "graphics/nxwm/cwindowmessenger.hxx"
+#include "graphics/nxwm/ctaskbar.hxx"
+
+/********************************************************************************************
+ * Pre-Processor Definitions
+ ********************************************************************************************/
+
+/********************************************************************************************
+ * CTaskbar Method Implementations
+ ********************************************************************************************/
+
+using namespace NxWM;
+
+/**
+ * CTaskbar Constructor
+ *
+ * @param hWnd - NX server handle
+ */
+
+CTaskbar::CTaskbar(void)
+{
+  m_taskbar     = (NXWidgets::CNxWindow *)0;
+  m_background  = (NXWidgets::CBgWindow *)0;
+  m_backImage   = (NXWidgets::CImage    *)0;
+  m_topApp      = (IApplication         *)0;
+  m_started     = false;
+}
+
+/**
+ * CTaskbar Destructor
+ */
+
+CTaskbar::~CTaskbar(void)
+{
+  // The disconnect,putting the instance back in the state that it
+  // was before it was constructed.
+
+  disconnect();
+}
+
+/**
+ * Connect to the server
+ */
+
+bool CTaskbar::connect(void)
+{
+  // Connect to the server
+
+  bool nxConnected = CNxServer::connect();
+  if (nxConnected)
+    {
+      // Set the background color
+
+      if (!setBackgroundColor(CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR))
+        {
+          // Failed
+        }
+    }
+
+  return nxConnected;
+}
+
+/**
+ * Disconnect from the server.  This method restores the taskbar to the
+ * same state that it was in when it was constructed.
+ */
+
+void CTaskbar::disconnect(void)
+{
+  // Stop all applications and remove them from the task bar.  Clearly, there
+  // are some ordering issues here... On an orderly system shutdown, disconnection
+  // should really occur priority to deleting instances
+
+  while (!m_slots.empty())
+    {
+       IApplication *app = m_slots.at(0).app;
+       stopApplication(app);
+    }
+
+  // Close the windows
+
+  NXWidgets::CWidgetControl *control;
+  if (m_taskbar)
+    {
+      // Get the contained widget control
+
+      control = m_taskbar->getWidgetControl();
+
+      // Delete the widget control.  We are responsible for it because we created it
+
+      if (control)
+        {
+          delete control;
+        }
+
+      // Then delete the task bar window
+
+      delete m_taskbar;
+      m_taskbar = (NXWidgets::CNxWindow *)0;
+    }
+
+  if (m_background)
+    {
+      // Delete the contained widget control.  We are responsible for it
+      // because we created it
+
+      control = m_background->getWidgetControl();
+      if (control)
+        {
+          delete control;
+        }
+
+      // Then delete the background
+
+      delete m_background;
+      m_background = (NXWidgets::CBgWindow *)0;
+    }
+
+  // Delete the background image
+
+  if (m_backImage)
+    {
+      delete m_backImage;
+      m_backImage = (NXWidgets::CImage *)0;
+    }
+
+  // Reset other variables
+
+  m_topApp  = (IApplication *)0;
+  m_started = false;
+
+  // And disconnect from the server
+
+  CNxServer::disconnect();
+}
+
+/**
+ * Initialize task bar.  Task bar initialization is separate from
+ * object instantiation so that failures can be reported.  The window
+ * manager start-up sequence is:
+ *
+ * 1. Create the CTaskbar instance,
+ * 2. Call the CTaskbar::connect() method to connect to the NX server (CTaskbar
+ *    inherits the connect method from CNxServer),
+ * 3. Call the CTaskbar::initWindowManager() method to initialize the task bar.
+ * 4. Call CTaskBar::startApplication repeatedly to add applications to the task bar
+ * 5. Call CTaskBar::startWindowManager to start the display with applications in place
+ *
+ * CTaskbar::initWindowManager() prepares the task bar to receive applications.
+ * CTaskBar::startWindowManager() brings the window manager up with those applications
+ * in place.
+ *
+ * @return True if the window was successfully initialized.
+ */
+
+bool CTaskbar::initWindowManager(void)
+{
+  // Create the taskbar window
+
+  if (!createTaskbarWindow())
+    {
+      return false;
+    }
+
+  // Create the background window
+
+  if (!createBackgroundWindow())
+    {
+      return false;
+    }
+
+  // Create the background image
+
+  if (!createBackgroundImage())
+    {
+      return false;
+    }
+
+  return true;
+}
+
+/**
+ * Start the window manager and present the initial displays.  The window
+ * manager start-up sequence is:
+ *
+ * 1. Create the CTaskbar instance,
+ * 2. Call startApplication repeatedly to add applications to the task bar
+ * 3. Call startWindowManager to start the display with applications in place
+ *
+ * CTaskbar::initWindowManager() prepares the task bar to receive applications.
+ * CTaskBar::startWindowManager() brings the window manager up with those applications
+ * in place.
+ *
+ * startWindowManager will present the task bar and the background image.  The
+ * initial taskbar will contain only the start window icon.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::startWindowManager(void)
+{
+  // Have we already been started
+
+ if (!m_started)
+    {
+      // We are now started
+
+      m_started = true;
+
+      // Decide which application will be the initial 'top' application
+
+      m_topApp = (IApplication *)0;
+      int topIndex = -1;
+
+      // No.. Search for that last, non-minimized application (there might not be one)
+
+      for (int i = m_slots.size() - 1; i >= 0; i--)
+        {
+          IApplication *candidate = m_slots.at(i).app;
+          if (!candidate->isMinimized())
+            {
+              m_topApp = candidate;
+              topIndex = i;
+              break;
+            }
+        }
+      ginfo("m_topApp=%p topIndex=%d\n", m_topApp, topIndex);
+
+      // Now start each application (whatever that means to the application)
+
+      for (int i = 0; i < m_slots.size(); )
+        {
+          IApplication *app = m_slots.at(i).app;
+
+          ginfo("Starting app[%d]\n", i);
+          if (!app->run())
+            {
+              // Call stopApplication on a failure to start.  This will call
+              // app->stop() (which is probably not necessary for the application
+              //  but it should be prepared/ to handle it).  stopApplication()
+              // will also removed the icon image from the list and delete it.
+
+              stopApplication(app);
+
+              // Then continue with the next application.  Notice that i is
+              // not incremented in this case and we will continue with the
+              // next application which will not be at this same index
+
+              continue;
+            }
+
+          // Hide all applications except for the top application.  NOTE:
+          // topIndex may still be -1, meaning that there is no application
+          // and that all applications should be hidden.
+
+          if (i != topIndex)
+            {
+              // Bring the application up in the non-visible state (the
+              // application may or may not be minimized, but it is not
+              // visible now).
+
+              ginfo("Hiding app[%d]\n", i);
+              hideApplicationWindow(app);
+            }
+          else
+            {
+              // Bring up the application as the new top application
+
+              ginfo("Showing app[%d]\n", i);
+              topApplication(app);
+            }
+
+          // The application was successfully initialized.. index to the next application
+
+          i++;
+        }
+
+      // If there is no top application (i.e., no applications or all applications
+      // are minimized), then draw the background image
+
+      if (!m_topApp)
+        {
+          if (!redrawBackgroundWindow())
+            {
+              return false;
+            }
+        }
+
+      // Draw the taskbar.  It will be draw at a higher level than the application.
+
+      return redrawTaskbarWindow();
+    }
+
+  return false;
+}
+
+/**
+ * Create an normal application window.  Creating a normal application in the
+ * start window requires three steps:
+ *
+ * 1. Call CTaskBar::openApplicationWindow to create a window for the application,
+ * 2. Instantiate the application, providing the window to the application's
+ *    constructor,
+ * 3. Then call CStartWindow::addApplication to add the application to the
+ *    start window.
+ *
+ * When the application is selected from the start window:
+ *
+ * 4. Call CTaskBar::startApplication start the application and bring its window to
+ *    the top.
+ *
+ * @param flags. CApplicationWindow flugs for window customization.
+ */
+
+CApplicationWindow *CTaskbar::openApplicationWindow(uint8_t flags)
+{
+  // Get a framed window for the application
+
+  NXWidgets::CNxTkWindow *window = openFramedWindow();
+  if (!window)
+    {
+      return (CApplicationWindow *)0;
+    }
+
+  // Set size and position of a window in the application area.
+
+  setApplicationGeometry(window, false);
+
+  // Use this window to instantiate the application window
+
+  CApplicationWindow *appWindow = new CApplicationWindow(window, flags);
+  if (!appWindow)
+    {
+      delete window;
+    }
+
+  return appWindow;
+}
+
+/**
+ * Create a full screen application window.  Creating a new full screen application
+ * requires three steps:
+ *
+ * 1. Call CTaskBar::FullScreenWindow to create a window for the application,
+ * 2. Instantiate the application, providing the window to the application's
+ *    constructor,
+ * 3. Then call CStartWindow::addApplication to add the application to the
+ *    start window.
+ *
+ * When the application is selected from the start window:
+ *
+ * 4. Call CTaskBar::startApplication start the application and bring its window to
+ *    the top.
+ */
+
+CFullScreenWindow *CTaskbar::openFullScreenWindow(void)
+{
+  // Get a raw window for the application
+
+  NXWidgets::CNxWindow *window = openRawWindow();
+  if (!window)
+    {
+      return (CFullScreenWindow *)0;
+    }
+
+  // Set size and position of a window in the application area.
+
+  setApplicationGeometry(window, true);
+
+  // Use this window to instantiate the generia application window
+
+  CFullScreenWindow *appWindow = new CFullScreenWindow(window);
+  if (!appWindow)
+    {
+      delete window;
+    }
+
+  return appWindow;
+}
+
+/**
+ * Start an application and add its icon to the taskbar.  The applications's
+ * window is brought to the top.  Creating a new application in the start
+ * window requires three steps:
+ *
+ * 1. Create the CTaskbar instance,
+ * 2. Call startApplication repeatedly to add applications to the task bar
+ * 3. Call startWindowManager to start the display with applications in place
+ *
+ * When the application is selected from the start window:
+ *
+ * 4. Call startApplication start the application and bring its window to
+ *    the top.
+ *
+ * @param app.  The new application to add to the task bar
+ * @param minimized.  The new application starts in the minimized state
+ * @return true on success
+ */
+
+bool CTaskbar::startApplication(IApplication *app, bool minimized)
+{
+  // Get the widget control associated with the task bar window
+
+  NXWidgets::CWidgetControl *control = m_taskbar->getWidgetControl();
+
+  // Get the bitmap icon that goes with this application
+
+  NXWidgets::IBitmap *bitmap = app->getIcon();
+
+#ifdef CONFIG_NXWM_TASKBAR_ICONSCALE
+  // Create a CScaledBitmap to scale the bitmap icon
+
+  NXWidgets::CScaledBitmap *scaler = (NXWidgets::CScaledBitmap *)0;
+  if (bitmap)
+    {
+      // Create a CScaledBitmap to scale the bitmap icon
+
+      struct nxgl_size_s iconSize;
+      iconSize.w = CONFIG_NXWM_TASKBAR_ICONWIDTH;
+      iconSize.h = CONFIG_NXWM_TASKBAR_ICONHEIGHT;
+
+      scaler = new NXWidgets::CScaledBitmap(bitmap, iconSize);
+      if (!scaler)
+        {
+          return false;
+        }
+    }
+#endif
+
+  // Create a CImage instance to manage the applications icon.  Assume the
+  // minimum size in case no bitmap is provided (bitmap == NULL)
+
+  int w = 1;
+  int h = 1;
+
+#ifdef CONFIG_NXWM_TASKBAR_ICONSCALE
+  if (scaler)
+    {
+      w = scaler->getWidth();
+      h = scaler->getHeight();
+    }
+
+  NXWidgets::CImage *image =
+    new NXWidgets::CImage(control, 0, 0, w, h, scaler, 0);
+
+#else
+  if (bitmap)
+    {
+      w = bitmap->getWidth();
+      h = bitmap->getHeight();
+    }
+
+  NXWidgets::CImage *image =
+    new NXWidgets::CImage(control, 0, 0, w, h, bitmap, 0);
+
+#endif
+
+  if (!image)
+    {
+      return false;
+    }
+
+  // Configure the image, disabling drawing for now
+
+  image->setBorderless(true);
+  image->disableDrawing();
+  image->setRaisesEvents(false);
+
+  // Register to get events from the mouse clicks on the image
+
+  image->addWidgetEventHandler(this);
+
+  // Add the application to end of the list of applications managed by
+  // the task bar
+
+  struct STaskbarSlot slot;
+  slot.app    = app;
+  slot.image  = image;
+  m_slots.push_back(slot);
+
+  // Initialize the application states
+
+  app->setTopApplication(false);
+  app->setMinimized(minimized);
+
+  // Has the window manager been started?
+
+  if (m_started)
+    {
+      // Yes.. Start the application (whatever that means).
+
+      if (!app->run())
+        {
+          // Call stopApplication on a failure to start.  This will call
+          // app->stop() (which is probably not necessary for the application
+          //  but it should be prepared/ to handle it).  stopApplication()
+          // will also removed the icon image from the list and delete it.
+
+          stopApplication(app);
+          return false;
+        }
+
+      // Were we ask to start the application minimized?
+
+      if (minimized)
+        {
+          // Bring the minimized application up in non-visible state
+
+          hideApplicationWindow(app);
+        }
+      else
+        {
+          // Bring up the application as the new top application if we are running
+          // If not, we will select and bring up the top application when the
+          // window manager is started
+
+          topApplication(app);
+        }
+
+      // Redraw the task bar with the new icon (if we have been started)
+
+      redrawTaskbarWindow();
+    }
+
+  return true;
+}
+
+/**
+ * Move window to the top of the hierarchy and re-draw it.  This method
+ * does nothing if the application is minimized.
+ *
+ * @param app.  The new application to show
+ * @return true on success
+ */
+
+bool CTaskbar::topApplication(IApplication *app)
+{
+  // Verify that the application is not minimized and is not already the top application
+
+  if (!app->isMinimized() && !app->isTopApplication())
+    {
+      // It is not minimized.  We are going to bring it to the top of the display.
+      // Is there already a top application?
+
+      if (m_topApp)
+        {
+          // Yes.. make the application non-visible (it is still maximized and
+          // will reappear when the window above it is minimized or closed).
+
+          hideApplicationWindow(m_topApp);
+        }
+
+      // Make the application the top application and redraw it
+
+      return redrawApplicationWindow(app);
+    }
+
+  return false;
+}
+
+/**
+ * Maximize an application by moving its window to the top of the hierarchy
+ * and re-drawing it.  If the application was already maximized, then this
+ * method is equivalent to topApplication().
+ *
+ * @param app.  The new application to add to the task bar
+ * @return true on success
+ */
+
+bool CTaskbar::maximizeApplication(IApplication *app)
+{
+  // Mark that the application is no longer minimized
+
+  app->setMinimized(false);
+
+  // Then bring the application to the top of the hierarchy
+
+  return topApplication(app);
+}
+
+/**
+ * Minimize an application by moving its window to the bottom of the and
+ * redrawing the next visible application.
+ *
+ * @param app.  The new application to add to the task bar
+ * @return true on success
+ */
+
+bool CTaskbar::minimizeApplication(IApplication *app)
+{
+  // Verify that the application is not already minimized
+
+  if (!app->isMinimized())
+    {
+      // No, then we are going to minimize it but disabling its components,
+      // marking it as minimized, then raising a new window to the top window.
+
+      app->setMinimized(true);
+      hideApplicationWindow(app);
+
+      // Re-draw the new top, non-minimized application
+
+      return redrawTopApplication();
+    }
+
+  return false;
+}
+
+/**
+ * Destroy an application.  Move its window to the bottom and remove its
+ * icon from the task bar.
+ *
+ * @param app.  The new application to remove from the task bar
+ * @return true on success
+ */
+
+bool CTaskbar::stopApplication(IApplication *app)
+{
+  // Make the application minimized and make sure that it is not the top
+  // application.
+
+  app->setMinimized(true);
+  if (app->isTopApplication())
+    {
+      app->setTopApplication(false);
+      m_topApp = (IApplication *)0;
+    }
+
+  // Hide the application window.  That will move the application to the
+  // bottom of the hiearachy.
+
+  hideApplicationWindow(app);
+
+  // Stop the application (whatever this means to the application).  We
+  // separate stopping from destroying to get the application a chance
+  // to put things in order before being destroyed.
+
+  app->stop();
+
+  // Find the application in the list of applications
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      // Is this it?
+
+      IApplication *candidate = m_slots.at(i).app;
+      if (candidate == app)
+        {
+          // Yes.. found it.  Delete the icon image and remove the entry
+          // from the list of applications
+
+          delete m_slots.at(i).image->getBitmap();
+          delete m_slots.at(i).image;
+          m_slots.erase(i);
+          break;
+        }
+    }
+
+  // Destroy the application (actually, this just sets up the application for
+  // later destruction.
+
+  app->destroy();
+
+  // Re-draw the new top, non-minimized application
+
+  bool ret = redrawTopApplication();
+  if (ret)
+    {
+      // And redraw the task bar (without the icon for this task)
+
+      ret = redrawTaskbarWindow();
+    }
+  return ret;
+}
+
+/**
+ * Get the size of the physical display device as it is known to the task
+ * bar.
+ *
+ * @return The size of the display
+ */
+
+void CTaskbar::getDisplaySize(FAR struct nxgl_size_s &size)
+{
+  // Get the widget control from the task bar window.  The physical window geometry
+  // should be the same for all windows.
+
+  NXWidgets::CWidgetControl *control = m_taskbar->getWidgetControl();
+
+  // Get the window bounding box from the widget control
+
+  NXWidgets::CRect rect = control->getWindowBoundingBox();
+
+  // And return the size of the window
+
+  rect.getSize(size);
+}
+
+/**
+ * Create a raw window.
+ *
+ * 1) Create a dumb CWigetControl instance (see note below)
+ * 2) Pass the dumb CWidgetControl instance to the window constructor
+ *    that inherits from INxWindow.  This will "smarten" the CWidgetControl
+ *    instance with some window knowlede
+ * 3) Call the open() method on the window to display the window.
+ * 4) After that, the fully smartened CWidgetControl instance can
+ *    be used to generate additional widgets by passing it to the
+ *    widget constructor
+ *
+ * NOTE:  Actually, NxWM uses the CWindowMessenger class that inherits from
+ * CWidgetControl.  That class just adds some unrelated messaging capability;
+ * It cohabitates with CWidgetControl only because it needs the CWidgetControl
+ * this point.
+ */
+
+NXWidgets::CNxWindow *CTaskbar::openRawWindow(void)
+{
+  // Create the widget control (with the window messenger) using the default style
+
+  CWindowMessenger *control = new CWindowMessenger(NULL);
+
+  // Get an (uninitialized) instance of the background window as a class
+  // that derives from INxWindow.
+
+  NXWidgets::CNxWindow *window = createRawWindow(control);
+  if (!window)
+    {
+      delete control;
+      return NULL;
+    }
+
+  // Open (and initialize) the window
+
+  bool success = window->open();
+  if (!success)
+    {
+      delete window;
+      window = (NXWidgets::CNxWindow *)0;
+      return NULL;
+    }
+
+  return window;
+}
+
+/**
+ * Create a framed application window
+ *
+ * This may be used to provide the window parater to the IApplication constructor
+ *
+ * @return A partially initialized application window instance.
+ */
+
+NXWidgets::CNxTkWindow *CTaskbar::openFramedWindow(void)
+{
+  // Create the widget control (with the window messenger) using the default style
+
+  CWindowMessenger *control = new CWindowMessenger(NULL);
+
+  // Get an (uninitialized) instance of the framed window as a class
+  // that derives from INxWindow.
+
+  NXWidgets::CNxTkWindow *window = createFramedWindow(control);
+  if (!window)
+    {
+      delete control;
+      return (NXWidgets::CNxTkWindow *)0;
+    }
+
+  // Open (and initialize) the window
+
+  bool success = window->open();
+  if (!success)
+    {
+      delete window;
+      window = (NXWidgets::CNxTkWindow *)0;
+    }
+
+  return window;
+}
+
+/**
+ * Set size and position of a window in the application area.
+ *
+ * @param window.   The window to be resized and repositioned
+ * @param fullscreen.  True: Use full screen
+ *
+ * @return true on success
+ */
+
+void CTaskbar::setApplicationGeometry(NXWidgets::INxWindow *window, bool fullscreen)
+{
+  // Get the physical size of the display
+
+  struct nxgl_size_s displaySize;
+  getDisplaySize(displaySize);
+
+  // Now position and size the application.  This will depend on the position and
+  // orientation of the task bar.
+
+  struct nxgl_point_s pos;
+  struct nxgl_size_s  size;
+
+  // In fullscreen mode, the application window gets everything
+
+  if (fullscreen)
+    {
+      pos.x = 0;
+      pos.y = 0;
+
+      size.w = displaySize.w;
+      size.h = displaySize.h;
+    }
+  else
+    {
+#if defined(CONFIG_NXWM_TASKBAR_TOP)
+      pos.x = 0;
+      pos.y = CONFIG_NXWM_TASKBAR_WIDTH;
+
+      size.w = displaySize.w;
+      size.h = displaySize.h - CONFIG_NXWM_TASKBAR_WIDTH;
+#elif defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+      pos.x = 0;
+      pos.y = 0;
+
+      size.w = displaySize.w;
+      size.h = displaySize.h - CONFIG_NXWM_TASKBAR_WIDTH;
+#elif defined(CONFIG_NXWM_TASKBAR_LEFT)
+      pos.x = CONFIG_NXWM_TASKBAR_WIDTH;
+      pos.y = 0;
+
+      size.w = displaySize.w - CONFIG_NXWM_TASKBAR_WIDTH;
+      size.h = displaySize.h;
+#else
+      pos.x = 0;
+      pos.y = 0;
+
+      size.w = displaySize.w - CONFIG_NXWM_TASKBAR_WIDTH;
+      size.h = displaySize.h;
+#endif
+    }
+
+  /* Set the size and position the window.
+   *
+   * @param pPos The new position of the window.
+   * @return True on success, false on failure.
+   */
+
+  window->setPosition(&pos);
+  window->setSize(&size);
+}
+
+/**
+ * Create the task bar window.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::createTaskbarWindow(void)
+{
+  // Create a raw window to present the task bar
+
+  m_taskbar = openRawWindow();
+  if (!m_taskbar)
+    {
+      return false;
+    }
+
+  // Get the size of the physical display
+
+  struct nxgl_size_s displaySize;
+  getDisplaySize(displaySize);
+
+  // Now position and size the task bar.  This will depend on the position and
+  // orientation of the task bar.
+
+  struct nxgl_point_s pos;
+  struct nxgl_size_s  size;
+
+#if defined(CONFIG_NXWM_TASKBAR_TOP)
+  pos.x = 0;
+  pos.y = 0;
+
+  size.w = displaySize.w;
+  size.h = CONFIG_NXWM_TASKBAR_WIDTH;
+#elif defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+  pos.x = 0;
+  pos.y = displaySize.h - CONFIG_NXWM_TASKBAR_WIDTH;
+
+  size.w = displaySize.w;
+  size.h = CONFIG_NXWM_TASKBAR_WIDTH;
+#elif defined(CONFIG_NXWM_TASKBAR_LEFT)
+  pos.x = 0;
+  pos.y = 0;
+
+  size.w = CONFIG_NXWM_TASKBAR_WIDTH;
+  size.h = displaySize.h;
+#else
+  pos.x = rect.getWidgth() - CONFIG_NXWM_TASKBAR_WIDTH;
+  pos.y = 0;
+
+  size.w = CONFIG_NXWM_TASKBAR_WIDTH;
+  size.h = displaySize.h;
+#endif
+
+  /* Set the size and position the window.
+   *
+   * @param pPos The new position of the window.
+   * @return True on success, false on failure.
+   */
+
+  m_taskbar->setPosition(&pos);
+  m_taskbar->setSize(&size);
+  return true;
+}
+
+/**
+ * Create the background window.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::createBackgroundWindow(void)
+{
+  CWindowMessenger *control = new CWindowMessenger(NULL);
+
+  // Create a raw window to present the background image
+
+  NXWidgets::CBgWindow *background = getBgWindow(control);
+  if (!background)
+    {
+      delete control;
+      return false;
+    }
+
+  // Open (and initialize) the BG window
+
+  bool success = background->open();
+  if (!success)
+    {
+      delete background;
+      return false;
+    }
+
+  m_background = background;
+  if (!m_background)
+    {
+      return false;
+    }
+
+  // Set the geometry to fit in the application window space
+
+  setApplicationGeometry(static_cast<NXWidgets::INxWindow*>(m_background), false);
+  return true;
+}
+
+/**
+ * Create the background image.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::createBackgroundImage(void)
+{
+#ifndef CONFIG_NXWM_DISABLE_BACKGROUND_IMAGE
+ // Get the size of the display
+
+  struct nxgl_size_s windowSize;
+  if (!m_background->getSize(&windowSize))
+    {
+      return false;
+    }
+
+  // Get the widget control from the background window
+
+  NXWidgets::CWidgetControl *control = m_background->getWidgetControl();
+
+  // Create the bitmap object
+
+  NXWidgets::CRlePaletteBitmap *bitmap =
+    new NXWidgets::CRlePaletteBitmap(&CONFIG_NXWM_BACKGROUND_IMAGE);
+
+  if (!bitmap)
+    {
+      return false;
+    }
+
+  // Get the size of the bitmap image
+
+  struct nxgl_size_s imageSize;
+  imageSize.w  = bitmap->getWidth();
+  imageSize.h = (nxgl_coord_t)bitmap->getHeight();
+
+  // Pick an X/Y position such that the image will be centered in the display
+
+  struct nxgl_point_s imagePos;
+  if (imageSize.w >= windowSize.w)
+    {
+      imagePos.x = 0;
+    }
+  else
+    {
+      imagePos.x = (windowSize.w - imageSize.w) >> 1;
+    }
+
+  if (imageSize.h >= windowSize.h)
+    {
+      imagePos.y = 0;
+    }
+  else
+    {
+      imagePos.y = (windowSize.h - imageSize.h) >> 1;
+    }
+
+  // Now we have enough information to create the image
+
+  m_backImage = new NXWidgets::CImage(control, imagePos.x, imagePos.y,
+                                      imageSize.w, imageSize.h, bitmap);
+  if (!m_backImage)
+    {
+      delete bitmap;
+      return false;
+    }
+
+  // Configure the background image
+
+  m_backImage->setBorderless(true);
+  m_backImage->setRaisesEvents(false);
+#endif
+
+  return true;
+}
+
+/**
+ * (Re-)draw the task bar window.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::redrawTaskbarWindow(void)
+{
+  // Only redraw the task bar if (1) the window manager has been started, AND
+  // (2) there is no top window (i.e., we are showing the background image), OR
+  // (3) there is a top window, but it is not full screen
+
+  if (m_started && (!m_topApp || !m_topApp->isFullScreen()))
+    {
+      // Get the widget control from the task bar
+
+      NXWidgets::CWidgetControl *control = m_taskbar->getWidgetControl();
+
+      // Get the graphics port for drawing on the background window
+
+      NXWidgets::CGraphicsPort *port = control->getGraphicsPort();
+
+      // Get the size of the window
+
+      struct nxgl_size_s windowSize;
+      if (!m_taskbar->getSize(&windowSize))
+        {
+          return false;
+        }
+
+      // Raise the task bar to the top of the display.  This is only necessary
+      // after stopping a full screen application.  Other applications do not
+      // overlap the task bar and, hence, do not interfere.
+
+      m_taskbar->raise();
+
+      // Fill the entire window with the background color
+
+      port->drawFilledRect(0, 0, windowSize.w, windowSize.h,
+                           CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR);
+
+#ifndef CONFIG_NXWM_TASKBAR_NO_BORDER
+      // Add a border to the task bar to delineate it from the background window
+
+      port->drawBevelledRect(0, 0,  windowSize.w, windowSize.h,
+                             CONFIG_NXWM_DEFAULT_SHINEEDGECOLOR,
+                             CONFIG_NXWM_DEFAULT_SHADOWEDGECOLOR);
+#endif
+
+      // Begin adding icons in the upper left corner
+
+      struct nxgl_point_s taskbarPos;
+#if defined(CONFIG_NXWM_TASKBAR_TOP) || defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+      taskbarPos.x = CONFIG_NXWM_TASKBAR_HSPACING;
+      taskbarPos.y = 0;
+#else
+      taskbarPos.x = 0;
+      taskbarPos.y = CONFIG_NXWM_TASKBAR_VSPACING;
+#endif
+
+      // Add each icon in the list of applications
+
+      for (int i = 0; i < m_slots.size(); i++)
+        {
+          // Get the icon associated with this application
+
+          NXWidgets::CImage *image = m_slots.at(i).image;
+
+          // Disable drawing of the icon image; disable events from the icon
+
+          image->disableDrawing();
+          image->setRaisesEvents(false);
+
+          // Highlight the icon for the top-most window
+
+          image->highlight(m_slots.at(i).app == m_topApp);
+
+          // Get the size of the icon image
+
+          NXWidgets::CRect rect;
+          image->getPreferredDimensions(rect);
+
+          // Position the icon
+
+          struct nxgl_point_s iconPos;
+
+#if defined(CONFIG_NXWM_TASKBAR_TOP) || defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+          // For horizontal task bars, the icons will be aligned along the top of
+          // the task bar
+
+          iconPos.x = taskbarPos.x;
+          iconPos.y = taskbarPos.y + CONFIG_NXWM_TASKBAR_VSPACING;
+#else
+          // For vertical task bars, the icons will be centered horizontally
+
+          iconPos.x = (windowSize.w - rect.getWidth()) >> 1;
+          iconPos.y = taskbarPos.y;
+#endif
+
+          // Set the position of the icon bitmap
+
+          image->moveTo(iconPos.x, iconPos.y);
+
+          // Then re-draw the icon at the new position
+
+          image->enableDrawing();
+          image->redraw();
+          image->setRaisesEvents(true);
+
+          // Do we add icons left-to-right?  Or top-to-bottom?
+
+#if defined(CONFIG_NXWM_TASKBAR_TOP) || defined(CONFIG_NXWM_TASKBAR_BOTTOM)
+          // left-to-right ... increment the X display position
+
+          taskbarPos.x += rect.getWidth() + CONFIG_NXWM_TASKBAR_HSPACING;
+          if (taskbarPos.x > windowSize.w)
+            {
+              break;
+            }
+#else
+          // top-to-bottom ... increment the Y display position
+
+          taskbarPos.y += rect.getHeight() + CONFIG_NXWM_TASKBAR_VSPACING;
+          if (taskbarPos.y > windowSize.h)
+            {
+              break;
+            }
+#endif
+        }
+
+      // If there is a top application then we must now raise it above the task
+      // bar so that itwill get the keyboard input.
+
+      raiseTopApplication();
+    }
+
+  // Return success (it is not a failure if the window manager is not started
+  // or the task bar is occluded by a full screen window.
+
+  return true;
+}
+
+/**
+ * Redraw the window at the top of the hierarchy.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::redrawTopApplication(void)
+{
+  // Check if there is already a top application
+
+  IApplication *app = m_topApp;
+  if (!app)
+    {
+      // No.. Search for that last, non-minimized application
+
+      for (int i = m_slots.size() - 1; i >= 0; i--)
+        {
+          IApplication *candidate = m_slots.at(i).app;
+          if (!candidate->isMinimized())
+            {
+              app = candidate;
+              break;
+            }
+        }
+    }
+
+  // Did we find one?
+
+  if (app)
+    {
+      // Yes.. make it the top application window and redraw it
+
+      return redrawApplicationWindow(app);
+      return true;
+    }
+  else
+    {
+      // Otherwise, there is no top application.  Re-draw the background image.
+
+      m_topApp = (IApplication *)0;
+      return redrawBackgroundWindow();
+    }
+}
+
+/**
+ * Raise the top window to the top of the NXheirarchy.
+ *
+ * @return true on success
+ */
+
+void CTaskbar::raiseTopApplication(void)
+{
+  if (m_topApp)
+    {
+      // Every application provides a method to obtain its application window
+
+      IApplicationWindow *appWindow = m_topApp->getWindow();
+
+      // Each application window provides a method to get the underlying NX window
+
+      NXWidgets::INxWindow *window = appWindow->getWindow();
+
+      // Raise the application window to the top of the hierarchy
+
+      window->raise();
+    }
+}
+
+/**
+ * (Re-)draw the background window.
+ *
+ * @return true on success
+ */
+
+bool CTaskbar::redrawBackgroundWindow(void)
+{
+  // Get the widget control from the background window
+
+  NXWidgets::CWidgetControl *control = m_background->getWidgetControl();
+
+  // Get the graphics port for drawing on the background window
+
+  NXWidgets::CGraphicsPort *port = control->getGraphicsPort();
+
+  // Get the size of the window
+
+  struct nxgl_size_s windowSize;
+  if (!m_background->getSize(&windowSize))
+    {
+      return false;
+    }
+
+  // Raise the background window to the top of the hierarchy
+
+  m_background->raise();
+
+  // Fill the entire window with the background color
+
+  port->drawFilledRect(0, 0, windowSize.w, windowSize.h,
+                       CONFIG_NXWM_DEFAULT_BACKGROUNDCOLOR);
+
+  // Add a border to the task bar to delineate it from the task bar
+
+  port->drawBevelledRect(0, 0,  windowSize.w, windowSize.h,
+                         CONFIG_NXWM_DEFAULT_SHINEEDGECOLOR,
+                         CONFIG_NXWM_DEFAULT_SHADOWEDGECOLOR);
+
+  // Then re-draw the background image on the window
+
+  if (m_backImage)
+    {
+      m_backImage->enableDrawing();
+      m_backImage->redraw();
+    }
+
+  return true;
+}
+
+/**
+ * Redraw the last application in the list of application maintained by
+ * the task bar.
+ *
+ * @param app. The new top application to draw
+ * @return true on success
+ */
+
+bool CTaskbar::redrawApplicationWindow(IApplication *app)
+{
+  // Mark the window as the top application
+
+  m_topApp = app;
+  app->setTopApplication(true);
+
+  // Disable drawing of the background image.
+
+  m_backImage->disableDrawing();
+
+  // Raise to top application to the top of the NX window hierarchy
+
+  raiseTopApplication();
+
+  // Redraw taskbar
+
+  redrawTaskbarWindow();
+
+  // Every application provides a method to obtain its application window
+
+  IApplicationWindow *appWindow = app->getWindow();
+
+  // Re-draw the application window toolbar
+
+  appWindow->redraw();
+
+  // And re-draw the application window itself
+
+  app->redraw();
+  return true;
+}
+
+/**
+ * The application window is hidden (either it is minimized or it is
+ * maximized, but not at the top of the hierarchy)
+ *
+ * @param app. The application to hide
+ */
+
+void CTaskbar::hideApplicationWindow(IApplication *app)
+{
+  // The hidden window is certainly not the top application any longer
+  // If it was before then redrawTopApplication() will pick a new one (rather
+  // arbitrarily).
+
+  if (app->isTopApplication())
+    {
+      m_topApp = (IApplication *)0;
+      app->setTopApplication(false);
+    }
+
+  // We do not need to lower the application to the back.. the new top
+  // window will be raised instead.
+  //
+  // So all that we really have to do is to make sure that all of the
+  // components of the hidden window are inactive.
+
+  // Every application provides a method to obtain its application window
+
+  IApplicationWindow *appWindow = app->getWindow();
+
+  // Hide the application window toolbar
+
+  appWindow->hide();
+
+  // The hide the application window itself
+
+  app->hide();
+}
+
+/**
+ * Handle a widget action event.  For CImage, this is a mouse button pre-release event.
+ *
+ * @param e The event data.
+ */
+
+void CTaskbar::handleActionEvent(const NXWidgets::CWidgetEventArgs &e)
+{
+  // Was a n ICON clicked?
+
+  for (int i = 0; i < m_slots.size(); i++)
+    {
+      // Is this it?
+
+      NXWidgets::CImage *image = m_slots.at(i).image;
+      if (image->isClicked())
+        {
+          // Was the icon minimized
+
+          IApplication *app = m_slots.at(i).app;
+          if (app->isMinimized())
+            {
+              // Maximize the application by moving its window to the top of
+              // the hierarchy and re-drawing it.
+
+              maximizeApplication(app);
+            }
+
+          // No, it is not minimized.  Is it already the top application?
+
+          else if (!app->isTopApplication())
+            {
+              /* Move window to the top of the hierarchy and re-draw it. */
+
+              topApplication(app);
+            }
+
+          // Then break out of the loop
+
+          break;
+        }
+    }
+}
+=== ads7843e.h ===
+/****************************************************************************
+ * drivers/input/ads7843e.h
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/* References:
+ *   "Touch Screen Controller, ADS7843," Burr-Brown Products from Texas
+ *    Instruments, SBAS090B, September 2000, Revised May 2002"
+ *
+ * See also:
+ *   "Low Voltage I/O Touch Screen Controller, TSC2046," Burr-Brown Products
+ *    from Texas Instruments, SBAS265F, October 2002, Revised August 2007."
+ *
+ *   "XPT2046 Data Sheet," Shenzhen XPTek Technology Co., Ltd, 2007
+ */
+
+#ifndef __DRIVERS_INPUT_ADS7843E_H
+#define __DRIVERS_INPUT_ADS7843E_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdint.h>
+#include <poll.h>
+#include <nuttx/wqueue.h>
+
+#include <nuttx/wdog.h>
+#include <nuttx/clock.h>
+#include <nuttx/mutex.h>
+#include <nuttx/semaphore.h>
+#include <nuttx/spi/spi.h>
+#include <nuttx/input/ads7843e.h>
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Configuration ************************************************************/
+
+/* Reference counting is partially implemented, but not needed in the current
+ * design.
+ */
+
+#undef CONFIG_ADS7843E_REFCNT
+
+/* ADS7843E Interfaces ******************************************************/
+
+/* ADS7843E command bit settings */
+
+#define ADS7843E_CMD_PD0          (1 << 0)  /* Bit 0: Power down mode select bit 0 */
+#define ADS7843E_CMD_PD1          (1 << 1)  /* Bit 1: Power down mode select bit 1 */
+#define ADS7843E_CMD_SER          (1 << 2)  /* Bit 2: SER/DFR\: 0:DFR 1:SER */
+#define ADS7843E_CMD_MODE8        (1 << 3)  /* Bit 3: Mode 1:8-bits 0:12-bits */
+#define ADS7843E_CMD_CHAN_SHIFT   (4)       /* Bits 4-6: Channel select bits */
+#define ADS7843E_CMD_CHAN_MASK    (7 << ADS7843E_CMD_CHAN_SHIFT)
+#define ADS7843E_CMD_START        (1 << 7)  /* Bit 7: Start Bit */
+
+/* ADS7843E Commands */
+
+#define ADS7843_CMD_YPOSITION \
+  ((1 << ADS7843E_CMD_CHAN_SHIFT)| ADS7843E_CMD_START | ADS7843E_CMD_PD0 | ADS7843E_CMD_PD1)
+#define ADS7843_CMD_XPOSITION \
+  ((5 << ADS7843E_CMD_CHAN_SHIFT)| ADS7843E_CMD_START | ADS7843E_CMD_PD0 | ADS7843E_CMD_PD1)
+#define ADS7843_CMD_ENABPENIRQ \
+  ((1 << ADS7843E_CMD_CHAN_SHIFT)| ADS7843E_CMD_START)
+
+/* Driver support ***********************************************************/
+
+/* This format is used to construct the /dev/input[n] device driver path.  It
+ * defined here so that it will be used consistently in all places.
+ */
+
+#define DEV_FORMAT   "/dev/input%d"
+#define DEV_NAMELEN  16
+
+/* Poll the pen position while the pen is down at this rate (50MS): */
+
+#define ADS7843E_WDOG_DELAY       MSEC2TICK(50)
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/* This describes the state of one contact */
+
+enum ads7843e_contact_e
+{
+  CONTACT_NONE = 0,                    /* No contact */
+  CONTACT_DOWN,                        /* First contact */
+  CONTACT_MOVE,                        /* Same contact, possibly different position */
+  CONTACT_UP,                          /* Contact lost */
+};
+
+/* This structure describes the results of one ADS7843E sample */
+
+struct ads7843e_sample_s
+{
+  uint8_t  id;                          /* Sampled touch point ID */
+  uint8_t  contact;                     /* Contact state (see enum ads7843e_contact_e) */
+  bool     valid;                       /* True: x,y contain valid, sampled data */
+  uint16_t x;                           /* Measured X position */
+  uint16_t y;                           /* Measured Y position */
+};
+
+/* This structure describes the state of one ADS7843E driver instance */
+
+struct ads7843e_dev_s
+{
+#ifdef CONFIG_ADS7843E_MULTIPLE
+  FAR struct ads7843e_dev_s *flink;     /* Supports a singly linked list of drivers */
+#endif
+#ifdef CONFIG_ADS7843E_REFCNT
+  uint8_t crefs;                        /* Number of times the device has been opened */
+#endif
+  uint8_t nwaiters;                     /* Number of threads waiting for ADS7843E data */
+  uint8_t id;                           /* Current touch point ID */
+  volatile bool penchange;              /* An unreported event is buffered */
+  uint16_t threshx;                     /* Thresholding X value */
+  uint16_t threshy;                     /* Thresholding Y value */
+  mutex_t devlock;                      /* Manages exclusive access to this structure */
+  sem_t waitsem;                        /* Used to wait for the availability of data */
+
+  FAR struct ads7843e_config_s *config; /* Board configuration data */
+  FAR struct spi_dev_s *spi;            /* Saved SPI driver instance */
+  struct work_s work;                   /* Supports the interrupt handling "bottom half" */
+  struct ads7843e_sample_s sample;      /* Last sampled touch point data */
+  struct wdog_s wdog;                   /* Poll the position while the pen is down */
+
+  /* The following is a list if poll structures of threads waiting for
+   * driver events. The 'struct pollfd_s' reference for each open is also
+   * retained in the f_priv field of the 'struct file'.
+   */
+
+  FAR struct pollfd_s *fds[CONFIG_ADS7843E_NPOLLWAITERS];
+};
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __DRIVERS_INPUT_ADS7843E_H */
+=== lpc17_40_gpioint.c ===
+/****************************************************************************
+ * arch/arm/src/lpc17xx_40xx/lpc17_40_gpioint.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
+
+#include <nuttx/debug.h>
+#include <nuttx/irq.h>
+#include <nuttx/arch.h>
+
+#include "arm_internal.h"
+#include "chip.h"
+#include "lpc17_40_gpio.h"
+
+#ifdef CONFIG_LPC17_40_GPIOIRQ
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_getintedge
+ *
+ * Description:
+ *  Get the stored interrupt edge configuration.
+ *
+ ****************************************************************************/
+
+static unsigned int lpc17_40_getintedge(unsigned int port, unsigned int pin)
+{
+  uint64_t *intedge;
+
+  /* Which word to we use? */
+
+  if (port == 0)
+    {
+      intedge = &g_intedge0;
+    }
+  else if (port == 2)
+    {
+      intedge = &g_intedge2;
+    }
+  else
+    {
+      return 0;
+    }
+
+  /* Return the value for the PINSEL */
+
+  return (unsigned int)(((*intedge) >> (pin << 1)) & 3);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setintedge
+ *
+ * Description:
+ *  Set the edge interrupt enabled bits for this pin.
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setintedge(uint32_t intbase, unsigned int pin,
+                             unsigned int edges)
+{
+  irqstate_t flags;
+  int regval;
+
+  /* These must be atomic */
+
+  flags = enter_critical_section();
+
+  /* Set/clear the rising edge enable bit */
+
+  regval = getreg32(intbase + LPC17_40_GPIOINT_INTENR_OFFSET);
+  if ((edges & 2) != 0)
+    {
+      regval |= GPIOINT(pin);
+    }
+  else
+    {
+      regval &= ~GPIOINT(pin);
+    }
+
+  putreg32(regval, intbase + LPC17_40_GPIOINT_INTENR_OFFSET);
+
+  /* Set/clear the falling edge enable bit */
+
+  regval = getreg32(intbase + LPC17_40_GPIOINT_INTENF_OFFSET);
+  if ((edges & 1) != 0)
+    {
+      regval |= GPIOINT(pin);
+    }
+  else
+    {
+      regval &= ~GPIOINT(pin);
+    }
+
+  putreg32(regval, intbase + LPC17_40_GPIOINT_INTENF_OFFSET);
+  leave_critical_section(flags);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_irq2port
+ *
+ * Description:
+ *  Given an IRQ number, return the GPIO port number (0 or 2) of the
+ *  interrupt.
+ *
+ ****************************************************************************/
+
+static int lpc17_40_irq2port(int irq)
+{
+  /* Set 1:
+   *   LPC176x: 12 interrupts p0.0-p0.11
+   *   LPC178x_40xx: 16 interrupts p0.0-p0.15
+   */
+
+  if (irq >= LPC17_40_VALID_FIRST0L &&
+      irq < (LPC17_40_VALID_FIRST0L + LPC17_40_VALID_NIRQS0L))
+    {
+      return 0;
+    }
+
+  /* Set 2:
+   *   LPC176x: 16 interrupts p0.15-p0.30
+   *   LPC178x_40xx: 16 interrupts p0.16-p0.31
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST0H &&
+           irq < (LPC17_40_VALID_FIRST0H + LPC17_40_VALID_NIRQS0H))
+    {
+      return 0;
+    }
+
+#if defined (LPC176x)
+  /* Set 3:
+   *   LPC17x: 14 interrupts p2.0-p2.13
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2 &&
+           irq < (LPC17_40_VALID_FIRST2 + LPC17_40_VALID_NIRQS2))
+    {
+      return 2;
+    }
+
+#elif defined (LPC178x_40xx)
+  /* Set 3:
+   *   LPC18x: 16 interrupts p2.0-p2.15
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2L &&
+           irq < (LPC17_40_VALID_FIRST2L + LPC17_40_VALID_NIRQS2L))
+    {
+      return 2;
+    }
+
+  /* Set 4:
+   *   LPC178x_40xx: 16 interrupts p2.16-p2.31
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2H &&
+           irq < (LPC17_40_VALID_FIRST2H + LPC17_40_VALID_NIRQS2H))
+    {
+      return 2;
+    }
+
+#endif
+
+  return -EINVAL;
+}
+
+/****************************************************************************
+ * Name: lpc17_40_irq2pin
+ *
+ * Description:
+ *  Given an IRQ number, return the GPIO pin number (0..31) of the interrupt.
+ *
+ ****************************************************************************/
+
+static int lpc17_40_irq2pin(int irq)
+{
+  /* Set 1:
+   *   LPC17x: 12 interrupts p0.0-p0.11
+   *   LPC18x: 16 interrupts p0.0-p0.15
+   *
+   * See arch/arm/include/lpc17xx_40xx/irq.h:
+   * LPC17_40_VALID_SHIFT0L   0     - Bit 0 is the first bit in the group of
+   *                               12/16 interrupts
+   * LPC17_40_VALID_FIRST0L   irq   - IRQ number associated with p0.0
+   * LPC17_40_VALID_NIRQS0L   12/16 - Number of interrupt bits in the group
+   */
+
+  if (irq >= LPC17_40_VALID_FIRST0L &&
+      irq < (LPC17_40_VALID_FIRST0L + LPC17_40_VALID_NIRQS0L))
+    {
+      return irq - LPC17_40_VALID_FIRST0L + LPC17_40_VALID_SHIFT0L;
+    }
+
+  /* Set 2:
+   *   LPC176x: 16 interrupts p0.15-p0.30
+   *   LPC178x_40xx: 16 interrupts p0.16-p0.31
+   *
+   * LPC17_40_VALID_SHIFT0H   15/16 - Bit number of the first bit in a group
+   *                               of 16 interrupts
+   * LPC17_40_VALID_FIRST0L   irq  - IRQ number associated with p0.15/16
+   * LPC17_40_VALID_NIRQS0L   16   - 16 interrupt bits in the group
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST0H &&
+           irq < (LPC17_40_VALID_FIRST0H + LPC17_40_VALID_NIRQS0H))
+    {
+      return irq - LPC17_40_VALID_FIRST0H + LPC17_40_VALID_SHIFT0H;
+    }
+
+#if defined(LPC176x)
+  /* Set 3:
+   *   LPC17x: 14 interrupts p2.0-p2.13
+   *
+   * LPC17_40_VALID_SHIFT2    0    - Bit 0 is the first bit in a group of 14
+   *                              interrupts
+   * LPC17_40_VALID_FIRST2    irq  - IRQ number associated with p2.0
+   * LPC17_40_VALID_NIRQS2    14   - 14 interrupt bits in the group
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2 &&
+           irq < (LPC17_40_VALID_FIRST2 + LPC17_40_VALID_NIRQS2))
+    {
+      return irq - LPC17_40_VALID_FIRST2 + LPC17_40_VALID_SHIFT2;
+    }
+
+#elif defined(LPC178x_40xx)
+
+  /* Set 3:
+   *   LPC18x: 16 interrupts p2.0-p2.15
+   *
+   * LPC17_40_VALID_SHIFT2L    0    - Bit 0 is the first bit in a group of 16
+   *                               interrupts
+   * LPC17_40_VALID_FIRST2L    irq  - IRQ number associated with p2.0
+   * LPC17_40_VALID_NIRQS2L    16   - 16 interrupt bits in the group
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2L &&
+           irq < (LPC17_40_VALID_FIRST2L + LPC17_40_VALID_NIRQS2L))
+    {
+      return irq - LPC17_40_VALID_FIRST2L + LPC17_40_VALID_SHIFT2L;
+    }
+
+  /* Set 3:
+   *   LPC18x: 16 interrupts p2.16-p2.31
+   *
+   * LPC17_40_VALID_SHIFT2L    16   - Bit 16 is the first bit in a group
+   *                                  of 16 interrupts
+   * LPC17_40_VALID_FIRST2L    irq  - IRQ number associated with p2.0
+   * LPC17_40_VALID_NIRQS2L    16   - 16 interrupt bits in the group
+   */
+
+  else if (irq >= LPC17_40_VALID_FIRST2H &&
+           irq < (LPC17_40_VALID_FIRST2H + LPC17_40_VALID_NIRQS2H))
+    {
+      return irq - LPC17_40_VALID_FIRST2H + LPC17_40_VALID_SHIFT2H;
+    }
+
+#endif
+
+  return -EINVAL;
+}
+
+/****************************************************************************
+ * Name: lpc17_40_gpiodemux
+ *
+ * Description:
+ *  Demux all interrupts on one GPIO interrupt status register.
+ *
+ ****************************************************************************/
+
+static void lpc17_40_gpiodemux(uint32_t intbase, uint32_t intmask,
+                            int irqbase, void *context)
+{
+  uint32_t intstatr;
+  uint32_t intstatf;
+  uint32_t intstatus;
+  uint32_t bit;
+  int      irq;
+
+  /* Get the interrupt rising and falling edge status and mask out only the
+   * interrupts that are enabled.
+   */
+
+  intstatr  = getreg32(intbase + LPC17_40_GPIOINT_INTSTATR_OFFSET);
+  intstatr &= getreg32(intbase + LPC17_40_GPIOINT_INTENR_OFFSET);
+
+  intstatf  = getreg32(intbase + LPC17_40_GPIOINT_INTSTATF_OFFSET);
+  intstatf &= getreg32(intbase + LPC17_40_GPIOINT_INTENF_OFFSET);
+
+  /* And get the OR of the enabled interrupt sources.  We do not make any
+   * distinction between rising and falling edges (but the hardware does
+   * support the ability to handle them differently if needed).
+   */
+
+  intstatus = intstatr | intstatf;
+
+  /* Now march through the (valid) bits and dispatch each interrupt */
+
+  irq = irqbase;
+  bit = 1;
+  while (intstatus != 0)
+    {
+      /* Does this pin support an interrupt?  If no, skip over it WITHOUT
+       * incrementing irq.
+       */
+
+      if ((intmask & bit) != 0)
+        {
+          /* This pin can support an interrupt.  Is there an interrupt
+           * pending and enabled?
+           */
+
+          if ((intstatus & bit) != 0)
+            {
+              /* Clear the interrupt status */
+
+              putreg32(bit, intbase + LPC17_40_GPIOINT_INTCLR_OFFSET);
+
+              /* And dispatch the interrupt */
+
+              irq_dispatch(irq, context);
+            }
+
+          /* Increment the IRQ number on each interrupt pin */
+
+          irq++;
+        }
+
+      /* Next bit */
+
+      intstatus &= ~bit;
+      bit      <<= 1;
+    }
+}
+
+/****************************************************************************
+ * Name: lpc17_40_gpiointerrupt
+ *
+ * Description:
+ *   Handle the GPIO interrupt.  For the LPC176x family, that interrupt could
+ *   also that also indicates that an EINT3 interrupt has occurred.  NOTE:
+ *   This logic would  have to be extended if EINT3 is actually used for
+ *   External Interrupt 3 on an LPC176x platform.
+ *
+ ****************************************************************************/
+
+static int lpc17_40_gpiointerrupt(int irq, void *context, void *arg)
+{
+  /* Get the GPIO interrupt status */
+
+  uint32_t intstatus = getreg32(LPC17_40_GPIOINT_IOINTSTATUS);
+
+  /* Check for an interrupt on GPIO0 */
+
+  if ((intstatus & GPIOINT_IOINTSTATUS_P0INT) != 0)
+    {
+      lpc17_40_gpiodemux(LPC17_40_GPIOINT0_BASE, LPC17_40_VALID_GPIOINT0,
+                      LPC17_40_VALID_FIRST0L, context);
+    }
+
+#if defined(LPC176x)
+  /* Check for an interrupt on GPIO2 */
+
+  if ((intstatus & GPIOINT_IOINTSTATUS_P2INT) != 0)
+    {
+      lpc17_40_gpiodemux(LPC17_40_GPIOINT2_BASE, LPC17_40_VALID_GPIOINT2,
+                      LPC17_40_VALID_FIRST2, context);
+    }
+
+#elif defined(LPC178x_40xx)
+  /* Check for an interrupt on GPIO2 */
+
+  if ((intstatus & GPIOINT_IOINTSTATUS_P2INT) != 0)
+    {
+      lpc17_40_gpiodemux(LPC17_40_GPIOINT2_BASE, LPC17_40_VALID_GPIOINT2,
+                      LPC17_40_VALID_FIRST2L, context);
+    }
+
+#endif
+
+  return OK;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lpc17_40_gpioirqinitialize
+ *
+ * Description:
+ *   Initialize logic to support a second level of interrupt decoding for
+ *   GPIO pins.
+ *
+ ****************************************************************************/
+
+void lpc17_40_gpioirqinitialize(void)
+{
+  /* Disable all GPIO interrupts */
+
+  putreg32(0, LPC17_40_GPIOINT0_INTENR);
+  putreg32(0, LPC17_40_GPIOINT0_INTENF);
+  putreg32(0, LPC17_40_GPIOINT2_INTENR);
+  putreg32(0, LPC17_40_GPIOINT2_INTENF);
+
+  /* Attach and enable the GPIO IRQ. */
+
+#if defined(LPC176x)
+  /* For the LPC176x family, GPIO0 and GPIO2 interrupts share the same
+   * position in the NVIC with External Interrupt 3
+   */
+
+  irq_attach(LPC17_40_IRQ_EINT3, lpc17_40_gpiointerrupt, NULL);
+  up_enable_irq(LPC17_40_IRQ_EINT3);
+
+#elif defined(LPC178x_40xx)
+  /* the LPC178x/40xx family has a single, dedicated interrupt for GPIO0 and
+   * GPIO2.
+   */
+
+  irq_attach(LPC17_40_IRQ_GPIO, lpc17_40_gpiointerrupt, NULL);
+  up_enable_irq(LPC17_40_IRQ_GPIO);
+
+#endif
+}
+
+/****************************************************************************
+ * Name: lpc17_40_gpioirqenable
+ *
+ * Description:
+ *   Enable the interrupt for specified GPIO IRQ
+ *
+ ****************************************************************************/
+
+void lpc17_40_gpioirqenable(int irq)
+{
+  /* Map the IRQ number to a port number */
+
+  int port = lpc17_40_irq2port(irq);
+  if (port >= 0)
+    {
+      /* The IRQ number does correspond to an interrupt port.  Now get the
+       * base address of the GPIOINT registers for the port.
+       */
+
+      uint32_t intbase = g_intbase[port];
+      if (intbase != 0)
+        {
+          /* And get the pin number associated with the port */
+
+          unsigned int pin   = lpc17_40_irq2pin(irq);
+          unsigned int edges = lpc17_40_getintedge(port, pin);
+          lpc17_40_setintedge(intbase, pin, edges);
+        }
+    }
+}
+
+/****************************************************************************
+ * Name: lpc17_40_gpioirqdisable
+ *
+ * Description:
+ *   Disable the interrupt for specified GPIO IRQ
+ *
+ ****************************************************************************/
+
+void lpc17_40_gpioirqdisable(int irq)
+{
+  /* Map the IRQ number to a port number */
+
+  int port = lpc17_40_irq2port(irq);
+  if (port >= 0)
+    {
+      /* The IRQ number does correspond to an interrupt port.  Now get the
+       * base address of the GPIOINT registers for the port.
+       */
+
+      uint32_t intbase = g_intbase[port];
+      if (intbase != 0)
+        {
+          /* And get the pin number associated with the port */
+
+          unsigned int pin = lpc17_40_irq2pin(irq);
+          lpc17_40_setintedge(intbase, pin, 0);
+        }
+    }
+}
+
+#endif /* CONFIG_LPC17_40_GPIOIRQ */
+=== lpc17_40_gpio.h / iocon ===
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:62:#define LPC17_40_GPIOINT2_OFFSET            0x00a0
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:133:#define LPC17_40_GPIOINT2_BASE              (LPC17_40_GPIOINT_BASE+LPC17_40_GPIOINT2_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:153:#define LPC17_40_GPIOINT2_INTSTATR          (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTSTATR_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:154:#define LPC17_40_GPIOINT2_INTSTATF          (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTSTATF_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:155:#define LPC17_40_GPIOINT2_INTCLR            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTCLR_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:156:#define LPC17_40_GPIOINT2_INTENR            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTENR_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc17_40_gpio.h:157:#define LPC17_40_GPIOINT2_INTENF            (LPC17_40_GPIOINT2_BASE+LPC17_40_GPIOINT_INTENF_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_iocon.h:107:#define LPC17_40_IOCON_P0_20            (LPC17_40_IOCON_P0_BASE + LPC17_40_IOCON_PP20_OFFSET)
+arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_iocon.h:168:#define LPC17_40_IOCON_P2_15            (LPC17_40_IOCON_P2_BASE + LPC17_40_IOCON_PP15_OFFSET)

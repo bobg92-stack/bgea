@@ -1,0 +1,1395 @@
+9211014🎃kali)-[~/nuttxspace/nuttx]
+└─$ cd /home/bg9211014/nuttxspace/nuttx && {
+  echo "=== board.h ==="
+  sed -n '50,185p;330,445p' boards/arm/lpc17xx_40xx/open1788/include/board.h
+  echo "=== .config ETH/SD ==="
+  grep -nE "LPC17_40_.*(ETH|EMAC|RMII|PHY|SDCARD|MCI)" .config || true
+  echo "=== lpc17_40_emacram.h ==="
+  sed -n '35,$p' arch/arm/src/lpc17xx_40xx/lpc17_40_emacram.h
+  echo "=== lpc17_40_ethernet.c ==="
+  python3 -c '
+lines = open("arch/arm/src/lpc17xx_40xx/lpc17_40_ethernet.c").read().splitlines()
+targets = ("lpc17_40_phyread(", "lpc17_40_phywrite(", "lpc17_40_ethreset(",
+           "lpc17_40_ifup(", "lpc17_40_interrupt(", "lpc17_40_ethinitialize(")
+for idx, l in enumerate(lines):
+    if l == "{":
+        hdr = "\n".join(lines[max(0, idx-6):idx])
+        if any(t in hdr for t in targets):
+            end = idx
+            while end < len(lines) and lines[end] != "}":
+                end += 1
+            print(f"--- lines {max(1, idx-3)}-{end+1} ---")
+            print("\n".join(lines[max(0, idx-4):end+1]))
+'
+  echo "=== lpc178x_40xx_gpio.c ==="
+  sed -n '150,355p' arch/arm/src/lpc17xx_40xx/lpc178x_40xx_gpio.c
+  echo "=== lpc178x_40xx_gpio.h ==="
+  grep -nE "GPIO_(SLEW|INBUFF|HYSTERESIS|FILTER|FUNC|MODE)" arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_gpio.h || true
+  echo "=== EA lpc177x_8x_mci.c ==="
+  sed -n '975,1160p' ~/ss4/eanatty/lpc1788_samples/Lib_MCU/src/lpc177x_8x_mci.c
+  echo "=== GPIO_SD_PWR usage ==="
+  grep -rn "GPIO_SD_PWR" boards/ arch/arm/src/lpc17xx_40xx/ || true
+}
+=== board.h ===
+#define BOARD_XTAL_FREQUENCY       (12000000)            /* XTAL oscillator frequency */
+#define BOARD_OSCCLK_FREQUENCY     BOARD_XTAL_FREQUENCY  /* Main oscillator frequency */
+#define BOARD_RTCCLK_FREQUENCY     (32768)               /* RTC oscillator frequency */
+#define BOARD_INTRCOSC_FREQUENCY   (4000000)             /* Internal RC oscillator frequency */
+#define BOARD_WDTOSC_FREQUENCY     (500000)              /* WDT oscillator frequency */
+
+/* This is the clock setup we configure for:
+ *
+ * SYSCLK = BOARD_OSCCLK_FREQUENCY = 12MHz  -> Select Main oscillator for
+ *                                             source
+ * PLL0CLK = (10 * SYSCLK) / 1 = 120MHz -> PLL0 multiplier=10,
+ *                                         pre-divider=1
+ * CCLCK = 120MHz  -> CCLK divider = 1
+ */
+
+#define LPC17_40_CCLK              120000000 /* 120Mhz */
+#define BOARD_PCLKDIV              2         /* Peripheral clock = LPC17_40_CCLK/2 */
+#define BOARD_PCLK_FREQUENCY       (LPC17_40_CCLK / BOARD_PCLKDIV)
+
+/* Select the main oscillator as the frequency source.
+ *  SYSCLK is then the frequency of the main oscillator.
+ *
+ * If BOARD_XTAL_FREQUENCY > 15000000, then the SCS OSCRS bit (bit 4)
+ * should also be set in the BOARD_SCS_VALUE.
+ */
+
+#undef CONFIG_LPC17_40_MAINOSC
+#define CONFIG_LPC17_40_MAINOSC       1
+#define BOARD_SCS_VALUE            SYSCON_SCS_OSCEN
+
+/* Select the main oscillator and CCLK divider.
+ * The output of the divider is CCLK.
+ * The input to the divider (PLLCLK) will be determined by the PLL output.
+ */
+
+#define BOARD_CCLKSEL_DIVIDER      1
+#define BOARD_CCLKSEL_VALUE        (BOARD_CCLKSEL_DIVIDER | SYSCON_CCLKSEL_CCLKSEL)
+
+/* PLL0.  PLL0 is used to generate the CPU clock (PLLCLK).
+ *
+ *  Source clock:               Main oscillator
+ *  PLL0 Multiplier value (M):  10
+ *  PLL0 Pre-divider value (P): 1
+ *
+ *  PLL0CLK = (M * SYSCLK) = 120MHz
+ */
+
+#undef CONFIG_LPC17_40_PLL0
+#define CONFIG_LPC17_40_PLL0          1
+#define BOARD_CLKSRCSEL_VALUE      SYSCON_CLKSRCSEL_MAIN
+
+#define BOARD_PLL0CFG_MSEL         10
+#define BOARD_PLL0CFG_PSEL         1
+#define BOARD_PLL0CFG_VALUE \
+  (((BOARD_PLL0CFG_MSEL-1) << SYSCON_PLLCFG_MSEL_SHIFT) | \
+   ((BOARD_PLL0CFG_PSEL-1) << SYSCON_PLLCFG_PSEL_SHIFT))
+
+/* PLL1 : PLL1 is used to generate clock for the USB */
+
+#undef  CONFIG_LPC17_40_PLL1
+#define BOARD_PLL1CFG_MSEL        4
+#define BOARD_PLL1CFG_PSEL        2
+#define BOARD_PLL1CFG_VALUE \
+  (((BOARD_PLL1CFG_MSEL-1) << SYSCON_PLLCFG_MSEL_SHIFT) | \
+   ((BOARD_PLL1CFG_PSEL-1) << SYSCON_PLLCFG_PSEL_SHIFT))
+
+#ifdef CONFIG_LPC17_40_EMC
+/* EMC clock selection.
+ *
+ * The EMC clock should not be driven above 80MHz.  As a result the EMC
+ * uses the CPU clock divided by two.
+ */
+
+#  define BOARD_EMCCLKSEL_DIVIDER  2
+#  define BOARD_EMCCLKSEL_VALUE    SYSCON_EMCCLKSEL_CCLK_DIV2
+#  define LPC17_40_EMCCLK             (LPC17_40_CCLK / BOARD_EMCCLKSEL_DIVIDER)
+#endif
+
+#if defined(CONFIG_LPC17_40_USBHOST) || (CONFIG_LPC17_40_USBDEV)
+/* USB divider.  The output of the PLL is used as the USB clock
+ *
+ *  USBCLK = PLL1CLK = (SYSCLK * 4)  = 48MHz
+ */
+
+#  define BOARD_USBCLKSEL_DIVIDER  1
+#  define BOARD_USBCLKSEL_VALUE    (SYSCON_USBCLKSEL_USBDIV_DIV1 | \
+                                    SYSCON_USBCLKSEL_USBSEL_PLL1)
+#endif
+
+/* FLASH Configuration */
+
+#undef  CONFIG_LPC17_40_FLASH
+#define CONFIG_LPC17_40_FLASH         1
+
+/* Flash access use 6 CPU clocks - Safe for any allowed conditions */
+
+#define BOARD_FLASHCFG_VALUE       (SYSCON_FLASHCFG_TIM_5 | 0x03a)
+
+/* Ethernet configuration */
+
+#define ETH_MCFG_CLKSEL_DIV        ETH_MCFG_CLKSEL_DIV56
+
+#ifdef CONFIG_LPC17_40_SDCARD
+/* SDIO dividers.  Note that slower clocking is required when DMA is disabled
+ * in order to avoid RX overrun/TX underrun errors due to delayed responses
+ * to service FIFOs in interrupt driven mode.
+ * SDCARD_CLOCK=PCLK/(2*(SDCARD_CLKDIV+1))
+ */
+
+#  define SDCARD_CLKDIV_INIT       74   /* 400Khz  */
+#  define SDCARD_INIT_CLKDIV       (SDCARD_CLKDIV_INIT)
+
+#  define SDCARD_NORMAL_CLKDIV     1    /* DMA ON:  SDCARD_CLOCK=15MHz */
+#define SDCARD_SLOW_CLKDIV         14   /* DMA OFF: SDCARD_CLOCK=2MHz */
+
+#  ifdef CONFIG_SDIO_DMA
+#    define SDCARD_MMCXFR_CLKDIV   (SDCARD_NORMAL_CLKDIV)
+#  else
+#    define SDCARD_MMCXFR_CLKDIV   (SDCARD_SLOW_CLKDIV)
+#  endif
+
+#  ifdef CONFIG_SDIO_DMA
+#    define SDCARD_SDXFR_CLKDIV    (SDCARD_NORMAL_CLKDIV)
+#  else
+#    define SDCARD_SDXFR_CLKDIV    (SDCARD_SLOW_CLKDIV)
+#  endif
+#endif
+
+/* Set EMC delay values:
+ *
+ * CMDDLY: Programmable delay value for EMC outputs in command delayed
+ *   mode.  The delay amount is roughly CMDDLY * 250 picoseconds.
+ * FBCLKDLY: Programmable delay value for the feedback clock that controls
+ *   input data sampling.  The delay amount is roughly (FBCLKDLY+1) * 250
+ *   picoseconds.
+ * CLKOUT0DLY: Programmable delay value for the CLKOUT0 output. This would
+#define GPIO_UART1_RTS             GPIO_UART1_RTS_2
+#define GPIO_UART1_RI              GPIO_UART1_RI_1
+#define GPIO_UART1_DSR             GPIO_UART1_DSR_1
+#define GPIO_UART1_DCD             GPIO_UART1_DCD_1
+#define GPIO_UART1_CTS             GPIO_UART1_CTS_1
+#define GPIO_UART1_DTR             GPIO_UART1_DTR_1
+#define GPIO_UART1_TXD             GPIO_UART1_TXD_1
+#define GPIO_UART1_RXD             GPIO_UART1_RXD_1
+
+/* MCI-SDIO:
+ *
+ * D0    --- Connected to P1[6]
+ * D1    --- Connected to P2[11]
+ * D2    --- Connected to P2[12]
+ * D3    --- Connected to P2[13]
+ * CLK   --- Connected to P1[2]
+ * CMD   --- Connected to P1[3]
+ */
+
+#define GPIO_SD_DAT0               GPIO_SD_DAT0_2
+#define GPIO_SD_DAT1               GPIO_SD_DAT1_1
+#define GPIO_SD_DAT2               GPIO_SD_DAT2_1
+#define GPIO_SD_DAT3               GPIO_SD_DAT3_1
+#define GPIO_SD_CLK                GPIO_SD_CLK_2
+#define GPIO_SD_CMD                GPIO_SD_CMD_2
+#define GPIO_SD_PWR                GPIO_SD_PWR_2
+
+/* LCD R:
+ *
+ * VD0   --- Connected to P0[4]
+ * VD1   --- Connected to P0[5]
+ * VD2   --- Connected to P4[28]
+ * VD3   --- Connected to P4[29]
+ * VD4   --- Connected to P2[6]
+ * VD5   --- Connected to P2[7]
+ * VD6   --- Connected to P2[8]
+ * VD7   --- Connected to P2[9]
+ */
+
+#define GPIO_LCD_VD0                GPIO_LCD_VD0_1
+#define GPIO_LCD_VD1                GPIO_LCD_VD1_1
+#define GPIO_LCD_VD2                GPIO_LCD_VD2_2
+#define GPIO_LCD_VD3                GPIO_LCD_VD3_2
+#define GPIO_LCD_VD4                GPIO_LCD_VD4_1
+#define GPIO_LCD_VD5                GPIO_LCD_VD5_1
+#define GPIO_LCD_VD6                GPIO_LCD_VD6_2
+#define GPIO_LCD_VD7                GPIO_LCD_VD7_2
+
+/* LCD G:
+ *
+ * VD8    --- Connected to P0[6]
+ * VD9    --- Connected to P0[7]
+ * VD10   --- Connected to P1[20]
+ * VD11   --- Connected to P1[21]
+ * VD12   --- Connected to P1[22]
+ * VD13   --- Connected to P1[23]
+ * VD14   --- Connected to P1[24]
+ * VD15   --- Connected to P1[25]
+ */
+
+#define GPIO_LCD_VD8                GPIO_LCD_VD8_1
+#define GPIO_LCD_VD9                GPIO_LCD_VD9_1
+#define GPIO_LCD_VD10               GPIO_LCD_VD10_1
+#define GPIO_LCD_VD11               GPIO_LCD_VD11_1
+#define GPIO_LCD_VD12               GPIO_LCD_VD12_1
+#define GPIO_LCD_VD13               GPIO_LCD_VD13_1
+#define GPIO_LCD_VD14               GPIO_LCD_VD14_1
+#define GPIO_LCD_VD15               GPIO_LCD_VD15_1
+
+/* LCD B:
+ *
+ * VD16   --- Connected to P0[8]
+ * VD17   --- Connected to P0[9]
+ * VD18   --- Connected to P2[12]
+ * VD19   --- Connected to P2[13]
+ * VD20   --- Connected to P1[26]
+ * VD21   --- Connected to P1[27]
+ * VD22   --- Connected to P1[28]
+ * VD23   --- Connected to P1[29]
+ *
+ * DCLK   --- Connected to P2[2]
+ * LP     --- Connected to P2[5]
+ * FP     --- Connected to P2[3]
+ * ENAB_M --- Connected to P2[4]
+ * PWR    --- Connected to P2[0]
+ */
+
+/* XPT2046 Touchscreen:
+ *
+ * -------------- -------------------- ------------ -------------------------
+ * XTPT2046       Module               Module       Open1788 LED
+ *                Signal               Connector    Connector
+ * -------------- -------------------- ------------ -------------------------
+ * Pin 11 PENIRQ\ PENIRQ (pulled high) PORT3 Pin 1  P2.15 PENIRQ
+ * Pin 12 DOUT    MISO                 PORT3 Pin 4  P1.18 MISO1
+ *                                                  (Also USB HOST UP LED)
+ * Pin 13 BUSY    BUSY (pulled high)   PORT3 Pin 9  P2.14 BUSY
+ * Pin 14 DIN     MOSI                 PORT3 Pin 3  P0.13 MOSI1
+ *                                                  (Also USB Device up LED
+ *                                                  and SD CD pin)
+ * Pin 15 CS\     SSEL (pulled high)   PORT3 Pin 6  P1.8  GPIO
+ *                                                  (Also RMII_CRS_DV)
+ * Pin 16 DCLK    SCK                  PORT3 Pin 5  P1.19 SCK1
+ * -------------- -------------------- ------------ -------------------------
+ */
+
+#define GPIO_SSP1_MISO   GPIO_SSP1_MISO_3
+#define GPIO_SSP1_MOSI   GPIO_SSP1_MOSI_2
+#define GPIO_SSP1_SCK    GPIO_SSP1_SCK_2
+#define GPIO_SSP0_MISO   GPIO_SSP0_MISO_1
+#define GPIO_SSP0_MOSI   GPIO_SSP0_MOSI_1
+#define GPIO_SSP0_SCK    GPIO_SSP0_SCK_1
+#define GPIO_I2C0_SCL    GPIO_I2C0_SCL_1
+#define GPIO_I2C0_SDA    GPIO_I2C0_SDA_1
+#define GPIO_ENET_MDC    GPIO_ENET_MDC_1
+#define GPIO_ENET_MDIO   GPIO_ENET_MDIO_1
+=== .config ETH/SD ===
+374:CONFIG_LPC17_40_ETHERNET=y
+378:CONFIG_LPC17_40_SDCARD=y
+442:CONFIG_LPC17_40_SDCARD_DMA=y
+443:# CONFIG_LPC17_40_SDCARD_WIDTH_D1_ONLY is not set
+448:CONFIG_LPC17_40_PHY_AUTONEG=y
+449:# CONFIG_LPC17_40_PHY_CEMENT_DISABLE is not set
+450:CONFIG_LPC17_40_EMACRAM_SIZE=16384
+451:CONFIG_LPC17_40_ETH_NTXDESC=5
+452:CONFIG_LPC17_40_ETH_NRXDESC=5
+454:# CONFIG_LPC17_40_ETH_HASH is not set
+=== lpc17_40_emacram.h ===
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* Default, no-EMAC Case ****************************************************/
+
+/* Assume that all of AHB SRAM will be available for heap. If this is not
+ * true, then LPC17_40_BANK0_HEAPSIZE will be undefined and redefined below.
+ */
+
+#undef LPC17_40_BANK0_HEAPBASE
+#undef LPC17_40_BANK0_HEAPSIZE
+#ifdef LPC17_40_HAVE_BANK0
+#  define LPC17_40_BANK0_HEAPBASE LPC17_40_SRAM_BANK0
+#  define LPC17_40_BANK0_HEAPSIZE LPC17_40_BANK0_SIZE
+#endif
+
+/* Is networking enabled?
+ * Is the LPC17xx/LPC40xx Ethernet device enabled? Does this chip have
+ *  an Ethernet controller?
+ *
+ *  Yes... then we will replace the above default definitions.
+ */
+
+#if defined(CONFIG_NET) && defined(CONFIG_LPC17_40_ETHERNET) && LPC17_40_NETHCONTROLLERS > 0
+
+/* EMAC RAM Configuration ***************************************************/
+
+/* Is AHB SRAM available? */
+
+#ifndef LPC17_40_HAVE_BANK0
+#  error "AHB SRAM Bank0 is not available for EMAC RAM"
+#endif
+
+/* Number of Tx descriptors */
+
+#ifndef CONFIG_LPC17_40_ETH_NTXDESC
+#  define CONFIG_LPC17_40_ETH_NTXDESC 13
+#endif
+
+/* Number of Rx descriptors */
+
+#ifndef CONFIG_LPC17_40_ETH_NRXDESC
+#  define CONFIG_LPC17_40_ETH_NRXDESC 13
+#endif
+
+/* Size of the region at the beginning of AHB SRAM 0 set set aside for the
+ * EMAC. This size must fit within AHB SRAM Bank 0 and also be a multiple
+ * of 32-bit words.
+ */
+
+#ifndef CONFIG_LPC17_40_EMACRAM_SIZE
+#  define CONFIG_LPC17_40_EMACRAM_SIZE LPC17_40_BANK0_SIZE
+#endif
+
+#if CONFIG_LPC17_40_EMACRAM_SIZE > LPC17_40_BANK0_SIZE
+#  error "EMAC RAM size cannot exceed the size of AHB SRAM Bank 0"
+#endif
+
+#if (CONFIG_LPC17_40_EMACRAM_SIZE & 3) != 0
+#  error "EMAC RAM size must be in multiples of 32-bit words"
+#endif
+
+/* Determine is there is any meaningful space left at the end of AHB Bank 0
+ * that could be added to the heap.
+ */
+
+#undef LPC17_40_BANK0_HEAPBASE
+#undef LPC17_40_BANK0_HEAPSIZE
+#if CONFIG_LPC17_40_EMACRAM_SIZE < (LPC17_40_BANK0_SIZE-128)
+#  define LPC17_40_BANK0_HEAPBASE (LPC17_40_SRAM_BANK0 + CONFIG_LPC17_40_EMACRAM_SIZE)
+#  define LPC17_40_BANK0_HEAPSIZE (LPC17_40_BANK0_SIZE - CONFIG_LPC17_40_EMACRAM_SIZE)
+#endif
+
+/* Memory at the beginning of AHB SRAM, Bank 0 is set aside for EMAC Tx and
+ * Rx descriptors.  The position is not controllable, only the size of the
+ * region is controllable.
+ */
+
+#define LPC17_40_EMACRAM_BASE   LPC17_40_SRAM_BANK0
+#define LPC17_40_EMACRAM_SIZE   CONFIG_LPC17_40_EMACRAM_SIZE
+
+/* Descriptor Memory Layout *************************************************/
+
+/* EMAC DMA RAM and descriptor definitions.  The configured number of
+ * descriptors will determine the organization and the size of the descriptor
+ * and status tables. There is a complex interaction between the maximum
+ * packet size (CONFIG_NET_ETH_PKTSIZE) and the number of Rx and Tx
+ * descriptors that can be supported (CONFIG_LPC17_40_ETH_NRXDESC and
+ * CONFIG_LPC17_40_ETH_NTXDESC): Small buffers -> more packets.  This is
+ * something that needs to be tuned for you system.
+ *
+ * For a 16Kb SRAM region, here is the relationship:
+ *
+ *  16384 <= ntx * (pktsize + 8 + 4) + nrx * (pktsize + 8 + 8)
+ *
+ * If ntx == nrx and pktsize == 590+2, then you could have ntx = nrx = 13.
+ * In this case, you would need only 15,756 bytes of EMAC RAM (but be careful
+ * with alignment! 15,756 is not well aligned.).
+ */
+
+#define LPC17_40_TXDESCTAB_SIZE (CONFIG_LPC17_40_ETH_NTXDESC*LPC17_40_TXDESC_SIZE)
+#define LPC17_40_TXSTATTAB_SIZE (CONFIG_LPC17_40_ETH_NTXDESC*LPC17_40_TXSTAT_SIZE)
+#define LPC17_40_TXTAB_SIZE     (LPC17_40_TXDESCTAB_SIZE+LPC17_40_TXSTATTAB_SIZE)
+
+#define LPC17_40_RXDESCTAB_SIZE (CONFIG_LPC17_40_ETH_NRXDESC*LPC17_40_RXDESC_SIZE)
+#define LPC17_40_RXSTATTAB_SIZE (CONFIG_LPC17_40_ETH_NRXDESC*LPC17_40_RXSTAT_SIZE)
+#define LPC17_40_RXTAB_SIZE     (LPC17_40_RXDESCTAB_SIZE+LPC17_40_RXSTATTAB_SIZE)
+
+#define LPC17_40_DESCTAB_SIZE   (LPC17_40_TXTAB_SIZE+LPC17_40_RXTAB_SIZE)
+
+/* Descriptor table memory organization.  Descriptor tables are packed at
+ * the end of AHB SRAM, Bank 0.  The beginning of bank 0 is reserved for
+ * packet memory.
+ */
+
+#define LPC17_40_DESC_BASE      (LPC17_40_EMACRAM_BASE+LPC17_40_EMACRAM_SIZE-LPC17_40_DESCTAB_SIZE)
+#define LPC17_40_TXDESC_BASE    LPC17_40_DESC_BASE
+#define LPC17_40_TXSTAT_BASE    (LPC17_40_TXDESC_BASE+LPC17_40_TXDESCTAB_SIZE)
+#define LPC17_40_RXDESC_BASE    (LPC17_40_TXSTAT_BASE+LPC17_40_TXSTATTAB_SIZE)
+#define LPC17_40_RXSTAT_BASE    (LPC17_40_RXDESC_BASE + LPC17_40_RXDESCTAB_SIZE)
+
+/* Now carve up the beginning of SRAM for packet memory.  The size of a
+ * packet buffer is related to the size of the MTU.  We'll round sizes up
+ * to multiples of 256 bytes.
+ */
+
+#define LPC17_40_PKTMEM_BASE     LPC17_40_EMACRAM_BASE
+#define LPC17_40_PKTMEM_SIZE     (LPC17_40_EMACRAM_SIZE-LPC17_40_DESCTAB_SIZE)
+#define LPC17_40_PKTMEM_END      (LPC17_40_EMACRAM_BASE+LPC17_40_PKTMEM_SIZE)
+
+#define LPC17_40_MAXPACKET_SIZE  ((CONFIG_NET_ETH_PKTSIZE + CONFIG_NET_GUARDSIZE + 3) & ~3)
+#define LPC17_40_NTXPKTS         CONFIG_LPC17_40_ETH_NTXDESC
+#define LPC17_40_NRXPKTS         CONFIG_LPC17_40_ETH_NRXDESC
+
+#define LPC17_40_TXBUFFER_SIZE   (LPC17_40_NTXPKTS * LPC17_40_MAXPACKET_SIZE)
+#define LPC17_40_RXBUFFER_SIZE   (LPC17_40_NRXPKTS * LPC17_40_MAXPACKET_SIZE)
+#define LPC17_40_BUFFER_SIZE     (LPC17_40_TXBUFFER_SIZE + LPC17_40_RXBUFFER_SIZE)
+
+#define LPC17_40_BUFFER_BASE     LPC17_40_PKTMEM_BASE
+#define LPC17_40_TXBUFFER_BASE   LPC17_40_BUFFER_BASE
+#define LPC17_40_RXBUFFER_BASE   (LPC17_40_TXBUFFER_BASE + LPC17_40_TXBUFFER_SIZE)
+#define LPC17_40_BUFFER_END      (LPC17_40_BUFFER_BASE + LPC17_40_BUFFER_SIZE)
+
+#if LPC17_40_BUFFER_END > LPC17_40_PKTMEM_END
+#  error "Packet memory overlaps descriptor tables"
+#endif
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
+
+#endif /* CONFIG_NET && CONFIG_LPC17_40_ETHERNET && LPC17_40_NETHCONTROLLERS > 0*/
+#endif /* __ARCH_ARM_SRC_LPC17XX_40XX_LPC17_40_EMACRAM_H */
+=== lpc17_40_ethernet.c ===
+--- lines 1086-1275 ---
+ *
+ ****************************************************************************/
+
+static int lpc17_40_interrupt(int irq, void *context, void *arg)
+{
+  register struct lpc17_40_driver_s *priv;
+  uint32_t status;
+
+#if CONFIG_LPC17_40_NINTERFACES > 1
+# error "A mechanism to associate and interface with an IRQ is needed"
+#else
+  priv = &g_ethdrvr[0];
+#endif
+
+  /* Get the interrupt status (zero means no interrupts pending). */
+
+  status = lpc17_40_getreg(LPC17_40_ETH_INTST);
+  if (status != 0)
+    {
+      /* Clear all pending interrupts */
+
+      lpc17_40_putreg(status, LPC17_40_ETH_INTCLR);
+
+      /* Handle each pending interrupt **************************************/
+
+      /* Check for Wake-Up on Lan *******************************************/
+
+#ifdef CONFIG_LPC17_40_ETH_WOL
+      if ((status & ETH_INT_WKUP) != 0)
+        {
+#         warning "Missing logic"
+        }
+      else
+#endif
+      /* Fatal Errors *******************************************************/
+
+      /* RX OVERRUN -- Fatal overrun error in the receive queue. The fatal
+       * interrupt should be resolved by a Rx soft-reset. The bit is not
+       * set when there is a nonfatal overrun error.
+       *
+       * TX UNDERRUN -- Interrupt set on a fatal underrun error in the
+       * transmit queue. The fatal interrupt should be resolved by a Tx
+       * soft-reset. The bit is not set when there is a nonfatal underrun
+       * error.
+       */
+
+      if ((status & (ETH_INT_RXOVR | ETH_INT_TXUNR)) != 0)
+        {
+          if ((status & ETH_INT_RXOVR) != 0)
+            {
+              nerr("ERROR: RX Overrun. status: %08" PRIx32 "\n", status);
+              NETDEV_RXERRORS(&priv->lp_dev);
+            }
+
+          if ((status & ETH_INT_TXUNR) != 0)
+            {
+              nerr("ERROR: TX Underrun. status: %08" PRIx32 "\n", status);
+              NETDEV_TXERRORS(&priv->lp_dev);
+            }
+
+          /* ifup() will reset the EMAC and bring it back up */
+
+           lpc17_40_ifup(&priv->lp_dev);
+        }
+      else
+        {
+          /* Check for receive events ***************************************/
+
+          /* RX ERROR -- Triggered on receive errors: AlignmentError,
+           * RangeError, LengthError, SymbolError, CRCError or NoDescriptor
+           * or Overrun.  NOTE:  (1) We will still need to call
+           * lpc17_40_rxdone_process on RX errors to bump the considx over
+           * the bad packet.  (2) The DMA engine reports bogus length
+           * errors, making this a pretty useless (as well as annoying)
+           * check anyway.
+           */
+
+          if ((status & ETH_INT_RXERR) != 0)
+            {
+              nerr("ERROR: RX ERROR: status: %08" PRIx32 "\n", status);
+              NETDEV_RXERRORS(&priv->lp_dev);
+            }
+
+          /* RX FINISHED -- Triggered when all receive descriptors have
+           * been processed i.e. on the transition to the situation
+           * where ProduceIndex == ConsumeIndex.
+           *
+           * Treated as INT_RX_DONE if ProduceIndex != ConsumeIndex so the
+           * packets are processed anyway.
+           *
+           * RX DONE -- Triggered when a receive descriptor has been
+           * processed while the Interrupt bit in the Control field of
+           * the descriptor was set.
+           */
+
+          if ((status & ETH_INT_RXFIN) != 0 ||
+              (status & ETH_INT_RXDONE) != 0)
+            {
+              /* We have received at least one new incoming packet.
+               * Disable further TX interrupts for now.  TX interrupts will
+               * be re-enabled after the work has been processed.
+               */
+
+              priv->lp_inten &= ~ETH_RXINTS;
+              lpc17_40_putreg(priv->lp_inten, LPC17_40_ETH_INTEN);
+
+              /* Schedule RX-related work to be performed on the work thread,
+               * perhaps cancelling any pending RX work.
+               */
+
+              work_queue(ETHWORK, &priv->lp_rxwork,
+                         lpc17_40_rxdone_work, priv, 0);
+            }
+
+          /* Check for Tx events ********************************************/
+
+          /* TX ERROR -- Triggered on transmit errors: LateCollision,
+           * ExcessiveCollision and ExcessiveDefer, NoDescriptor or Underrun.
+           * NOTE: We will still need to call lpc17_40_txdone_process() in
+           * order to clean up after the failed transmit.
+           */
+
+          if ((status & ETH_INT_TXERR) != 0)
+            {
+              nerr("ERROR: TX ERROR: status: %08" PRIx32 "\n", status);
+              NETDEV_TXERRORS(&priv->lp_dev);
+            }
+
+#if 0
+          /* TX FINISHED -- Triggered when all transmit descriptors have
+           * been processed i.e. on the transition to the situation
+           * where ProduceIndex == ConsumeIndex.
+           */
+
+          if ((status & ETH_INT_TXFIN) != 0)
+            {
+            }
+#endif
+
+          /* TX DONE -- Triggered when a descriptor has been transmitted
+           * while the Interrupt bit in the Control field of the
+           * descriptor was set.
+           */
+
+          if ((status & ETH_INT_TXDONE) != 0)
+            {
+              NETDEV_TXDONE(&priv->lp_dev);
+
+              /* A packet transmission just completed.
+               * Cancel the pending Tx timeout
+               */
+
+              wd_cancel(&priv->lp_txtimeout);
+
+              /* Disable further Tx interrupts.  Tx interrupts may be
+               * re-enabled again depending upon the actions of
+               * lpc17_40_txdone_process()
+               */
+
+              priv->lp_inten &= ~ETH_TXINTS;
+              lpc17_40_putreg(priv->lp_inten, LPC17_40_ETH_INTEN);
+
+              /* Cancel any pending TX done work (to prevent overruns and
+               * also to avoid race conditions with the TX timeout work)
+               */
+
+              work_cancel(ETHWORK, &priv->lp_txwork);
+
+              /* Schedule TX-related work to be performed on the work thread,
+               * perhaps cancelling any pending TX work.
+               */
+
+              work_queue(ETHWORK, &priv->lp_txwork,
+                         lpc17_40_txdone_work, priv, 0);
+            }
+        }
+    }
+
+  /* Clear the pending interrupt */
+
+#if 0 /* Apparently not necessary */
+#  if CONFIG_LPC17_40_NINTERFACES > 1
+  lpc17_40_clrpend(priv->irq);
+#  else
+  lpc17_40_clrpend(LPC17_40_IRQ_ETH);
+#  endif
+#endif
+
+  return OK;
+}
+--- lines 1374-1514 ---
+ *
+ ****************************************************************************/
+
+static int lpc17_40_ifup(struct net_driver_s *dev)
+{
+  struct lpc17_40_driver_s *priv =
+    (struct lpc17_40_driver_s *)dev->d_private;
+  uint32_t regval;
+  int ret;
+
+  ninfo("Bringing up: %u.%u.%u.%u\n",
+        ip4_addr1(dev->d_ipaddr), ip4_addr2(dev->d_ipaddr),
+        ip4_addr3(dev->d_ipaddr), ip4_addr4(dev->d_ipaddr));
+
+  /* Reset the Ethernet controller (again) */
+
+  lpc17_40_ethreset(priv);
+
+  /* Initialize the PHY and wait for the link to be established */
+
+  ret = lpc17_40_phyinit(priv);
+  if (ret != 0)
+    {
+      nerr("ERROR: lpc17_40_phyinit failed: %d\n", ret);
+      return ret;
+    }
+
+  /* Configure the MAC station address */
+
+  regval = (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[5] << 8 |
+           (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[4];
+  lpc17_40_putreg(regval, LPC17_40_ETH_SA0);
+
+  regval = (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[3] << 8 |
+           (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[2];
+  lpc17_40_putreg(regval, LPC17_40_ETH_SA1);
+
+  regval = (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[1] << 8 |
+           (uint32_t)priv->lp_dev.d_mac.ether.ether_addr_octet[0];
+  lpc17_40_putreg(regval, LPC17_40_ETH_SA2);
+
+  /* Initialize Ethernet interface for the PHY setup */
+
+  lpc17_40_macmode(priv->lp_mode);
+
+  /* Initialize EMAC DMA memory --
+   * descriptors, status, packet buffers, etc.
+   */
+
+  lpc17_40_txdescinit(priv);
+  lpc17_40_rxdescinit(priv);
+
+  /* Configure to pass all received frames */
+
+  regval = lpc17_40_getreg(LPC17_40_ETH_MAC1);
+  regval |= ETH_MAC1_PARF;
+  lpc17_40_putreg(regval, LPC17_40_ETH_MAC1);
+
+  /* Set up RX filter and configure to accept broadcast addresses, multicast
+   * addresses, and perfect station address matches.  We should also accept
+   * perfect matches and, most likely, broadcast (for example, for ARP
+   * requests).  Other RX filter options will only be enabled if so
+   * selected.  NOTE: There is a selection CONFIG_NET_BROADCAST, but this
+   * enables receipt of UDP broadcast packets inside of the stack.
+   */
+
+  regval = ETH_RXFLCTRL_PERFEN | ETH_RXFLCTRL_BCASTEN;
+#ifdef CONFIG_LPC17_40_MULTICAST
+  regval |= (ETH_RXFLCTRL_MCASTEN | ETH_RXFLCTRL_UCASTEN);
+#endif
+#ifdef CONFIG_LPC17_40_ETH_HASH
+  regval |= (ETH_RXFLCTRL_MCASTHASHEN | ETH_RXFLCTRL_UCASTHASHEN);
+#endif
+  lpc17_40_putreg(regval, LPC17_40_ETH_RXFLCTRL);
+
+  /* Clear any pending interrupts (shouldn't be any) */
+
+  lpc17_40_putreg(0xffffffff, LPC17_40_ETH_INTCLR);
+
+  /* Enable Ethernet interrupts.  The way we do this depends on whether or
+   * not Wakeup on Lan (WoL) has been configured.
+   */
+
+#ifdef CONFIG_LPC17_40_ETH_WOL
+  /* Configure WoL: Clear all receive filter WoLs and enable the perfect
+   * match WoL interrupt.  We will wait until the Wake-up to finish
+   * bringing things up.
+   */
+
+  lpc17_40_putreg(0xffffffff, LPC17_40_ETH_RXFLWOLCLR);
+  lpc17_40_putreg(ETH_RXFLCTRL_RXFILEN, LPC17_40_ETH_RXFLCTRL);
+
+  priv->lp_inten = ETH_INT_WKUP;
+  lpc17_40_putreg(ETH_INT_WKUP, LPC17_40_ETH_INTEN);
+#else
+  /* Otherwise, enable all Rx interrupts.  Tx interrupts, SOFTINT and WoL are
+   * excluded.  Tx interrupts will not be enabled until there is data to be
+   * sent.
+   */
+
+  priv->lp_inten = ETH_RXINTS;
+  lpc17_40_putreg(ETH_RXINTS, LPC17_40_ETH_INTEN);
+#endif
+
+  /* Enable Rx. "Enabling of the receive function is located in two places.
+   * The receive DMA manager needs to be enabled and the receive data path
+   * of the MAC needs to be enabled. To prevent overflow in the receive
+   * DMA engine the receive DMA engine should be enabled by setting the
+   * RxEnable bit in the Command register before enabling the receive data
+   * path in the MAC by setting the RECEIVE ENABLE bit in the MAC1 register."
+   */
+
+  regval  = lpc17_40_getreg(LPC17_40_ETH_CMD);
+  regval |= ETH_CMD_RXEN;
+  lpc17_40_putreg(regval, LPC17_40_ETH_CMD);
+
+  regval  = lpc17_40_getreg(LPC17_40_ETH_MAC1);
+  regval |= ETH_MAC1_RE;
+  lpc17_40_putreg(regval, LPC17_40_ETH_MAC1);
+
+  /* Enable Tx */
+
+  regval  = lpc17_40_getreg(LPC17_40_ETH_CMD);
+  regval |= ETH_CMD_TXEN;
+  lpc17_40_putreg(regval, LPC17_40_ETH_CMD);
+
+  /* Finally, make the interface up and enable the Ethernet interrupt at
+   * the interrupt controller
+   */
+
+  priv->lp_ifup = true;
+#if CONFIG_LPC17_40_NINTERFACES > 1
+  up_enable_irq(priv->irq);
+#else
+  up_enable_irq(LPC17_40_IRQ_ETH);
+#endif
+
+  netdev_carrier_on(dev);
+
+  return OK;
+}
+--- lines 2088-2114 ---
+
+#ifdef LPC17_40_HAVE_PHY
+static void lpc17_40_phywrite(uint8_t phyaddr, uint8_t regaddr,
+                              uint16_t phydata)
+{
+  uint32_t regval;
+
+  lpc17_40_putreg(0, LPC17_40_ETH_MCMD);
+
+  /* Set PHY address and PHY register address */
+
+  regval = ((uint32_t)phyaddr << ETH_MADR_PHYADDR_SHIFT) |
+           ((uint32_t)regaddr << ETH_MADR_REGADDR_SHIFT);
+  lpc17_40_putreg(regval, LPC17_40_ETH_MADR);
+
+  /* Set up to write */
+
+  lpc17_40_putreg(ETH_MCMD_WRITE, LPC17_40_ETH_MCMD);
+
+  /* Write the register data to the PHY */
+
+  lpc17_40_putreg((uint32_t)phydata, LPC17_40_ETH_MWTD);
+
+  /* Wait for the PHY command to complete */
+
+  while ((lpc17_40_getreg(LPC17_40_ETH_MIND) & ETH_MIND_BUSY) != 0);
+}
+--- lines 2132-2160 ---
+ ****************************************************************************/
+
+#ifdef LPC17_40_HAVE_PHY
+static uint16_t lpc17_40_phyread(uint8_t phyaddr, uint8_t regaddr)
+{
+  uint32_t regval;
+
+  lpc17_40_putreg(1, LPC17_40_ETH_MCMD);
+
+  /* Set PHY address and PHY register address */
+
+  regval = ((uint32_t)phyaddr << ETH_MADR_PHYADDR_SHIFT) |
+           ((uint32_t)regaddr << ETH_MADR_REGADDR_SHIFT);
+  lpc17_40_putreg(regval, LPC17_40_ETH_MADR);
+
+  /* Set up to read */
+
+  lpc17_40_putreg(ETH_MCMD_READ, LPC17_40_ETH_MCMD);
+
+  /* Wait for the PHY command to complete */
+
+  while ((lpc17_40_getreg(LPC17_40_ETH_MIND) &
+         (ETH_MIND_BUSY | ETH_MIND_NVALID)) != 0);
+  lpc17_40_putreg(0, LPC17_40_ETH_MCMD);
+
+  /* Return the PHY register data */
+
+  return (uint16_t)(lpc17_40_getreg(LPC17_40_ETH_MRDD) & ETH_MRDD_MASK);
+}
+--- lines 2915-2975 ---
+ *
+ ****************************************************************************/
+
+static void lpc17_40_ethreset(struct lpc17_40_driver_s *priv)
+{
+  irqstate_t flags;
+
+  /* Reset the MAC */
+
+  flags = enter_critical_section();
+
+  /* Put the MAC into the reset state */
+
+  lpc17_40_putreg((ETH_MAC1_TXRST    | ETH_MAC1_MCSTXRST | ETH_MAC1_RXRST |
+                ETH_MAC1_MCSRXRST | ETH_MAC1_SIMRST   | ETH_MAC1_SOFTRST),
+               LPC17_40_ETH_MAC1);
+
+  /* Disable RX/RX, clear modes, reset all control registers */
+
+  lpc17_40_putreg((ETH_CMD_REGRST | ETH_CMD_TXRST | ETH_CMD_RXRST),
+               LPC17_40_ETH_CMD);
+
+  /* Take the MAC out of the reset state */
+
+  up_udelay(50);
+  lpc17_40_putreg(0, LPC17_40_ETH_MAC1);
+
+  /* The RMII bit must be set on initialization (I'm not sure this needs
+   * to be done here but... oh well).
+   */
+
+  lpc17_40_putreg(ETH_CMD_RMII, LPC17_40_ETH_CMD);
+
+  /* Set other misc configuration-related registers to default values */
+
+  lpc17_40_putreg(0, LPC17_40_ETH_MAC2);
+  lpc17_40_putreg(0, LPC17_40_ETH_SUPP);
+  lpc17_40_putreg(0, LPC17_40_ETH_TEST);
+
+  lpc17_40_putreg(18, LPC17_40_ETH_IPGR);
+  lpc17_40_putreg(((15 << ETH_CLRT_RMAX_SHIFT) |
+                   (55 << ETH_CLRT_COLWIN_SHIFT)), LPC17_40_ETH_CLRT);
+
+  /* Set the Maximum Frame size register. "This field resets to the value
+   * 0x0600, which represents a maximum receive frame of 1536 octets. An
+   * untagged maximum size Ethernet frame is 1518 octets. A tagged frame adds
+   * four octets for a total of 1522 octets. If a shorter maximum length
+   * restriction is desired, program this 16-bit field."
+   */
+
+  lpc17_40_putreg(LPC17_40_MAXPACKET_SIZE, LPC17_40_ETH_MAXF);
+
+  /* Disable all Ethernet controller interrupts */
+
+  lpc17_40_putreg(0, LPC17_40_ETH_INTEN);
+
+  /* Clear any pending interrupts (shouldn't be any) */
+
+  lpc17_40_putreg(0xffffffff, LPC17_40_ETH_INTCLR);
+  leave_critical_section(flags);
+}
+--- lines 2998-3073 ---
+int lpc17_40_ethinitialize(int intf)
+#else
+static inline int lpc17_40_ethinitialize(int intf)
+#endif
+{
+  struct lpc17_40_driver_s *priv;
+  uint32_t regval;
+  int ret;
+  int i;
+
+  DEBUGASSERT(intf < CONFIG_LPC17_40_NINTERFACES);
+  priv = &g_ethdrvr[intf];
+
+  /* Turn on the ethernet MAC clock */
+
+  regval  = lpc17_40_getreg(LPC17_40_SYSCON_PCONP);
+  regval |= SYSCON_PCONP_PCENET;
+  lpc17_40_putreg(regval, LPC17_40_SYSCON_PCONP);
+
+  /* Configure all GPIO pins needed by ENET */
+
+  for (i = 0; i < GPIO_NENET_PINS; i++)
+    {
+      lpc17_40_configgpio(g_enetpins[i]);
+    }
+
+  lpc17_40_showpins();
+
+  /* Initialize the driver structure */
+
+  memset(priv, 0, sizeof(struct lpc17_40_driver_s));
+  priv->lp_dev.d_buf     = g_pktbuf[intf];     /* Single packet buffer */
+  priv->lp_dev.d_ifup    = lpc17_40_ifup;      /* I/F down callback */
+  priv->lp_dev.d_ifdown  = lpc17_40_ifdown;    /* I/F up (new IP address) callback */
+  priv->lp_dev.d_txavail = lpc17_40_txavail;   /* New TX data callback */
+#ifdef CONFIG_NET_MCASTGROUP
+  priv->lp_dev.d_addmac  = lpc17_40_addmac;    /* Add multicast MAC address */
+  priv->lp_dev.d_rmmac   = lpc17_40_rmmac;     /* Remove multicast MAC address */
+#endif
+#ifdef CONFIG_NETDEV_IOCTL
+  priv->lp_dev.d_ioctl   = lpc17_40_eth_ioctl; /* Handle network IOCTL commands */
+#endif
+  priv->lp_dev.d_private = priv;               /* Used to recover private state from dev */
+
+#if CONFIG_LPC17_40_NINTERFACES > 1
+# error "A mechanism to associate base address an IRQ with an interface is needed"
+  priv->lp_base          = ??;                 /* Ethernet controller base address */
+  priv->lp_irq           = ??;                 /* Ethernet controller IRQ number */
+#endif
+
+  /* Reset the Ethernet controller and leave in the ifdown statue.  The
+   * Ethernet controller will be properly re-initialized each time
+   * lpc17_40_ifup() is called.
+   */
+
+  lpc17_40_ifdown(&priv->lp_dev);
+
+  /* Attach the IRQ to the driver */
+
+#if CONFIG_LPC17_40_NINTERFACES > 1
+  ret = irq_attach(priv->irq, lpc17_40_interrupt, NULL);
+#else
+  ret = irq_attach(LPC17_40_IRQ_ETH, lpc17_40_interrupt, NULL);
+#endif
+  if (ret != 0)
+    {
+      /* We could not attach the ISR to the interrupt */
+
+      return -EAGAIN;
+    }
+
+  /* Register the device with the OS so that socket IOCTLs can be performed */
+
+  netdev_register(&priv->lp_dev, NET_LL_ETHERNET);
+  return OK;
+}
+=== lpc178x_40xx_gpio.c ===
+
+            case 27:
+            case 28:
+              typemask = IOCON_TYPE_I_MASK;
+              break;
+
+            case 29:
+            case 30:
+            case 31:
+              typemask = IOCON_TYPE_U_MASK;
+              break;
+
+            default:
+                break;
+          }
+        break;
+
+      case 1:
+        switch (pin)
+          {
+            case 30:
+            case 31:
+              typemask = IOCON_TYPE_A_MASK;
+              break;
+
+            default:
+              break;
+          }
+        break;
+
+      case 5:
+        switch (pin)
+          {
+            case 2:
+            case 3:
+              typemask = IOCON_TYPE_I_MASK;
+              break;
+
+            default:
+              break;
+          }
+        break;
+
+      default:
+        break;
+    }
+
+  return typemask;
+}
+#endif
+
+/****************************************************************************
+ * Name: lpc17_40_seti2cmode
+ *
+ * Description:
+ *   Configure I2C pin drive mode.  Applies to Type I pins
+ *
+ ****************************************************************************/
+
+static void lpc17_40_seti2cmode(unsigned int port, unsigned int pin,
+                             uint32_t value)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+  regval &= ~IOCON_I2CMODE_MASK;
+  regval |= ((value << IOCON_I2CMODE_SHIFT) & IOCON_I2CMODE_MASK);
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setpinfunction
+ *
+ * Description:
+ *   Select pin function.
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setpinfunction(unsigned int port, unsigned int pin,
+                                 unsigned int value)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+
+  regval &= ~IOCON_FUNC_MASK;
+  regval |= ((value << IOCON_FUNC_SHIFT) & IOCON_FUNC_MASK);
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setinvertinput
+ *
+ * Description:
+ *   Configure pin input polarity.  Applies to Type D, A, I and W pins.
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setinvertinput(unsigned int port, unsigned int pin)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+  regval |= IOCON_INV_MASK;
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setslewfast
+ *
+ * Description:
+ *   Configure pin mode slew rate drive.  Applies to Type D and Type W pins
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setslewmode(lpc17_40_pinset_t cfgset, unsigned int port,
+                              unsigned int pin)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+  uint32_t value;
+
+  /* Decode the request output slew rate */
+
+  value = ((cfgset & GPIO_SLEW_MASK) >> GPIO_SLEW_SHIFT);
+
+  /* Get the current IOCON register contents */
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+
+  /* Set the driver slew rate */
+
+  regval &= ~IOCON_SLEW_MASK;
+  regval |= ((value << IOCON_SLEW_SHIFT) & IOCON_SLEW_MASK);
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setmodedigital
+ *
+ * Description:
+ *   Configure pin mode as analog or digital IO. Applies to Type A pins
+ *
+ ****************************************************************************/
+
+#if 0 /* Not used */
+static void lpc17_40_setmodedigital(unsigned int port, unsigned int pin)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+  regval |= IOCON_ADMODE_MASK;
+  putreg32(regval, regaddr);
+}
+#endif
+
+/****************************************************************************
+ * Name: lpc17_40_setmodeanalog
+ *
+ * Description:
+ *   Configure pin mode as analog or digital IO. Applies to Type A pins
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setmodeanalog(unsigned int port, unsigned int pin)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+  regval &= ~IOCON_ADMODE_MASK;
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setdacenable
+ *
+ * Description:
+ *   Configure DAC output. Applies to Type A pins P0:26 only
+ *
+ ****************************************************************************/
+
+static void lpc17_40_setdacenable(unsigned int port, unsigned int pin)
+{
+  uint32_t regaddr;
+  uint32_t regval;
+
+  regaddr = LPC17_40_IOCON_P(port, pin);
+  regval  = getreg32(regaddr);
+  regval |= IOCON_DACEN_MASK;
+  putreg32(regval, regaddr);
+}
+
+/****************************************************************************
+ * Name: lpc17_40_setdacdisable
+ *
+=== lpc178x_40xx_gpio.h ===
+grep: arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_gpio.h: No such file or directory
+=== EA lpc177x_8x_mci.c ===
+        if ( ExpectResp == EXPECT_NO_RESP )                     /* no response */
+        {
+                CmdData &= ~((1 << 6) | (1 << 7));              /* Clear long response bit as well */
+        }
+        else if ( ExpectResp == EXPECT_SHORT_RESP )     /* expect short response */
+        {
+                CmdData |= (1 << 6);
+        }
+        else if ( ExpectResp == EXPECT_LONG_RESP )      /* expect long response */
+        {
+                CmdData |= (1 << 6) | (1 << 7);
+        }
+
+        if ( AllowTimeout == ALLOW_CMD_TIMER )                  /* allow timeout or not */
+        {
+                CmdData &= ~ MCI_DISABLE_CMD_TIMER;
+        }
+        else
+        {
+                CmdData |= MCI_DISABLE_CMD_TIMER;
+        }
+
+        /*send the command*/
+        CmdData |= (1 << 10);           /* This bit needs to be set last. */
+
+        LPC_MCI->ARGUMENT = Argument;   /* Set the argument first, finally command */
+
+        LPC_MCI->COMMAND = CmdData;
+
+        return;
+}
+
+
+/************************************************************************//**
+ * @brief               The routine is to get the reponse from card after commands.
+ *                              This function is always used in pair of MCI_SendCmd() func
+ *
+ * @param[in]   ExpectCmdData specify the command of which the data will be
+ *                              retrieved. This field should be the same with CmdIndex of
+ *                              MCI_SendCmd() function.
+ *
+ * @param[in]   ExpectResp the response type for the command. They may be:
+ *                              - EXPECT_NO_RESP: means no response required
+ *                              - EXPECT_SHORT_RESP: means a response in a word needed
+ *                              - EXPECT_LONG_RESP: means a response in 4 words needed
+ *
+ * @param[out]  CmdResp the buffer stored the data replied from cards
+ *
+ * @return              MCI_FUNC_OK in case of success
+ ***************************************************************************/
+uint32_t MCI_GetCmdResp(uint32_t ExpectCmdData, uint32_t ExpectResp, uint32_t *CmdResp)
+{
+        uint32_t CmdRespStatus = 0;
+        uint32_t LastCmdIndex;
+
+        if ( ExpectResp == EXPECT_NO_RESP )
+        {
+                return MCI_FUNC_OK;
+        }
+
+        while (1)
+        {
+                // Get the status of the component
+                CmdRespStatus = LPC_MCI->STATUS;
+
+                if ( CmdRespStatus & (MCI_CMD_TIMEOUT) )
+                {
+                        LPC_MCI->CLEAR = CmdRespStatus | MCI_CMD_TIMEOUT;
+
+                        LPC_MCI->COMMAND = 0;
+                        LPC_MCI->ARGUMENT = 0xFFFFFFFF;
+
+                        return (CmdRespStatus);
+                }
+
+                if (  CmdRespStatus & MCI_CMD_CRC_FAIL )
+                {
+                        LPC_MCI->CLEAR = CmdRespStatus | MCI_CMD_CRC_FAIL;
+                        LastCmdIndex = LPC_MCI->COMMAND & 0x003F;
+
+                        if ( (LastCmdIndex == CMD1_SEND_OP_COND) || (LastCmdIndex == ACMD41_SEND_APP_OP_COND)
+                                                                                                        || (LastCmdIndex == CMD12_STOP_TRANSMISSION) )
+                        {
+                                LPC_MCI->COMMAND = 0;
+                                LPC_MCI->ARGUMENT = 0xFFFFFFFF;
+                                break;                  /* ignore CRC error if it's a resp for SEND_OP_COND
+                                                                or STOP_TRANSMISSION. */
+                        }
+                        else
+                        {
+                                return (CmdRespStatus);
+                        }
+                }
+                else if (CmdRespStatus & MCI_CMD_RESP_END)
+                {
+                        LPC_MCI->CLEAR = CmdRespStatus | MCI_CMD_RESP_END;
+                        break;  /* cmd response is received, expecting response */
+                }
+        }
+
+        if ((LPC_MCI->RESP_CMD & 0x3F) != ExpectCmdData)
+        {
+                /* If the response is not R1, in the response field, the Expected Cmd data
+                won't be the same as the CMD data in SendCmd(). Below four cmds have
+                R2 or R3 response. We don't need to check if MCI_RESP_CMD is the same
+                as the Expected or not. */
+                if ((ExpectCmdData != CMD1_SEND_OP_COND) && (ExpectCmdData != ACMD41_SEND_APP_OP_COND)
+                                        && (ExpectCmdData != CMD2_ALL_SEND_CID) && (ExpectCmdData != CMD9_SEND_CSD))
+                {
+                        CmdRespStatus = INVALID_RESPONSE;       /* Reuse error status */
+                        return (INVALID_RESPONSE);
+                }
+        }
+
+        /* Read MCI_RESP0 register assuming it's not long response. */
+        if (CmdResp != NULL)
+        {
+                if (ExpectResp == EXPECT_SHORT_RESP)
+                {
+                        *(CmdResp + 0) = LPC_MCI->RESP0;
+                        *(CmdResp + 1) = 0;
+                        *(CmdResp + 2) = 0;
+                        *(CmdResp + 3) = 0;
+                }
+                else if (ExpectResp == EXPECT_LONG_RESP)
+                {
+                        *(CmdResp + 0) = LPC_MCI->RESP0;
+                        *(CmdResp + 1) = LPC_MCI->RESP1;
+                        *(CmdResp + 2) = LPC_MCI->RESP2;
+                        *(CmdResp + 3) = LPC_MCI->RESP3;
+                }
+        }
+
+        return MCI_FUNC_OK;
+}
+
+
+/************************************************************************//**
+ * @brief               The routine is to send command to cards then get back the
+ *                              reponses (if required).
+ *
+ * @param[in]   CmdIndex the command to be sent to cards
+ *
+ * @param[in]   Argument the argument follows the command
+ *
+ * @param[in]   ExpectResp the response type for the command. They may be:
+ *                              - EXPECT_NO_RESP: means no response required
+ *                              - EXPECT_SHORT_RESP: means a response in a word needed
+ *                              - EXPECT_LONG_RESP: means a response in 4 words needed
+ *
+ * @param[out]  CmdResp the buffer stored the data replied from cards
+ *
+ * @param[in]   AllowTimeout allow timeout the command or not
+ *
+ * @return              MCI_FUNC_OK in case of success
+ ***************************************************************************/
+uint32_t MCI_CmdResp(uint32_t CmdIndex, uint32_t Argument,
+                                                                uint32_t ExpectResp, uint32_t *CmdResp, uint32_t AllowTimeout)
+{
+        uint32_t respStatus;
+        uint32_t respValue[4];
+
+        MCI_SendCmd(CmdIndex, Argument, ExpectResp, AllowTimeout);
+
+        if((CmdResp != NULL) || (ExpectResp != EXPECT_NO_RESP))
+        {
+                respStatus = MCI_GetCmdResp(CmdIndex, ExpectResp, CmdResp);
+        }
+        else
+        {
+                respStatus = MCI_FUNC_BAD_PARAMETERS;
+        }
+
+        return respStatus;
+}
+
+
+/************************************************************************//**
+ * @brief               To reset the card, the CMD0 is sent and then the card is put
+ *                              in idle state. This is the very first command to be sent to
+ *                              initialize either MMC or SD card.
+ *
+ * @param               None
+ *
+ * @return              Always MCI_FUNC_OK
+ ***************************************************************************/
+=== GPIO_SD_PWR usage ===
+boards/arm/imxrt/imxrt1180-evk/src/imxrt_bringup.c:61:  imxrt_config_gpio(GPIO_SD_PWREN);
+boards/arm/imxrt/imxrt1180-evk/include/board.h:186:#define GPIO_SD_PWREN    IOMUX_GPIO(IOMUXC_PAD_GPIO_AD_14_GPIO4_IO14, \
+boards/arm/lpc17xx_40xx/open1788/src/lpc17_40_bringup.c:257:  lpc17_40_configgpio(GPIO_SD_PWR);
+boards/arm/lpc17xx_40xx/open1788/include/board.h:355:#define GPIO_SD_PWR                GPIO_SD_PWR_2
+boards/arm/lpc17xx_40xx/lpc4088-devkit/src/lpc4088-devkit.h:109:#define GPIO_SD_PWR      (GPIO_OUTPUT | GPIO_VALUE_ZERO | GPIO_PORT1 | GPIO_PIN5)
+boards/arm/lpc17xx_40xx/lpc4088-devkit/src/lpc17_40_bringup.c:208:  lpc17_40_configgpio(GPIO_SD_PWR);
+arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h:154:#define GPIO_SD_PWR_1      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT0 | GPIO_PIN21)
+arch/arm/src/lpc17xx_40xx/hardware/lpc178x_40xx_pinconfig.h:216:#define GPIO_SD_PWR_2      (GPIO_ALT2 | GPIO_PULLUP | GPIO_PORT1 | GPIO_PIN5)
